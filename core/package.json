@@ -1,0 +1,19 @@
+{
+  "name": "core",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-syntax-import-source": "^7.25.9",
+    "@babel/preset-react": "^7.26.3",
+    "@babel/preset-typescript": "^7.26.0",
+    "comment-parser": "^1.4.1"
+  }
+}
