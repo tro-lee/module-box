@@ -53,7 +53,7 @@ export async function findParamInImportDeclaration(
           continue;
         }
 
-        const analyzer = await ASTAnalyzer.new(realImportPath);
+        const analyzer = await ASTAnalyzer.scan(realImportPath);
         const { interfaceDeclarations, functionDeclarations } =
           analyzer.context;
 

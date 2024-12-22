@@ -9,19 +9,19 @@ import {
 } from "@babel/types";
 import path from "path";
 
-type FunctionDeclarationWithComment = {
+export type FunctionDeclarationWithComment = {
   name: string;
   functionDeclaration: FunctionDeclaration;
   leadingComment: Comment | undefined;
 };
 
-type InterfaceDeclarationWithComment = {
+export type InterfaceDeclarationWithComment = {
   name: string;
   tsTypeElements: TSTypeElement[];
   leadingComment: Comment | undefined;
 };
 
-type Context = {
+export type Context = {
   interfaceDeclarations: InterfaceDeclarationWithComment[];
   functionDeclarations: FunctionDeclarationWithComment[];
   importDeclarations: ImportDeclaration[];
@@ -29,6 +29,7 @@ type Context = {
 
 const ASTAnalyzerMapCache = new Map<string, ASTAnalyzer>();
 
+// 用于分析出文件的AST
 export class ASTAnalyzer {
   private ast: ParseResult | null = null;
   private filePath: string;
@@ -120,7 +121,7 @@ export class ASTAnalyzer {
     return this.context;
   }
 
-  static async new(filePath: string): Promise<ASTAnalyzer> {
+  static async scan(filePath: string): Promise<ASTAnalyzer> {
     if (ASTAnalyzerMapCache.has(filePath)) {
       return ASTAnalyzerMapCache.get(filePath)!!;
     }

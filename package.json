@@ -1,0 +1,17 @@
+{
+  "name": "module-toolbox",
+  "module": "index.ts",
+  "type": "module",
+  "workspaces": [
+    "core"
+  ],
+  "scripts": {
+    "start": "bun run core/index.ts test/template/demo.tsx -- -debug"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

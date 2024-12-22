@@ -1,13 +1,13 @@
 import fs from "fs";
 import path from "path";
-import { parseArgs } from "util";
 import { parse as parseComment } from "comment-parser";
 import { findParamInImportDeclaration } from "./src/esmFunction";
 import { ASTAnalyzer } from "./src/astAnalyzer";
+import { ModulesAnalyzer } from "./src/modulesAnalyzer";
 
 async function analyzeFile(filePath: string) {
   try {
-    const analyzer = await ASTAnalyzer.new(filePath);
+    const analyzer = await ASTAnalyzer.scan(filePath);
     const { functionDeclarations } = analyzer.context;
 
     // 处理找到的函数注释
@@ -50,16 +50,7 @@ async function analyzeFile(filePath: string) {
   }
 }
 
-async function main() {
-  const { positionals } = parseArgs({
-    args: Bun.argv,
-    strict: true,
-    allowPositionals: true,
-  });
-
-  const filePath = positionals[2] || "test/demo.tsx";
-  //  "../../../Work/biz-mrn-food-deal/";
-
+export default async function (filePath: string) {
   if (!fs.existsSync(filePath)) {
     console.error("Error: File does not exist:", filePath);
     process.exit(1);
@@ -70,7 +61,14 @@ async function main() {
     process.exit(1);
   }
 
-  await analyzeFile(path.resolve(filePath));
-}
+  const analyzer = await ASTAnalyzer.scan(path.resolve(filePath));
+  const { functionDeclarations } = analyzer.context;
 
-main();
+  for (const func of functionDeclarations) {
+    const modulesAnalyzer = await ModulesAnalyzer.new(func, analyzer.context);
+  }
+
+  await analyzeFile(path.resolve(filePath));
+
+  console.log(analyzer.context);
+}
