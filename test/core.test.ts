@@ -1,7 +1,7 @@
 import { test } from "bun:test";
-import { getEntryFilePathsByDir } from "../core/src/entryFunction";
+import { getEntryFilePathsByDir } from "../core/src/entry";
 
-test("entry Test", async () => {
+test("core Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(
     "/Users/trolee02/Documents/Work/biz-mrn-food-deal",
     {

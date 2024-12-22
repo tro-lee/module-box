@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { ImportDeclaration } from "@babel/types";
-import { ASTAnalyzer } from "./astAnalyzer";
+import { ASTAnalyzer } from "./ast";
 
 // 辅助函数：获取导入的别名
 function getImportedAlias(specifier: any): string {

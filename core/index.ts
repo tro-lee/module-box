@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { parse as parseComment } from "comment-parser";
 import { findParamInImportDeclaration } from "./src/esmFunction";
-import { ASTAnalyzer } from "./src/astAnalyzer";
+import { ASTAnalyzer } from "./src/ast";
 import { ModulesAnalyzer } from "./src/modulesAnalyzer";
 
 async function analyzeFile(filePath: string) {
