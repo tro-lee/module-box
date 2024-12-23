@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { getEntryFilePathsByDir } from "../core/src/entry";
 import { scanAstByFile } from "../core/src/ast";
-import type { GlobalContext } from "../core/src/core";
+import type { GlobalContext } from "../core/src/types";
 import { transformFunctionToModuleComponent } from "../core/src/transformer";
 
 test.skip("entry Test", async () => {
@@ -31,7 +31,10 @@ test("ast Test", async () => {
     globalContext.set(file, ast);
   }
 
-  globalContext.forEach((fileContext, file) => {
-    transformFunctionToModuleComponent(fileContext, globalContext);
-  });
+  for (const fileContext of globalContext.values()) {
+    const moduleComponents = await transformFunctionToModuleComponent(
+      fileContext,
+      globalContext,
+    );
+  }
 });

@@ -11,19 +11,19 @@ import {
   FileContext,
   FunctionDeclarationWithComment,
   InterfaceDeclarationWithComment,
-} from "./core";
+} from "./types";
 
-const astAnalyzerCache: Record<string, FileContext> = {};
+const astContextCache: Record<string, FileContext> = {};
 
 export async function scanAstByFile(filePath: string) {
   const filename = path.resolve(__dirname, filePath);
   if (!fs.existsSync(filename)) {
-    throw new Error("File not found");
+    throw new Error("file not found: " + filename);
   }
 
   // 缓存逻辑
-  if (filename in astAnalyzerCache) {
-    return astAnalyzerCache[filename];
+  if (filename in astContextCache) {
+    return astContextCache[filename];
   }
 
   // 从文件中解析出 所要的语法树
@@ -64,6 +64,7 @@ export async function scanAstByFile(filePath: string) {
       const leadingComment = leadingComments?.at(-1);
 
       functionsWithComment.push({
+        type: "FunctionDeclarationWithComment",
         id,
         leadingComment,
         path,
@@ -82,6 +83,7 @@ export async function scanAstByFile(filePath: string) {
       const leadingComment = leadingComments?.at(-1);
 
       interfacesWithComment.push({
+        type: "InterfaceDeclarationWithComment",
         id,
         leadingComment,
         path,
@@ -91,11 +93,13 @@ export async function scanAstByFile(filePath: string) {
     },
   });
 
-  astAnalyzerCache[filename] = {
+  astContextCache[filename] = {
+    type: "LocalFileContext",
+    path: filename,
     interfacesWithComment,
     functionsWithComment,
     importDeclarations: imports,
   };
 
-  return astAnalyzerCache[filename];
+  return astContextCache[filename];
 }
