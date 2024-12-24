@@ -7,76 +7,85 @@ import {
   TSTypeElement,
 } from "@babel/types";
 
-// AST相关 ==============================
-
-export type FunctionDeclarationWithComment = {
-  type: "FunctionDeclarationWithComment";
-
-  // 糖
+// Base interfaces for common properties
+interface WithComment {
   id: Identifier;
-  leadingComment: Comment | undefined;
+  leadingComment?: Comment;
+}
 
-  // 实际数据
-  path: NodePath<FunctionDeclaration>;
-  functionDeclaration: FunctionDeclaration & { id: Identifier };
-};
+interface WithPath<T> {
+  path: NodePath<T>;
+}
 
-export type InterfaceDeclarationWithComment = {
-  type: "InterfaceDeclarationWithComment";
+type FunctionDeclarationWithComment =
+  & WithComment
+  & WithPath<FunctionDeclaration>
+  & {
+    type: "FunctionDeclarationWithComment";
+    functionDeclaration: FunctionDeclaration & { id: Identifier };
+  };
 
-  // 糖
-  id: Identifier;
-  leadingComment: Comment | undefined;
-  tsTypeElements: TSTypeElement[];
+type InterfaceDeclarationWithComment =
+  & WithComment
+  & WithPath<TSInterfaceDeclaration>
+  & {
+    type: "InterfaceDeclarationWithComment";
+    tsTypeElements: TSTypeElement[];
+    interfaceDeclaration: TSInterfaceDeclaration;
+  };
 
-  // 实际数据
-  path: NodePath<TSInterfaceDeclaration>;
-  interfaceDeclaration: TSInterfaceDeclaration;
-};
-
-export type NodeModuleItem = {
-  type: "NodeModuleItem";
+type NodeModuleImportDeclarationItem = {
+  type: "NodeModuleImportDeclarationItem";
   id: Identifier;
   path: string;
 };
 
-// 上下文相关 ==============================
-
-export type FileContext = LocalFileContext | NodeModuleFileContext;
-
-export type LocalFileContext = {
-  type: "LocalFileContext";
+type FileContext = {
   path: string;
   interfacesWithComment: InterfaceDeclarationWithComment[];
   functionsWithComment: FunctionDeclarationWithComment[];
   importDeclarations: ImportDeclaration[];
 };
 
-export type NodeModuleFileContext = {
-  type: "NodeModuleFileContext";
-  path: string;
+type GlobalContext = Map<string, FileContext>;
+
+// ============================================
+interface Prop {
+  propKey: string;
+  propType?: CustomTypeAnnotation;
+}
+
+type BaseTypeAnnotation<T extends string> = {
+  type: T;
 };
+type NodeModuleImportTypeAnnotation =
+  & BaseTypeAnnotation<"NodeModuleImportTypeAnnotation">
+  & {
+    typeName: string;
+    importPath: string;
+  };
+type InterfaceTypeAnnotation = BaseTypeAnnotation<"InterfaceTypeAnnotation"> & {
+  filePath: string;
+  interfaceName: string;
+  interfaceDescription: string;
+  interfaceProps: Prop[];
+};
+type ObjectTypeAnnotation = BaseTypeAnnotation<"ObjectTypeAnnotation"> & {
+  props: Prop[];
+};
+type UnionTypeAnnotation = BaseTypeAnnotation<"UnionTypeAnnotation"> & {
+  members: CustomTypeAnnotation[];
+};
+type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
+type CustomTypeAnnotation =
+  | NodeModuleImportTypeAnnotation
+  | InterfaceTypeAnnotation
+  | ObjectTypeAnnotation
+  | UnionTypeAnnotation
+  | NullTypeAnnotation
+  | undefined;
 
-export type GlobalContext = Map<string, FileContext>;
-
-// 模块信息相关 =============================
-
-export type ModuleComponent = {
+type ModuleComponent = {
   componentName: string;
   componentDescription: string;
-
-  // 组件参数
-  componentParams: Param[];
-};
-
-export type Param = {
-  paramName: string;
-  paramDescription: string;
-
-  paramProps: Prop[];
-};
-
-export type Prop = {
-  propKey: string;
-  propType: any;
 };

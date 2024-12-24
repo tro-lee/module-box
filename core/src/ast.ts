@@ -94,7 +94,6 @@ export async function scanAstByFile(filePath: string) {
   });
 
   astContextCache[filename] = {
-    type: "LocalFileContext",
     path: filename,
     interfacesWithComment,
     functionsWithComment,
