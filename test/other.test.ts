@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import { getEntryFilePathsByDir } from "../core/src/entry";
 import { scanAstByFile } from "../core/src/ast";
 import type { GlobalContext } from "../core/src/types";
-import { transformFunctionToModuleComponent } from "../core/src/transformer";
+import { transformFunctionToModuleComponent } from "../core/src/transform";
 
 test.skip("entry Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(

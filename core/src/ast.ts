@@ -1,4 +1,5 @@
 import {
+  ArrowFunctionExpression,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
@@ -67,7 +68,8 @@ export async function scanAstByFile(filePath: string) {
         type: "FunctionDeclarationWithComment",
         id,
         leadingComment,
-        path,
+        nodePath: path,
+        filePath: filename,
         functionDeclaration,
       });
     },
@@ -86,8 +88,10 @@ export async function scanAstByFile(filePath: string) {
         type: "InterfaceDeclarationWithComment",
         id,
         leadingComment,
-        path,
+        nodePath: path,
+        filePath: filename,
         tsTypeElements: path.node.body.body,
+        extendsExpression: path.node.extends ?? [],
         interfaceDeclaration: path.node,
       });
     },

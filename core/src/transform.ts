@@ -1,6 +1,6 @@
 import { parse as parseComment } from "comment-parser";
 import { FileContext, GlobalContext, ModuleComponent } from "./types";
-import { parseTypeAnnotation } from "./parseType";
+import { parseFunctionBody, parseTypeAnnotation } from "./parse";
 
 export async function transformFunctionToModuleComponent(
   context: FileContext,
@@ -23,8 +23,19 @@ export async function transformFunctionToModuleComponent(
     }
 
     // 拼出模块组件
+    // 获取组件名称 和 组件描述
+    // 获取组件的参数 和 组件的接口
     const functionName = functionDeclaration.id.name;
     const comment = parseComment("/*" + leadingComment?.value + "*/");
+
+    let componentDescription = "";
+    for (const item of comment) {
+      item.tags.forEach((tag) => {
+        if (tag.name === "description") {
+          componentDescription = tag.name;
+        }
+      });
+    }
 
     const componentParams = await Promise.all(
       functionDeclaration.params.map(async (param) => {
@@ -39,14 +50,7 @@ export async function transformFunctionToModuleComponent(
       }),
     );
 
-    let componentDescription = "";
-    for (const item of comment) {
-      item.tags.forEach((tag) => {
-        if (tag.name === "description") {
-          componentDescription = tag.name;
-        }
-      });
-    }
+    const componentBody = await parseFunctionBody(functionDeclaration.body);
 
     const component: ModuleComponent = {
       componentName: functionName,

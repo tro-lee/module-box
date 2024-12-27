@@ -3,34 +3,31 @@ import {
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
+  TSExpressionWithTypeArguments,
   TSInterfaceDeclaration,
   TSTypeElement,
 } from "@babel/types";
 
-// Base interfaces for common properties
-interface WithComment {
+interface WithBaseInfo<T> {
   id: Identifier;
+  nodePath: NodePath<T>;
+  filePath: string;
   leadingComment?: Comment;
 }
 
-interface WithPath<T> {
-  path: NodePath<T>;
-}
-
 type FunctionDeclarationWithComment =
-  & WithComment
-  & WithPath<FunctionDeclaration>
+  & WithBaseInfo<FunctionDeclaration>
   & {
     type: "FunctionDeclarationWithComment";
     functionDeclaration: FunctionDeclaration & { id: Identifier };
   };
 
 type InterfaceDeclarationWithComment =
-  & WithComment
-  & WithPath<TSInterfaceDeclaration>
+  & WithBaseInfo<TSInterfaceDeclaration>
   & {
     type: "InterfaceDeclarationWithComment";
     tsTypeElements: TSTypeElement[];
+    extendsExpression: TSExpressionWithTypeArguments[];
     interfaceDeclaration: TSInterfaceDeclaration;
   };
 
@@ -48,6 +45,11 @@ type FileContext = {
 };
 
 type GlobalContext = Map<string, FileContext>;
+
+type ModuleComponent = {
+  componentName: string;
+  componentDescription: string;
+};
 
 // ============================================
 interface Prop {
@@ -69,6 +71,7 @@ type InterfaceTypeAnnotation = BaseTypeAnnotation<"InterfaceTypeAnnotation"> & {
   interfaceName: string;
   interfaceDescription: string;
   interfaceProps: Prop[];
+  interfaceExtends: CustomTypeAnnotation[];
 };
 type ObjectTypeAnnotation = BaseTypeAnnotation<"ObjectTypeAnnotation"> & {
   props: Prop[];
@@ -76,16 +79,57 @@ type ObjectTypeAnnotation = BaseTypeAnnotation<"ObjectTypeAnnotation"> & {
 type UnionTypeAnnotation = BaseTypeAnnotation<"UnionTypeAnnotation"> & {
   members: CustomTypeAnnotation[];
 };
+type ArrayTypeAnnotation = BaseTypeAnnotation<"ArrayTypeAnnotation"> & {
+  elementType: CustomTypeAnnotation;
+};
 type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
+type StringKeywordTypeAnnotation = BaseTypeAnnotation<
+  "StringKeywordTypeAnnotation"
+>;
+type NumberKeywordTypeAnnotation = BaseTypeAnnotation<
+  "NumberKeywordTypeAnnotation"
+>;
+type BooleanKeywordTypeAnnotation = BaseTypeAnnotation<
+  "BooleanKeywordTypeAnnotation"
+>;
+type AnyTypeAnnotation = BaseTypeAnnotation<"AnyTypeAnnotation">;
+type UndefinedTypeAnnotation = BaseTypeAnnotation<"UndefinedTypeAnnotation">;
+type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
+type TodoTypeAnnotation = BaseTypeAnnotation<"TodoTypeAnnotation"> & {
+  typeAnnotation: any;
+};
+
 type CustomTypeAnnotation =
   | NodeModuleImportTypeAnnotation
   | InterfaceTypeAnnotation
   | ObjectTypeAnnotation
   | UnionTypeAnnotation
+  | ArrayTypeAnnotation
+  | NullTypeAnnotation
+  | StringKeywordTypeAnnotation
+  | NumberKeywordTypeAnnotation
+  | BooleanKeywordTypeAnnotation
+  | AnyTypeAnnotation
+  | TodoTypeAnnotation
+  | UndefinedTypeAnnotation
   | NullTypeAnnotation
   | undefined;
 
-type ModuleComponent = {
-  componentName: string;
-  componentDescription: string;
+// ============================================
+type Variable = {
+  name: string;
+  source: Source;
+};
+
+type Source = CallExpressionSource | IdentifierSource;
+
+type CallExpressionSource = {
+  type: "CallExpression";
+  calleeName: string;
+  arguments: string[];
+};
+
+type IdentifierSource = {
+  type: "Identifier";
+  name: string;
 };

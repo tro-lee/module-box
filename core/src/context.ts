@@ -9,23 +9,27 @@ import {
 } from "./types";
 import { scanAstByFile } from "./ast";
 
+type Declaration =
+  | InterfaceDeclarationWithComment
+  | FunctionDeclarationWithComment
+  | NodeModuleImportDeclarationItem;
+type DeclarationContext<T extends Declaration> = {
+  declaration: T;
+  context: FileContext;
+};
+
 async function getDeclarationInContextHelper(
   itemName: string,
   currentContext: FileContext,
   globalContext: GlobalContext,
   declarationType: "interface" | "function",
-): Promise<
-  | InterfaceDeclarationWithComment
-  | FunctionDeclarationWithComment
-  | NodeModuleImportDeclarationItem
-  | undefined
-> {
+): Promise<DeclarationContext<Declaration> | undefined> {
   // 从当前文件的声明中查找目标声明
   const declarations = declarationType === "interface"
     ? currentContext.interfacesWithComment
     : currentContext.functionsWithComment;
   const item = declarations.find((item) => item.id.name === itemName);
-  if (item) return item;
+  if (item) return { declaration: item, context: currentContext };
 
   // 从当前文件的导入声明中查找目标声明
   const { importDeclarations } = currentContext;
@@ -46,12 +50,15 @@ async function getDeclarationInContextHelper(
   // TODO 暂时判定开头带@ 为全部索引
   if (targetImportDeclaration.source.value.startsWith("@")) {
     return {
-      type: "NodeModuleImportDeclarationItem",
-      id: {
-        type: "Identifier",
-        name: itemName,
+      declaration: {
+        type: "NodeModuleImportDeclarationItem",
+        id: {
+          type: "Identifier",
+          name: itemName,
+        },
+        path: targetImportDeclaration.source.value,
       },
-      path: targetImportDeclaration.source.value,
+      context: currentContext,
     };
   }
 
@@ -95,18 +102,21 @@ export async function getInterfaceDeclarationInContext(
   currentContext: FileContext,
   globalContext: GlobalContext,
 ): Promise<
-  InterfaceDeclarationWithComment | NodeModuleImportDeclarationItem | undefined
+  DeclarationContext<
+    InterfaceDeclarationWithComment | NodeModuleImportDeclarationItem
+  > | undefined
 > {
-  return getDeclarationInContextHelper(
+  const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
     globalContext,
     "interface",
-  ) as Promise<
-    | InterfaceDeclarationWithComment
-    | NodeModuleImportDeclarationItem
-    | undefined
-  >;
+  );
+  return result as
+    | DeclarationContext<
+      InterfaceDeclarationWithComment | NodeModuleImportDeclarationItem
+    >
+    | undefined;
 }
 
 export async function getFunctionDeclarationInContext(
@@ -114,14 +124,19 @@ export async function getFunctionDeclarationInContext(
   currentContext: FileContext,
   globalContext: GlobalContext,
 ): Promise<
-  FunctionDeclarationWithComment | NodeModuleImportDeclarationItem | undefined
+  DeclarationContext<
+    FunctionDeclarationWithComment | NodeModuleImportDeclarationItem
+  > | undefined
 > {
-  return getDeclarationInContextHelper(
+  const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
     globalContext,
     "function",
-  ) as Promise<
-    FunctionDeclarationWithComment | NodeModuleImportDeclarationItem | undefined
-  >;
+  );
+  return result as
+    | DeclarationContext<
+      FunctionDeclarationWithComment | NodeModuleImportDeclarationItem
+    >
+    | undefined;
 }
