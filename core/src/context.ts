@@ -3,7 +3,6 @@ import fs from "fs";
 import {
   FileContext,
   FunctionDeclarationWithComment,
-  GlobalContext,
   InterfaceDeclarationWithComment,
   NodeModuleImportDeclarationItem,
 } from "./types";
@@ -21,7 +20,6 @@ type DeclarationContext<T extends Declaration> = {
 async function getDeclarationInContextHelper(
   itemName: string,
   currentContext: FileContext,
-  globalContext: GlobalContext,
   declarationType: "interface" | "function",
 ): Promise<DeclarationContext<Declaration> | undefined> {
   // 从当前文件的声明中查找目标声明
@@ -71,8 +69,20 @@ async function getDeclarationInContextHelper(
     );
 
     // 获取目标上下文
-    let targetContext;
-    for (const ext of ["", ".ts", ".tsx", ".js", ".jsx"]) {
+    let targetContext: FileContext | undefined;
+    for (
+      const ext of [
+        "",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        "/index.ts",
+        "/index.tsx",
+        "/index.js",
+        "/index.jsx",
+      ]
+    ) {
       const _absoluteTargetImportPath = absoluteTargetImportPath + ext;
       if (
         !fs.existsSync(_absoluteTargetImportPath) ||
@@ -81,17 +91,15 @@ async function getDeclarationInContextHelper(
         continue;
       }
 
-      targetContext = globalContext.get(_absoluteTargetImportPath) ??
-        await scanAstByFile(
-          _absoluteTargetImportPath,
-        );
+      targetContext = await scanAstByFile(
+        _absoluteTargetImportPath,
+      );
     }
     if (!targetContext) return undefined;
 
-    return getDeclarationInContextHelper(
+    return await getDeclarationInContextHelper(
       itemName,
       targetContext,
-      globalContext,
       declarationType,
     );
   }
@@ -100,7 +108,6 @@ async function getDeclarationInContextHelper(
 export async function getInterfaceDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
-  globalContext: GlobalContext,
 ): Promise<
   DeclarationContext<
     InterfaceDeclarationWithComment | NodeModuleImportDeclarationItem
@@ -109,7 +116,6 @@ export async function getInterfaceDeclarationInContext(
   const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
-    globalContext,
     "interface",
   );
   return result as
@@ -122,7 +128,6 @@ export async function getInterfaceDeclarationInContext(
 export async function getFunctionDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
-  globalContext: GlobalContext,
 ): Promise<
   DeclarationContext<
     FunctionDeclarationWithComment | NodeModuleImportDeclarationItem
@@ -131,7 +136,6 @@ export async function getFunctionDeclarationInContext(
   const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
-    globalContext,
     "function",
   );
   return result as

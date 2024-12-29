@@ -1,6 +1,8 @@
 import type {
   BlockStatement,
+  Expression,
   JSXElement,
+  JSXEmptyExpression,
   Noop,
   TSTypeAnnotation,
   TypeAnnotation,
@@ -10,19 +12,20 @@ import { parse as parseComment } from "comment-parser";
 import {
   CustomTypeAnnotation,
   FileContext,
-  GlobalContext,
   InterfaceTypeAnnotation,
   Prop,
   Source,
   Variable,
 } from "./types";
-import { getInterfaceDeclarationInContext } from "./context";
+import {
+  getFunctionDeclarationInContext,
+  getInterfaceDeclarationInContext,
+} from "./context";
 
 // 解析类型注解
 export async function parseTypeAnnotation(
   typeAnnotation: TSTypeAnnotation | TypeAnnotation | Noop | null | undefined,
   context: FileContext,
-  globalContext: GlobalContext,
 ): Promise<CustomTypeAnnotation> {
   if (!typeAnnotation) return;
 
@@ -37,7 +40,6 @@ export async function parseTypeAnnotation(
       const item = await getInterfaceDeclarationInContext(
         typeName.name,
         context,
-        globalContext,
       );
       if (!item) return;
 
@@ -78,7 +80,6 @@ export async function parseTypeAnnotation(
             const propType = await parseTypeAnnotation(
               prop.typeAnnotation,
               declarationInContext,
-              globalContext,
             );
 
             interfaceProps.push({
@@ -101,7 +102,6 @@ export async function parseTypeAnnotation(
                 },
               },
               declarationInContext,
-              globalContext,
             ) as InterfaceTypeAnnotation | undefined;
 
             if (extendsInterfaceItem) {
@@ -136,7 +136,6 @@ export async function parseTypeAnnotation(
             const propType = await parseTypeAnnotation(
               property.typeAnnotation,
               context,
-              globalContext,
             );
 
             return {
@@ -166,7 +165,6 @@ export async function parseTypeAnnotation(
               typeAnnotation: member,
             },
             context,
-            globalContext,
           );
         }),
       );
@@ -187,7 +185,6 @@ export async function parseTypeAnnotation(
             typeAnnotation: _typeAnnotation.elementType,
           },
           context,
-          globalContext,
         ),
       };
     }
@@ -245,16 +242,18 @@ function parseVariableDeclaratorInit(
 ): Source | undefined {
   // 赋值给标识符
   if (
-    init?.type === "CallExpression" &&
-    init.callee.type === "Identifier"
+    init?.type === "CallExpression"
   ) {
-    return {
-      type: "CallExpression",
-      calleeName: init.callee.name,
-      arguments: init.arguments.map((arg) =>
-        arg.type === "Identifier" ? arg.name : ""
-      ).filter(Boolean),
-    };
+    if (init.callee.type === "Identifier") {
+      return {
+        type: "CallExpression",
+        calleeName: init.callee.name,
+        arguments: init.arguments.map((arg) =>
+          arg.type === "Identifier" ? arg.name : ""
+        ).filter(Boolean),
+      };
+    } else if (init.callee.type === "ArrowFunctionExpression") {
+    }
   } else if (init?.type === "Identifier") {
     return {
       type: "Identifier",
@@ -301,8 +300,83 @@ export async function parseFunctionBody(functionBody: BlockStatement) {
       }
     });
   });
+
+  return variables;
 }
 
-export async function parseJSXElement(jsxElement: JSXElement) {
-  console.log(jsxElement);
+type TopicObject = {
+  type: "TopicObject";
+  objectName: string;
+  sourceCode: string;
+};
+
+async function parseExpression(
+  expression: Expression | JSXEmptyExpression,
+  currentContext: FileContext,
+) {
+  return {};
+}
+
+// 解析JSX元素
+export async function parseJSXElement(
+  jsxElement: JSXElement,
+  currentContext: FileContext,
+) {
+  let jsxElements: any[] = [];
+
+  // 解析当前jsxElement
+  if (jsxElement.openingElement.name.type === "JSXIdentifier") {
+    // 获取函数声明
+    const functionDeclaration = await getFunctionDeclarationInContext(
+      jsxElement.openingElement.name.name,
+      currentContext,
+    );
+    if (!functionDeclaration) return [];
+
+    // 解析属性
+    const elementAttributes = await Promise.all(
+      jsxElement.openingElement.attributes.map(
+        async (attr) => {
+          if (
+            attr.type === "JSXAttribute" &&
+            attr.value &&
+            attr.value.type === "JSXExpressionContainer"
+          ) {
+            return {
+              name: attr.name.name,
+              value: await parseExpression(
+                attr.value.expression,
+                currentContext,
+              ),
+            };
+          }
+        },
+      ),
+    );
+
+    jsxElements.push(
+      {
+        type: "ComponentElement",
+        componentName: functionDeclaration.declaration.id.name,
+        componentParams: elementAttributes,
+        importPath: functionDeclaration.context.path,
+      },
+    );
+  }
+
+  // 解析子代
+  if (jsxElement.children) {
+    for (const child of jsxElement.children) {
+      if (child.type === "JSXElement") {
+        jsxElements.push(
+          ...(await parseJSXElement(
+            child,
+            currentContext,
+          )),
+        );
+      }
+    }
+  }
+
+  return jsxElements;
 }

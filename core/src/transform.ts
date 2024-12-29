@@ -1,10 +1,14 @@
 import { parse as parseComment } from "comment-parser";
-import { FileContext, GlobalContext, ModuleComponent } from "./types";
-import { parseFunctionBody, parseTypeAnnotation } from "./parse";
+import { FileContext, ModuleComponent } from "./types";
+import {
+  parseFunctionBody,
+  parseJSXElement,
+  parseTypeAnnotation,
+} from "./parse";
+import { JSXElement } from "@babel/types";
 
 export async function transformFunctionToModuleComponent(
   context: FileContext,
-  globalContext: GlobalContext,
 ) {
   const moduleComponents: ModuleComponent[] = [];
   const { functionsWithComment } = context;
@@ -40,11 +44,10 @@ export async function transformFunctionToModuleComponent(
     const componentParams = await Promise.all(
       functionDeclaration.params.map(async (param) => {
         // 解析解构类型声明 类似 {a}: {b} 的参数
-        if (param.type === "ObjectPattern" && param.typeAnnotation) {
+        if (param.typeAnnotation) {
           return await parseTypeAnnotation(
             param.typeAnnotation,
             context,
-            globalContext,
           );
         }
       }),
@@ -52,9 +55,25 @@ export async function transformFunctionToModuleComponent(
 
     const componentBody = await parseFunctionBody(functionDeclaration.body);
 
+    let results: JSXElement[] = [];
+    for (const statement of functionDeclaration.body.body) {
+      if (
+        statement.type === "ReturnStatement" &&
+        statement.argument?.type === "JSXElement"
+      ) {
+        const result = await parseJSXElement(
+          statement.argument,
+          context,
+        );
+        results.push(...result);
+      }
+    }
+    console.log(results);
+
     const component: ModuleComponent = {
       componentName: functionName,
       componentDescription,
+      componentBody,
       componentParams,
     };
 

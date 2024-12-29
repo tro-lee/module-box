@@ -1,8 +1,8 @@
 import { test } from "bun:test";
 import { getEntryFilePathsByDir } from "../core/src/entry";
 import { scanAstByFile } from "../core/src/ast";
-import type { GlobalContext } from "../core/src/types";
 import { transformFunctionToModuleComponent } from "../core/src/transform";
+import type { FileContext } from "../core/src/types";
 
 test.skip("entry Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(
@@ -25,16 +25,16 @@ test("ast Test", async () => {
     },
   );
 
-  const globalContext: GlobalContext = new Map();
+  const globalContext: Map<string, FileContext> = new Map();
   for (const file of entryFiles) {
     const ast = await scanAstByFile(file);
+    if (!ast) continue;
     globalContext.set(file, ast);
   }
 
   for (const fileContext of globalContext.values()) {
     const moduleComponents = await transformFunctionToModuleComponent(
       fileContext,
-      globalContext,
     );
   }
 });

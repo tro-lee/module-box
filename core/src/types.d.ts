@@ -19,7 +19,9 @@ type FunctionDeclarationWithComment =
   & WithBaseInfo<FunctionDeclaration>
   & {
     type: "FunctionDeclarationWithComment";
-    functionDeclaration: FunctionDeclaration & { id: Identifier };
+    functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
+      id: Identifier;
+    };
   };
 
 type InterfaceDeclarationWithComment =
@@ -43,8 +45,6 @@ type FileContext = {
   functionsWithComment: FunctionDeclarationWithComment[];
   importDeclarations: ImportDeclaration[];
 };
-
-type GlobalContext = Map<string, FileContext>;
 
 type ModuleComponent = {
   componentName: string;

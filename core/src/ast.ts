@@ -1,5 +1,6 @@
 import {
   ArrowFunctionExpression,
+  Expression,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
@@ -30,7 +31,14 @@ export async function scanAstByFile(filePath: string) {
   // 从文件中解析出 所要的语法树
   // importDeclaration, functionDeclaration, interfaceDeclaration
 
-  const sourceCode = await Bun.file(filename).text();
+  let sourceCode: string;
+  try {
+    sourceCode = await Bun.file(filename).text();
+  } catch (e) {
+    console.error("file not found: " + filename);
+    return;
+  }
+
   const ast = parse(sourceCode, {
     filename,
     sourceType: "module",
@@ -49,6 +57,53 @@ export async function scanAstByFile(filePath: string) {
   traverse(ast, {
     ImportDeclaration(path: NodePath<ImportDeclaration>) {
       imports.push(path.node);
+    },
+    ArrowFunctionExpression(path: NodePath<ArrowFunctionExpression>) {
+      // 保证解析是 解析的顶级域的初始化箭头函数
+      // 然后伪装成FunctionDeclaration，我们不对箭头函数和函数进行细微区分
+      if (
+        path?.parentPath?.parentPath?.parentPath?.type !== "Program" ||
+        path.key !== "init" ||
+        path.parent.type !== "VariableDeclarator" ||
+        path.parent.id.type !== "Identifier"
+      ) {
+        return;
+      }
+
+      const arrowFunction = path.node;
+      const leadingComments = path.parent?.leadingComments;
+      const leadingComment = leadingComments?.at(-1);
+
+      // 将箭头函数体转换为块级语句
+      if (arrowFunction.body.type !== "BlockStatement") {
+        arrowFunction.body = {
+          type: "BlockStatement",
+          body: [{
+            type: "ExpressionStatement",
+            expression: arrowFunction.body as Expression,
+          }],
+          directives: [],
+        };
+      }
+
+      functionsWithComment.push({
+        type: "FunctionDeclarationWithComment",
+        id: {
+          type: "Identifier",
+          name: path.parent.id.name,
+        },
+        leadingComment,
+        nodePath: path,
+        filePath: filename,
+        functionDeclaration: {
+          id: {
+            type: "Identifier",
+            name: path.parent.id.name,
+          },
+          body: arrowFunction.body,
+          params: arrowFunction.params,
+        },
+      });
     },
     FunctionDeclaration(path: NodePath<FunctionDeclaration>) {
       const id = path.node.id;
