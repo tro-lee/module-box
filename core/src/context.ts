@@ -4,20 +4,20 @@ import {
   FileContext,
   FunctionDeclarationWithComment,
   InterfaceDeclarationWithComment,
-  NodeModuleImportDeclarationItem,
+  NodeModuleImportDeclaration,
 } from "./types";
 import { scanAstByFile } from "./ast";
 
 type Declaration =
   | InterfaceDeclarationWithComment
   | FunctionDeclarationWithComment
-  | NodeModuleImportDeclarationItem;
+  | NodeModuleImportDeclaration;
 
 async function getDeclarationInContextHelper(
   itemName: string,
   currentContext: FileContext,
   declarationType: "interface" | "function",
-): Promise<Declaration | undefined> {
+): Promise<Declaration> {
   // 从当前文件的声明中查找目标声明
   const declarations = declarationType === "interface"
     ? currentContext.interfacesWithComment
@@ -38,13 +38,17 @@ async function getDeclarationInContextHelper(
         specifier.local.name === itemName)
     )
   );
-  if (!targetImportDeclaration) return undefined;
+  if (!targetImportDeclaration) {
+    throw new Error(
+      `[${currentContext.path}] 未找到目标声明 ${itemName}`,
+    );
+  }
 
   // 若查到为外部引用
   // TODO 暂时判定开头带@ 为全部索引
   if (targetImportDeclaration.source.value.startsWith("@")) {
     return {
-      type: "NodeModuleImportDeclarationItem",
+      type: "NodeModuleImportDeclaration",
       id: {
         type: "Identifier",
         name: itemName,
@@ -86,11 +90,20 @@ async function getDeclarationInContextHelper(
         continue;
       }
 
-      targetContext = await scanAstByFile(
-        _absoluteTargetImportPath,
+      try {
+        targetContext = await scanAstByFile(
+          _absoluteTargetImportPath,
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if (!targetContext) {
+      throw new Error(
+        `[${currentContext.path}] 未找到目标声明 ${itemName}`,
       );
     }
-    if (!targetContext) return undefined;
 
     return await getDeclarationInContextHelper(
       itemName,
@@ -98,30 +111,40 @@ async function getDeclarationInContextHelper(
       declarationType,
     );
   }
+
+  throw new Error(
+    `[${currentContext.path}] 未找到目标声明 ${itemName}`,
+  );
 }
 
 export async function getInterfaceDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
 ): Promise<
-  Declaration | undefined
+  InterfaceDeclarationWithComment | NodeModuleImportDeclaration
 > {
   const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
     "interface",
   );
-  return result as Declaration | undefined;
+  return result as
+    | InterfaceDeclarationWithComment
+    | NodeModuleImportDeclaration;
 }
 
 export async function getFunctionDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
-): Promise<Declaration | undefined> {
+): Promise<
+  FunctionDeclarationWithComment | NodeModuleImportDeclaration
+> {
   const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
     "function",
   );
-  return result as Declaration | undefined;
+  return result as
+    | FunctionDeclarationWithComment
+    | NodeModuleImportDeclaration;
 }

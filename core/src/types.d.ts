@@ -8,37 +8,9 @@ import {
   TSTypeElement,
 } from "@babel/types";
 
-interface WithBaseInfo<T> {
-  id: Identifier;
-  nodePath: NodePath<T>;
-  filePath: string;
-  leadingComment?: Comment;
-  context: FileContext;
-}
-
-type FunctionDeclarationWithComment =
-  & WithBaseInfo<FunctionDeclaration>
-  & {
-    type: "FunctionDeclarationWithComment";
-    functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
-      id: Identifier;
-    };
-  };
-
-type InterfaceDeclarationWithComment =
-  & WithBaseInfo<TSInterfaceDeclaration>
-  & {
-    type: "InterfaceDeclarationWithComment";
-    tsTypeElements: TSTypeElement[];
-    extendsExpression: TSExpressionWithTypeArguments[];
-    interfaceDeclaration: TSInterfaceDeclaration;
-  };
-
-type NodeModuleImportDeclarationItem =
-  & WithBaseInfo<ImportDeclaration>
-  & {
-    type: "NodeModuleImportDeclarationItem";
-  };
+// ============================================
+// 基础类型
+// ============================================
 
 type FileContext = {
   path: string;
@@ -47,14 +19,76 @@ type FileContext = {
   importDeclarations: ImportDeclaration[];
 };
 
-type ModuleComponent = {
-  componentName: string;
-  componentDescription: string;
-  componentJSXElements: JSXElement[];
-  componentParams: Param[];
+// ============================================
+// 声明语句相关
+// ============================================
+
+interface WithBaseInfo<T> {
+  id: Identifier;
+  nodePath: NodePath<T>;
+  filePath: string;
+  leadingComment?: Comment;
+  context: FileContext;
+}
+
+type FunctionDeclarationWithComment = WithBaseInfo<FunctionDeclaration> & {
+  type: "FunctionDeclarationWithComment";
+  functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
+    id: Identifier;
+  };
+};
+
+type InterfaceDeclarationWithComment = WithBaseInfo<TSInterfaceDeclaration> & {
+  type: "InterfaceDeclarationWithComment";
+  tsTypeElements: TSTypeElement[];
+  extendsExpression: TSExpressionWithTypeArguments[];
+  interfaceDeclaration: TSInterfaceDeclaration;
+};
+
+type NodeModuleImportDeclaration = WithBaseInfo<ImportDeclaration> & {
+  type: "NodeModuleImportDeclaration";
 };
 
 // ============================================
+// 模块组件相关
+// ============================================
+
+type WithModuleComponentBaseInfo<T> = {
+  type: T;
+  componentName: string;
+};
+
+type LocalModuleComponent =
+  & WithModuleComponentBaseInfo<"LocalModuleComponent">
+  & {
+    componentDescription: string;
+    componentJSXElements: ComponentJSXElement[];
+    componentParams: Param[];
+  };
+
+type NodeModuleComponent =
+  & WithModuleComponentBaseInfo<"NodeModuleComponent">
+  & {
+    packageName: string;
+  };
+
+type ModuleComponent = LocalModuleComponent | NodeModuleComponent;
+
+type ComponentJSXElement = {
+  type: "ComponentJSXElement";
+  componentName: string;
+  componentParams: any[];
+  importPath: string;
+  moduleComponent: ModuleComponent;
+  functionDeclaration:
+    | FunctionDeclarationWithComment
+    | NodeModuleImportDeclaration;
+};
+
+// ============================================
+// 类型注解
+// ============================================
+
 interface Prop {
   propKey: string;
   propType?: CustomTypeAnnotation;
@@ -63,12 +97,16 @@ interface Prop {
 type BaseTypeAnnotation<T extends string> = {
   type: T;
 };
+
+// Node模块类型
 type NodeModuleImportTypeAnnotation =
   & BaseTypeAnnotation<"NodeModuleImportTypeAnnotation">
   & {
     typeName: string;
     importPath: string;
   };
+
+// 接口类型
 type InterfaceTypeAnnotation = BaseTypeAnnotation<"InterfaceTypeAnnotation"> & {
   filePath: string;
   interfaceName: string;
@@ -76,15 +114,21 @@ type InterfaceTypeAnnotation = BaseTypeAnnotation<"InterfaceTypeAnnotation"> & {
   interfaceProps: Prop[];
   interfaceExtends: CustomTypeAnnotation[];
 };
+
+// 复杂类型
 type ObjectTypeAnnotation = BaseTypeAnnotation<"ObjectTypeAnnotation"> & {
   props: Prop[];
 };
+
 type UnionTypeAnnotation = BaseTypeAnnotation<"UnionTypeAnnotation"> & {
   members: CustomTypeAnnotation[];
 };
+
 type ArrayTypeAnnotation = BaseTypeAnnotation<"ArrayTypeAnnotation"> & {
   elementType: CustomTypeAnnotation;
 };
+
+// 基础类型
 type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
 type StringKeywordTypeAnnotation = BaseTypeAnnotation<
   "StringKeywordTypeAnnotation"
@@ -97,7 +141,8 @@ type BooleanKeywordTypeAnnotation = BaseTypeAnnotation<
 >;
 type AnyTypeAnnotation = BaseTypeAnnotation<"AnyTypeAnnotation">;
 type UndefinedTypeAnnotation = BaseTypeAnnotation<"UndefinedTypeAnnotation">;
-type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
+
+// 特殊类型
 type TodoTypeAnnotation = BaseTypeAnnotation<"TodoTypeAnnotation"> & {
   typeAnnotation: any;
 };
@@ -119,6 +164,9 @@ type CustomTypeAnnotation =
   | undefined;
 
 // ============================================
+// 杂用
+// ============================================
+
 type Variable = {
   name: string;
   source: Source;

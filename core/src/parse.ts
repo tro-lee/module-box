@@ -3,6 +3,7 @@ import type {
   Expression,
   JSXElement,
   JSXEmptyExpression,
+  JSXFragment,
   Noop,
   TSTypeAnnotation,
   TypeAnnotation,
@@ -10,6 +11,7 @@ import type {
 } from "@babel/types";
 import { parse as parseComment } from "comment-parser";
 import {
+  ComponentJSXElement,
   CustomTypeAnnotation,
   FileContext,
   InterfaceTypeAnnotation,
@@ -41,10 +43,9 @@ export async function parseTypeAnnotation(
         typeName.name,
         context,
       );
-      if (!declaration) return;
 
       // 若来自nodeModule模块
-      if (declaration.type === "NodeModuleImportDeclarationItem") {
+      if (declaration.type === "NodeModuleImportDeclaration") {
         return {
           type: "NodeModuleImportTypeAnnotation",
           typeName: typeName.name,
@@ -318,65 +319,54 @@ async function parseExpression(
 // 解析JSX元素
 // 只解析组件函数
 export async function parseJSXElement(
-  jsxElement: JSXElement,
+  jsxElement: JSXElement | JSXFragment,
   currentContext: FileContext,
-) {
-  let jsxElements: any[] = [];
+): Promise<Omit<ComponentJSXElement, "moduleComponent">[]> {
+  let jsxElements: Omit<ComponentJSXElement, "moduleComponent">[] = [];
 
-  // 解析当前jsxElement
-  if (jsxElement.openingElement.name.type === "JSXIdentifier") {
-    // 获取函数声明
-    const functionDeclaration = await getFunctionDeclarationInContext(
-      jsxElement.openingElement.name.name,
-      currentContext,
-    );
-    if (!functionDeclaration) return [];
+  if (jsxElement.type === "JSXFragment") {
+    // fragment不需要额外处理
+  } else if (jsxElement.type === "JSXElement") {
+    // 解析当前jsxElement
+    if (jsxElement.openingElement.name.type === "JSXIdentifier") {
+      // 获取函数声明
+      const functionDeclaration = await getFunctionDeclarationInContext(
+        jsxElement.openingElement.name.name,
+        currentContext,
+      );
 
-    // 解析属性
-    const elementAttributes = await Promise.all(
-      jsxElement.openingElement.attributes.map(
-        async (attr) => {
-          if (
-            attr.type === "JSXAttribute" &&
-            attr.value &&
-            attr.value.type === "JSXExpressionContainer"
-          ) {
-            return {
-              name: attr.name.name,
-              value: await parseExpression(
-                attr.value.expression,
-                currentContext,
-              ),
-            };
-          }
-        },
-      ),
-    );
+      // 解析属性
+      const elementAttributes = await Promise.all(
+        jsxElement.openingElement.attributes.map(
+          async (attr) => {
+            if (
+              attr.type === "JSXAttribute" &&
+              attr.value &&
+              attr.value.type === "JSXExpressionContainer"
+            ) {
+              return {
+                name: attr.name.name,
+                value: await parseExpression(
+                  attr.value.expression,
+                  currentContext,
+                ),
+              };
+            }
+          },
+        ),
+      );
 
-    if (
-      functionDeclaration.type === "NodeModuleImportDeclarationItem"
-    ) {
       jsxElements.push(
         {
-          type: "ComponentElement",
+          type: "ComponentJSXElement",
           componentName: functionDeclaration.id.name,
           componentParams: elementAttributes,
           importPath: functionDeclaration.filePath,
           functionDeclaration,
         },
       );
-    } else if (
-      functionDeclaration.type === "FunctionDeclarationWithComment"
-    ) {
-      jsxElements.push(
-        {
-          type: "ComponentElement",
-          componentName: functionDeclaration.id.name,
-          componentParams: elementAttributes,
-          importPath: functionDeclaration.filePath,
-          functionDeclaration,
-        },
-      );
+    } else {
+      throw new Error("JSXElement name is not a Identifier");
     }
   }
 

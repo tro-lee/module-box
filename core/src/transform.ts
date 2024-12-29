@@ -1,31 +1,41 @@
 import { parse as parseComment } from "comment-parser";
 import {
+  ComponentJSXElement,
   FileContext,
   FunctionDeclarationWithComment,
   ModuleComponent,
+  NodeModuleImportDeclaration,
 } from "./types";
 import { parseJSXElement, parseTypeAnnotation } from "./parse";
-import { JSXElement } from "@babel/types";
 
-export async function transformFunctionToModuleComponentByFunctionDeclaration(
-  functionWithComment: FunctionDeclarationWithComment,
-  context: FileContext,
-) {
-  const { functionDeclaration, leadingComment } = functionWithComment;
+export async function transformFunctionToModuleComponentByDeclaration(
+  functionWithComment:
+    | FunctionDeclarationWithComment
+    | NodeModuleImportDeclaration,
+): Promise<ModuleComponent | undefined> {
+  if (functionWithComment.type === "NodeModuleImportDeclaration") {
+    return {
+      type: "NodeModuleComponent",
+      componentName: functionWithComment.id.name,
+      packageName: functionWithComment.filePath,
+    };
+  }
+
+  const { functionDeclaration, leadingComment, context } = functionWithComment;
 
   // 判断是否是jsx组件
-  const isJsxComponent = functionDeclaration.body.type === "BlockStatement" &&
-    functionDeclaration.body.body.some((statement) =>
-      statement.type === "ReturnStatement" &&
-      statement.argument?.type === "JSXElement"
-    );
+  const isJsxComponent = isJSXFunctionComponent(functionWithComment);
   if (!isJsxComponent) {
+    console.error(
+      `[${context.path} ${functionDeclaration.id.name}] 不是jsx组件`,
+    );
     return;
   }
 
+  // ============================
   // 拼出模块组件
-  // 获取组件名称 和 组件描述
-  // 获取组件的参数 和 组件的接口
+  // ============================
+
   const functionName = functionDeclaration.id.name;
   const comment = parseComment("/*" + leadingComment?.value + "*/");
 
@@ -50,7 +60,7 @@ export async function transformFunctionToModuleComponentByFunctionDeclaration(
     }),
   );
 
-  let componentJSXElements: JSXElement[] = [];
+  let componentJSXElements: ComponentJSXElement[] = [];
   for (const statement of functionDeclaration.body.body) {
     if (
       statement.type === "ReturnStatement" &&
@@ -60,18 +70,43 @@ export async function transformFunctionToModuleComponentByFunctionDeclaration(
         statement.argument,
         context,
       );
-      componentJSXElements.push(...result);
+
+      for (const item of result) {
+        const _item = item as ComponentJSXElement;
+        _item.moduleComponent =
+          await transformFunctionToModuleComponentByDeclaration(
+            _item.functionDeclaration,
+          ) as ModuleComponent;
+        if (!_item.moduleComponent) {
+          console.error(
+            `[${context.path} ${functionDeclaration.id.name}] 无法解析子组件: ${_item.functionDeclaration.id.name}`,
+          );
+          continue;
+        }
+        componentJSXElements.push(_item);
+      }
     }
   }
 
-  const component: ModuleComponent = {
+  return {
+    type: "LocalModuleComponent",
     componentName: functionName,
     componentDescription,
     componentJSXElements,
     componentParams,
   };
+}
 
-  return component;
+function isJSXFunctionComponent(
+  functionDeclaration: FunctionDeclarationWithComment,
+) {
+  return functionDeclaration.functionDeclaration.body.type ===
+      "BlockStatement" &&
+    functionDeclaration.functionDeclaration.body.body.some((statement) =>
+      statement.type === "ReturnStatement" &&
+      (statement.argument?.type === "JSXElement" ||
+        statement.argument?.type === "JSXFragment")
+    );
 }
 
 export async function transformFunctionToModuleComponent(
@@ -81,15 +116,18 @@ export async function transformFunctionToModuleComponent(
   const moduleComponents: ModuleComponent[] = [];
 
   for (const functionWithComment of functionsWithComment) {
-    const component =
-      await transformFunctionToModuleComponentByFunctionDeclaration(
-        functionWithComment,
-        context,
-      );
-    if (component) {
-      moduleComponents.push(component);
+    try {
+      if (isJSXFunctionComponent(functionWithComment)) {
+        const component = await transformFunctionToModuleComponentByDeclaration(
+          functionWithComment,
+        );
+        moduleComponents.push(component);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
+  console.log(moduleComponents);
   return moduleComponents;
 }
