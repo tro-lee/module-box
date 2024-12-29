@@ -318,6 +318,7 @@ async function parseExpression(
 }
 
 // 解析JSX元素
+// 只解析组件函数
 export async function parseJSXElement(
   jsxElement: JSXElement,
   currentContext: FileContext,
@@ -360,6 +361,7 @@ export async function parseJSXElement(
         componentName: functionDeclaration.declaration.id.name,
         componentParams: elementAttributes,
         importPath: functionDeclaration.context.path,
+        functionDeclaration,
       },
     );
   }

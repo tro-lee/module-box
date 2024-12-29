@@ -8,8 +8,8 @@
       "type": "bun",
       "internalConsoleOptions": "neverOpen",
       "request": "launch",
-      "name": "Debug File: other.test.ts",
-      "program": "${workspaceFolder}/test/other.test.ts",
+      "name": "Debug File: core.test.ts",
+      "program": "${workspaceFolder}/test/core.test.ts",
       "cwd": "${workspaceFolder}",
       "stopOnEntry": false,
       "watchMode": false
