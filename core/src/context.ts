@@ -12,22 +12,18 @@ type Declaration =
   | InterfaceDeclarationWithComment
   | FunctionDeclarationWithComment
   | NodeModuleImportDeclarationItem;
-type DeclarationContext<T extends Declaration> = {
-  declaration: T;
-  context: FileContext;
-};
 
 async function getDeclarationInContextHelper(
   itemName: string,
   currentContext: FileContext,
   declarationType: "interface" | "function",
-): Promise<DeclarationContext<Declaration> | undefined> {
+): Promise<Declaration | undefined> {
   // 从当前文件的声明中查找目标声明
   const declarations = declarationType === "interface"
     ? currentContext.interfacesWithComment
     : currentContext.functionsWithComment;
   const item = declarations.find((item) => item.id.name === itemName);
-  if (item) return { declaration: item, context: currentContext };
+  if (item) return item;
 
   // 从当前文件的导入声明中查找目标声明
   const { importDeclarations } = currentContext;
@@ -48,14 +44,13 @@ async function getDeclarationInContextHelper(
   // TODO 暂时判定开头带@ 为全部索引
   if (targetImportDeclaration.source.value.startsWith("@")) {
     return {
-      declaration: {
-        type: "NodeModuleImportDeclarationItem",
-        id: {
-          type: "Identifier",
-          name: itemName,
-        },
-        path: targetImportDeclaration.source.value,
+      type: "NodeModuleImportDeclarationItem",
+      id: {
+        type: "Identifier",
+        name: itemName,
       },
+      filePath: targetImportDeclaration.source.value,
+      nodePath: targetImportDeclaration,
       context: currentContext,
     };
   }
@@ -109,38 +104,24 @@ export async function getInterfaceDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
 ): Promise<
-  DeclarationContext<
-    InterfaceDeclarationWithComment | NodeModuleImportDeclarationItem
-  > | undefined
+  Declaration | undefined
 > {
   const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
     "interface",
   );
-  return result as
-    | DeclarationContext<
-      InterfaceDeclarationWithComment | NodeModuleImportDeclarationItem
-    >
-    | undefined;
+  return result as Declaration | undefined;
 }
 
 export async function getFunctionDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
-): Promise<
-  DeclarationContext<
-    FunctionDeclarationWithComment | NodeModuleImportDeclarationItem
-  > | undefined
-> {
+): Promise<Declaration | undefined> {
   const result = await getDeclarationInContextHelper(
     itemName,
     currentContext,
     "function",
   );
-  return result as
-    | DeclarationContext<
-      FunctionDeclarationWithComment | NodeModuleImportDeclarationItem
-    >
-    | undefined;
+  return result as Declaration | undefined;
 }

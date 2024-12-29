@@ -13,6 +13,7 @@ interface WithBaseInfo<T> {
   nodePath: NodePath<T>;
   filePath: string;
   leadingComment?: Comment;
+  context: FileContext;
 }
 
 type FunctionDeclarationWithComment =
@@ -33,11 +34,11 @@ type InterfaceDeclarationWithComment =
     interfaceDeclaration: TSInterfaceDeclaration;
   };
 
-type NodeModuleImportDeclarationItem = {
-  type: "NodeModuleImportDeclarationItem";
-  id: Identifier;
-  path: string;
-};
+type NodeModuleImportDeclarationItem =
+  & WithBaseInfo<ImportDeclaration>
+  & {
+    type: "NodeModuleImportDeclarationItem";
+  };
 
 type FileContext = {
   path: string;
@@ -49,6 +50,8 @@ type FileContext = {
 type ModuleComponent = {
   componentName: string;
   componentDescription: string;
+  componentJSXElements: JSXElement[];
+  componentParams: Param[];
 };
 
 // ============================================

@@ -37,20 +37,18 @@ export async function parseTypeAnnotation(
       const typeName = _typeAnnotation.typeName;
       if (typeName.type !== "Identifier") return;
 
-      const item = await getInterfaceDeclarationInContext(
+      const declaration = await getInterfaceDeclarationInContext(
         typeName.name,
         context,
       );
-      if (!item) return;
-
-      const { declaration, context: declarationInContext } = item;
+      if (!declaration) return;
 
       // 若来自nodeModule模块
       if (declaration.type === "NodeModuleImportDeclarationItem") {
         return {
           type: "NodeModuleImportTypeAnnotation",
           typeName: typeName.name,
-          importPath: declaration.path,
+          importPath: declaration.filePath,
         };
       }
 
@@ -79,7 +77,7 @@ export async function parseTypeAnnotation(
             const propKey = prop.key.name;
             const propType = await parseTypeAnnotation(
               prop.typeAnnotation,
-              declarationInContext,
+              declaration.context,
             );
 
             interfaceProps.push({
@@ -101,7 +99,7 @@ export async function parseTypeAnnotation(
                   typeName: extendsItem.expression,
                 },
               },
-              declarationInContext,
+              declaration.context,
             ) as InterfaceTypeAnnotation | undefined;
 
             if (extendsInterfaceItem) {
@@ -355,15 +353,31 @@ export async function parseJSXElement(
       ),
     );
 
-    jsxElements.push(
-      {
-        type: "ComponentElement",
-        componentName: functionDeclaration.declaration.id.name,
-        componentParams: elementAttributes,
-        importPath: functionDeclaration.context.path,
-        functionDeclaration,
-      },
-    );
+    if (
+      functionDeclaration.type === "NodeModuleImportDeclarationItem"
+    ) {
+      jsxElements.push(
+        {
+          type: "ComponentElement",
+          componentName: functionDeclaration.id.name,
+          componentParams: elementAttributes,
+          importPath: functionDeclaration.filePath,
+          functionDeclaration,
+        },
+      );
+    } else if (
+      functionDeclaration.type === "FunctionDeclarationWithComment"
+    ) {
+      jsxElements.push(
+        {
+          type: "ComponentElement",
+          componentName: functionDeclaration.id.name,
+          componentParams: elementAttributes,
+          importPath: functionDeclaration.filePath,
+          functionDeclaration,
+        },
+      );
+    }
   }
 
   // 解析子代

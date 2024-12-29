@@ -17,7 +17,9 @@ import {
 
 const astContextCache: Record<string, FileContext> = {};
 
-export async function scanAstByFile(filePath: string) {
+export async function scanAstByFile(
+  filePath: string,
+): Promise<FileContext | undefined> {
   const filename = path.resolve(__dirname, filePath);
   if (!fs.existsSync(filename)) {
     throw new Error("file not found: " + filename);
@@ -53,6 +55,13 @@ export async function scanAstByFile(filePath: string) {
   const imports: ImportDeclaration[] = [];
   const functionsWithComment: FunctionDeclarationWithComment[] = [];
   const interfacesWithComment: InterfaceDeclarationWithComment[] = [];
+
+  const context: FileContext = {
+    path: filename,
+    interfacesWithComment,
+    functionsWithComment,
+    importDeclarations: imports,
+  };
 
   traverse(ast, {
     ImportDeclaration(path: NodePath<ImportDeclaration>) {
@@ -95,6 +104,7 @@ export async function scanAstByFile(filePath: string) {
         leadingComment,
         nodePath: path,
         filePath: filename,
+        context,
         functionDeclaration: {
           id: {
             type: "Identifier",
@@ -125,6 +135,7 @@ export async function scanAstByFile(filePath: string) {
         leadingComment,
         nodePath: path,
         filePath: filename,
+        context,
         functionDeclaration,
       });
     },
@@ -145,6 +156,7 @@ export async function scanAstByFile(filePath: string) {
         leadingComment,
         nodePath: path,
         filePath: filename,
+        context,
         tsTypeElements: path.node.body.body,
         extendsExpression: path.node.extends ?? [],
         interfaceDeclaration: path.node,
@@ -152,12 +164,7 @@ export async function scanAstByFile(filePath: string) {
     },
   });
 
-  astContextCache[filename] = {
-    path: filename,
-    interfacesWithComment,
-    functionsWithComment,
-    importDeclarations: imports,
-  };
+  astContextCache[filename] = context;
 
   return astContextCache[filename];
 }
