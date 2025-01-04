@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { getEntryFilePathsByDir } from "../core/src/entry";
-import { scanAstByFile } from "../core/src/ast";
+import { scanAstByFileWithAutoExtension } from "../core/src/ast";
 import { transformFunctionToModuleComponent } from "../core/src/transform";
 import type { FileContext } from "../core/src/types";
 
@@ -27,7 +27,7 @@ test("ast Test", async () => {
 
   const globalContext: Map<string, FileContext> = new Map();
   for (const file of entryFiles) {
-    const ast = await scanAstByFile(file);
+    const ast = await scanAstByFileWithAutoExtension(file);
     if (!ast) continue;
     globalContext.set(file, ast);
   }

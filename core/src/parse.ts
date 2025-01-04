@@ -1,14 +1,15 @@
 import type {
   BlockStatement,
   Expression,
+  Identifier,
   JSXElement,
-  JSXEmptyExpression,
   JSXFragment,
   Noop,
+  ObjectProperty,
   TSTypeAnnotation,
   TypeAnnotation,
-  VariableDeclarator,
 } from "@babel/types";
+import generate from "@babel/generator";
 import { parse as parseComment } from "comment-parser";
 import {
   ComponentJSXElement,
@@ -16,8 +17,6 @@ import {
   FileContext,
   InterfaceTypeAnnotation,
   Prop,
-  Source,
-  Variable,
 } from "./types";
 import {
   getFunctionDeclarationInContext,
@@ -235,85 +234,89 @@ export async function parseTypeAnnotation(
   }
 }
 
-// 辅助函数 用于解析函数体
-function parseVariableDeclaratorInit(
-  init: VariableDeclarator["init"],
-): Source | undefined {
-  // 赋值给标识符
-  if (
-    init?.type === "CallExpression"
-  ) {
-    if (init.callee.type === "Identifier") {
-      return {
-        type: "CallExpression",
-        calleeName: init.callee.name,
-        arguments: init.arguments.map((arg) =>
-          arg.type === "Identifier" ? arg.name : ""
-        ).filter(Boolean),
-      };
-    } else if (init.callee.type === "ArrowFunctionExpression") {
-    }
-  } else if (init?.type === "Identifier") {
-    return {
-      type: "Identifier",
-      name: init.name,
-    };
+// 辅助函数 解析表达式
+// 用于获取表达式中的标识符
+function findIdentifiersInExpression(
+  expression: Expression | null | undefined,
+): string[] {
+  if (!expression) return [];
+
+  switch (expression.type) {
+    case "CallExpression":
+      if (expression.callee.type === "Identifier") {
+        return [
+          expression.callee.name,
+          ...expression.arguments.map((arg) =>
+            arg.type === "Identifier" ? arg.name : ""
+          ).filter(Boolean),
+        ];
+      }
+      break;
+    case "Identifier":
+      return [expression.name];
+    case "LogicalExpression":
+      return [
+        ...findIdentifiersInExpression(expression.left),
+        ...findIdentifiersInExpression(expression.right),
+      ];
+    case "ObjectExpression":
+      return expression.properties.map((prop) => {
+        if (prop.type === "ObjectProperty" && prop.key.type === "Identifier") {
+          return prop.key.name;
+        }
+      }).filter((v) => v !== undefined) || [];
   }
+
+  return [];
 }
 
 // 解析函数体
 // 用于获取变量关系
 export async function parseFunctionBody(functionBody: BlockStatement) {
-  const variables: Variable[] = [];
+  const statementMapWithIdentifiers: Map<string, {
+    leftIdentifiers: string[];
+    rightIdentifiers: string[];
+  }> = new Map();
 
-  functionBody.body.forEach((statement) => {
-    if (statement.type !== "VariableDeclaration") return;
+  for (const statement of functionBody.body) {
+    const sourceCode = generate(statement).code;
 
-    statement.declarations.forEach((variableDeclaration) => {
-      if (variableDeclaration.id.type === "Identifier") {
-        // 赋值给标识符
-        const result = parseVariableDeclaratorInit(variableDeclaration.init);
-        if (result) {
-          variables.push({
-            name: variableDeclaration.id.name,
-            source: result,
-          });
-        }
-      } else if (variableDeclaration.id.type === "ObjectPattern") {
-        // 解构赋值
-        variableDeclaration.id.properties.forEach((prop) => {
-          if (
-            prop.type === "ObjectProperty" && prop.key.type === "Identifier"
-          ) {
-            const result = parseVariableDeclaratorInit(
-              variableDeclaration.init,
-            );
-            if (result) {
-              variables.push({
-                name: prop.key.name,
-                source: result,
-              });
-            }
+    if (statement.type === "VariableDeclaration") {
+      const leftIdentifiers = statement.declarations.map(
+        (variableDeclaration) => {
+          if (variableDeclaration.id.type === "Identifier") {
+            return [variableDeclaration.id.name];
+          } else if (variableDeclaration.id.type === "ObjectPattern") {
+            return variableDeclaration.id.properties
+              .filter((prop) =>
+                prop.type === "ObjectProperty" && prop.key.type === "Identifier"
+              )
+              .map((prop) => ((prop as ObjectProperty).key as Identifier).name);
           }
-        });
-      }
-    });
-  });
+          return [];
+        },
+      ).filter((v) => v !== undefined);
 
-  return variables;
-}
+      const rightIdentifiers = statement.declarations.map(
+        (variableDeclaration) =>
+          findIdentifiersInExpression(variableDeclaration.init),
+      ).filter((v) => v !== undefined);
 
-type TopicObject = {
-  type: "TopicObject";
-  objectName: string;
-  sourceCode: string;
-};
+      statementMapWithIdentifiers.set(sourceCode, {
+        leftIdentifiers: leftIdentifiers.flat(),
+        rightIdentifiers: rightIdentifiers.flat(),
+      });
+    } else if (statement.type === "ExpressionStatement") {
+      const identifiers = findIdentifiersInExpression(statement.expression);
 
-async function parseExpression(
-  expression: Expression | JSXEmptyExpression,
-  currentContext: FileContext,
-) {
-  return {};
+      statementMapWithIdentifiers.set(sourceCode, {
+        leftIdentifiers: identifiers,
+        rightIdentifiers: [],
+      });
+    }
+  }
+
+  return statementMapWithIdentifiers;
 }
 
 // 解析JSX元素
@@ -324,18 +327,17 @@ export async function parseJSXElement(
 ): Promise<Omit<ComponentJSXElement, "moduleComponent">[]> {
   let jsxElements: Omit<ComponentJSXElement, "moduleComponent">[] = [];
 
+  // 解析当前标签
   if (jsxElement.type === "JSXFragment") {
     // fragment不需要额外处理
   } else if (jsxElement.type === "JSXElement") {
     // 解析当前jsxElement
     if (jsxElement.openingElement.name.type === "JSXIdentifier") {
-      // 获取函数声明
       const functionDeclaration = await getFunctionDeclarationInContext(
         jsxElement.openingElement.name.name,
         currentContext,
       );
 
-      // 解析属性
       const elementAttributes = await Promise.all(
         jsxElement.openingElement.attributes.map(
           async (attr) => {
@@ -346,10 +348,11 @@ export async function parseJSXElement(
             ) {
               return {
                 name: attr.name.name,
-                value: await parseExpression(
-                  attr.value.expression,
-                  currentContext,
-                ),
+                value: attr.value.expression.type !== "JSXEmptyExpression"
+                  ? findIdentifiersInExpression(
+                    attr.value.expression,
+                  )
+                  : [],
               };
             }
           },
@@ -370,7 +373,7 @@ export async function parseJSXElement(
     }
   }
 
-  // 解析子代
+  // 解析子代标签
   if (jsxElement.children) {
     for (const child of jsxElement.children) {
       if (child.type === "JSXElement") {

@@ -1,25 +1,23 @@
 import {
   ArrowFunctionExpression,
+  ExportAllDeclaration,
   Expression,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
   TSInterfaceDeclaration,
 } from "@babel/types";
-import { NodePath, parse, traverse } from "@babel/core";
+import { NodePath, parse, ParseResult, traverse } from "@babel/core";
 import path from "path";
 import fs from "fs";
-import {
-  FileContext,
-  FunctionDeclarationWithComment,
-  InterfaceDeclarationWithComment,
-} from "./types";
+import { FileContext } from "./types";
 
 const astContextCache: Record<string, FileContext> = {};
 
-export async function scanAstByFile(
+// 返回文件的上下文
+async function scanAstByFile(
   filePath: string,
-): Promise<FileContext | undefined> {
+): Promise<FileContext> {
   const filename = path.resolve(__dirname, filePath);
   if (!fs.existsSync(filename)) {
     throw new Error("file not found: " + filename);
@@ -30,42 +28,46 @@ export async function scanAstByFile(
     return astContextCache[filename];
   }
 
+  // ==============================
   // 从文件中解析出 所要的语法树
-  // importDeclaration, functionDeclaration, interfaceDeclaration
+  // ==============================
 
-  let sourceCode: string;
+  let ast: ParseResult | null = null;
   try {
-    sourceCode = await Bun.file(filename).text();
-  } catch (e) {
-    console.error("file not found: " + filename);
-    return;
-  }
+    const sourceCode = await Bun.file(filename).text();
 
-  const ast = parse(sourceCode, {
-    filename,
-    sourceType: "module",
-    plugins: ["@babel/plugin-syntax-import-source"],
-    presets: ["@babel/preset-typescript", "@babel/preset-react"],
-  });
+    ast = parse(sourceCode, {
+      filename,
+      sourceType: "module",
+      plugins: ["@babel/plugin-syntax-import-source"],
+      presets: ["@babel/preset-typescript", "@babel/preset-react"],
+    });
+  } catch (e) {
+    throw new Error("file not found: " + filename);
+  }
 
   if (!ast) {
     throw new Error("AST parsing failed");
   }
 
-  const imports: ImportDeclaration[] = [];
-  const functionsWithComment: FunctionDeclarationWithComment[] = [];
-  const interfacesWithComment: InterfaceDeclarationWithComment[] = [];
+  // ==============================
+  // 根据语法术 填充上下文
+  // ==============================
 
   const context: FileContext = {
     path: filename,
-    interfacesWithComment,
-    functionsWithComment,
-    importDeclarations: imports,
+    interfacesWithComment: [],
+    functionsWithComment: [],
+    importDeclarations: [],
+    exportAllDeclarations: [],
   };
 
   traverse(ast, {
     ImportDeclaration(path: NodePath<ImportDeclaration>) {
-      imports.push(path.node);
+      context.importDeclarations.push(path.node);
+    },
+    ExportAllDeclaration(path: NodePath<ExportAllDeclaration>) {
+      context.exportAllDeclarations.push(path.node);
     },
     ArrowFunctionExpression(path: NodePath<ArrowFunctionExpression>) {
       // 保证解析是 解析的顶级域的初始化箭头函数
@@ -95,14 +97,13 @@ export async function scanAstByFile(
         };
       }
 
-      functionsWithComment.push({
+      context.functionsWithComment.push({
         type: "FunctionDeclarationWithComment",
         id: {
           type: "Identifier",
           name: path.parent.id.name,
         },
         leadingComment,
-        nodePath: path,
         filePath: filename,
         context,
         functionDeclaration: {
@@ -129,11 +130,10 @@ export async function scanAstByFile(
         path.node.leadingComments;
       const leadingComment = leadingComments?.at(-1);
 
-      functionsWithComment.push({
+      context.functionsWithComment.push({
         type: "FunctionDeclarationWithComment",
         id,
         leadingComment,
-        nodePath: path,
         filePath: filename,
         context,
         functionDeclaration,
@@ -150,11 +150,10 @@ export async function scanAstByFile(
         path.node.leadingComments;
       const leadingComment = leadingComments?.at(-1);
 
-      interfacesWithComment.push({
+      context.interfacesWithComment.push({
         type: "InterfaceDeclarationWithComment",
         id,
         leadingComment,
-        nodePath: path,
         filePath: filename,
         context,
         tsTypeElements: path.node.body.body,
@@ -167,4 +166,44 @@ export async function scanAstByFile(
   astContextCache[filename] = context;
 
   return astContextCache[filename];
+}
+
+// 扫描文件，返回文件的上下文
+// 自动处理文件的扩展名
+// 比如扫描 /XXX/X 视为 /XXX/X/index.ts
+// 比如扫描 /XXX/X/hi 视为 /XXX/X/hi.ts
+export async function scanAstByFileWithAutoExtension(
+  filePath: string,
+): Promise<FileContext | null> {
+  for (
+    const ext of [
+      "",
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      "/index.ts",
+      "/index.tsx",
+      "/index.js",
+      "/index.jsx",
+    ]
+  ) {
+    const _absoluteTargetImportPath = filePath + ext;
+    if (
+      !fs.existsSync(_absoluteTargetImportPath) ||
+      !fs.statSync(_absoluteTargetImportPath).isFile()
+    ) {
+      continue;
+    }
+
+    try {
+      return await scanAstByFile(
+        _absoluteTargetImportPath,
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  return null;
 }

@@ -1,5 +1,6 @@
 import {
   Comment,
+  ExportAllDeclaration,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
@@ -12,40 +13,44 @@ import {
 // 基础类型
 // ============================================
 
-type FileContext = {
+export type FileContext = {
   path: string;
   interfacesWithComment: InterfaceDeclarationWithComment[];
   functionsWithComment: FunctionDeclarationWithComment[];
   importDeclarations: ImportDeclaration[];
+  exportAllDeclarations: ExportAllDeclaration[];
 };
 
 // ============================================
 // 声明语句相关
 // ============================================
 
-interface WithBaseInfo<T> {
+export interface WithBaseInfo<T> {
   id: Identifier;
-  nodePath: NodePath<T>;
   filePath: string;
   leadingComment?: Comment;
   context: FileContext;
 }
 
-type FunctionDeclarationWithComment = WithBaseInfo<FunctionDeclaration> & {
-  type: "FunctionDeclarationWithComment";
-  functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
-    id: Identifier;
+export type FunctionDeclarationWithComment =
+  & WithBaseInfo<FunctionDeclaration>
+  & {
+    type: "FunctionDeclarationWithComment";
+    functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
+      id: Identifier;
+    };
   };
-};
 
-type InterfaceDeclarationWithComment = WithBaseInfo<TSInterfaceDeclaration> & {
-  type: "InterfaceDeclarationWithComment";
-  tsTypeElements: TSTypeElement[];
-  extendsExpression: TSExpressionWithTypeArguments[];
-  interfaceDeclaration: TSInterfaceDeclaration;
-};
+export type InterfaceDeclarationWithComment =
+  & WithBaseInfo<TSInterfaceDeclaration>
+  & {
+    type: "InterfaceDeclarationWithComment";
+    tsTypeElements: TSTypeElement[];
+    extendsExpression: TSExpressionWithTypeArguments[];
+    interfaceDeclaration: TSInterfaceDeclaration;
+  };
 
-type NodeModuleImportDeclaration = WithBaseInfo<ImportDeclaration> & {
+export type NodeModuleImportDeclaration = WithBaseInfo<ImportDeclaration> & {
   type: "NodeModuleImportDeclaration";
 };
 
@@ -53,28 +58,28 @@ type NodeModuleImportDeclaration = WithBaseInfo<ImportDeclaration> & {
 // 模块组件相关
 // ============================================
 
-type WithModuleComponentBaseInfo<T> = {
+export type WithModuleComponentBaseInfo<T> = {
   type: T;
   componentName: string;
 };
 
-type LocalModuleComponent =
+export type LocalModuleComponent =
   & WithModuleComponentBaseInfo<"LocalModuleComponent">
   & {
     componentDescription: string;
     componentJSXElements: ComponentJSXElement[];
-    componentParams: Param[];
+    componentParams: CustomTypeAnnotation[];
   };
 
-type NodeModuleComponent =
+export type NodeModuleComponent =
   & WithModuleComponentBaseInfo<"NodeModuleComponent">
   & {
     packageName: string;
   };
 
-type ModuleComponent = LocalModuleComponent | NodeModuleComponent;
+export type ModuleComponent = LocalModuleComponent | NodeModuleComponent;
 
-type ComponentJSXElement = {
+export type ComponentJSXElement = {
   type: "ComponentJSXElement";
   componentName: string;
   componentParams: any[];
@@ -89,17 +94,17 @@ type ComponentJSXElement = {
 // 类型注解
 // ============================================
 
-interface Prop {
+export interface Prop {
   propKey: string;
   propType?: CustomTypeAnnotation;
 }
 
-type BaseTypeAnnotation<T extends string> = {
+export type BaseTypeAnnotation<T extends string> = {
   type: T;
 };
 
 // Node模块类型
-type NodeModuleImportTypeAnnotation =
+export type NodeModuleImportTypeAnnotation =
   & BaseTypeAnnotation<"NodeModuleImportTypeAnnotation">
   & {
     typeName: string;
@@ -107,47 +112,53 @@ type NodeModuleImportTypeAnnotation =
   };
 
 // 接口类型
-type InterfaceTypeAnnotation = BaseTypeAnnotation<"InterfaceTypeAnnotation"> & {
-  filePath: string;
-  interfaceName: string;
-  interfaceDescription: string;
-  interfaceProps: Prop[];
-  interfaceExtends: CustomTypeAnnotation[];
-};
+export type InterfaceTypeAnnotation =
+  & BaseTypeAnnotation<"InterfaceTypeAnnotation">
+  & {
+    filePath: string;
+    interfaceName: string;
+    interfaceDescription: string;
+    interfaceProps: Prop[];
+    interfaceExtends: CustomTypeAnnotation[];
+  };
 
 // 复杂类型
-type ObjectTypeAnnotation = BaseTypeAnnotation<"ObjectTypeAnnotation"> & {
-  props: Prop[];
-};
+export type ObjectTypeAnnotation =
+  & BaseTypeAnnotation<"ObjectTypeAnnotation">
+  & {
+    props: Prop[];
+  };
 
-type UnionTypeAnnotation = BaseTypeAnnotation<"UnionTypeAnnotation"> & {
+export type UnionTypeAnnotation = BaseTypeAnnotation<"UnionTypeAnnotation"> & {
   members: CustomTypeAnnotation[];
 };
 
-type ArrayTypeAnnotation = BaseTypeAnnotation<"ArrayTypeAnnotation"> & {
+export type ArrayTypeAnnotation = BaseTypeAnnotation<"ArrayTypeAnnotation"> & {
   elementType: CustomTypeAnnotation;
 };
 
 // 基础类型
-type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
-type StringKeywordTypeAnnotation = BaseTypeAnnotation<
+export type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
+export type StringKeywordTypeAnnotation = BaseTypeAnnotation<
   "StringKeywordTypeAnnotation"
 >;
-type NumberKeywordTypeAnnotation = BaseTypeAnnotation<
+export type NumberKeywordTypeAnnotation = BaseTypeAnnotation<
   "NumberKeywordTypeAnnotation"
 >;
-type BooleanKeywordTypeAnnotation = BaseTypeAnnotation<
+export type BooleanKeywordTypeAnnotation = BaseTypeAnnotation<
   "BooleanKeywordTypeAnnotation"
 >;
-type AnyTypeAnnotation = BaseTypeAnnotation<"AnyTypeAnnotation">;
-type UndefinedTypeAnnotation = BaseTypeAnnotation<"UndefinedTypeAnnotation">;
+export type AnyTypeAnnotation = BaseTypeAnnotation<"AnyTypeAnnotation">;
+export type UndefinedTypeAnnotation = BaseTypeAnnotation<
+  "UndefinedTypeAnnotation"
+>;
 
 // 特殊类型
-type TodoTypeAnnotation = BaseTypeAnnotation<"TodoTypeAnnotation"> & {
+export type TodoTypeAnnotation = BaseTypeAnnotation<"TodoTypeAnnotation"> & {
   typeAnnotation: any;
 };
 
-type CustomTypeAnnotation =
+export type CustomTypeAnnotation =
   | NodeModuleImportTypeAnnotation
   | InterfaceTypeAnnotation
   | ObjectTypeAnnotation
@@ -167,20 +178,20 @@ type CustomTypeAnnotation =
 // 杂用
 // ============================================
 
-type Variable = {
+export type Variable = {
   name: string;
   source: Source;
 };
 
-type Source = CallExpressionSource | IdentifierSource;
+export type Source = CallExpressionSource | IdentifierSource;
 
-type CallExpressionSource = {
+export type CallExpressionSource = {
   type: "CallExpression";
   calleeName: string;
   arguments: string[];
 };
 
-type IdentifierSource = {
+export type IdentifierSource = {
   type: "Identifier";
   name: string;
 };

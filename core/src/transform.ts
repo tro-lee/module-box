@@ -6,7 +6,11 @@ import {
   ModuleComponent,
   NodeModuleImportDeclaration,
 } from "./types";
-import { parseJSXElement, parseTypeAnnotation } from "./parse";
+import {
+  parseFunctionBody,
+  parseJSXElement,
+  parseTypeAnnotation,
+} from "./parse";
 
 export async function transformFunctionToModuleComponentByDeclaration(
   functionWithComment:
@@ -60,6 +64,8 @@ export async function transformFunctionToModuleComponentByDeclaration(
     }),
   );
 
+  const functionBody = await parseFunctionBody(functionDeclaration.body);
+
   let componentJSXElements: ComponentJSXElement[] = [];
   for (const statement of functionDeclaration.body.body) {
     if (
@@ -71,6 +77,7 @@ export async function transformFunctionToModuleComponentByDeclaration(
         context,
       );
 
+      // 解析子组件
       for (const item of result) {
         const _item = item as ComponentJSXElement;
         _item.moduleComponent =
@@ -113,7 +120,7 @@ export async function transformFunctionToModuleComponent(
   context: FileContext,
 ) {
   const { functionsWithComment } = context;
-  const moduleComponents: ModuleComponent[] = [];
+  const moduleComponents: any[] = [];
 
   for (const functionWithComment of functionsWithComment) {
     try {

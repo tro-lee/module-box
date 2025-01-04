@@ -6,7 +6,7 @@
     "core"
   ],
   "scripts": {
-    "start": "bun run core/index.ts test/template/demo.tsx -- -debug"
+    "start": "bun test test/core.test.ts -- -debug"
   },
   "devDependencies": {
     "@types/bun": "latest"
