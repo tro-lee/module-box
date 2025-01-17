@@ -7,6 +7,7 @@ import {
   TSExpressionWithTypeArguments,
   TSInterfaceDeclaration,
   TSTypeElement,
+  VariableDeclarator,
 } from "@babel/types";
 
 // ============================================
@@ -17,15 +18,16 @@ export type FileContext = {
   path: string;
   interfacesWithComment: InterfaceDeclarationWithComment[];
   functionsWithComment: FunctionDeclarationWithComment[];
+  variablesWithComment: VariableDeclaratorWithComment[];
   importDeclarations: ImportDeclaration[];
   exportAllDeclarations: ExportAllDeclaration[];
 };
 
 // ============================================
-// 声明语句相关
+// 声明语句相关 上下文内容
 // ============================================
 
-export interface WithBaseInfo<T> {
+export interface WithBaseInfo {
   id: Identifier;
   filePath: string;
   leadingComment?: Comment;
@@ -33,7 +35,7 @@ export interface WithBaseInfo<T> {
 }
 
 export type FunctionDeclarationWithComment =
-  & WithBaseInfo<FunctionDeclaration>
+  & WithBaseInfo
   & {
     type: "FunctionDeclarationWithComment";
     functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
@@ -42,7 +44,7 @@ export type FunctionDeclarationWithComment =
   };
 
 export type InterfaceDeclarationWithComment =
-  & WithBaseInfo<TSInterfaceDeclaration>
+  & WithBaseInfo
   & {
     type: "InterfaceDeclarationWithComment";
     tsTypeElements: TSTypeElement[];
@@ -50,44 +52,59 @@ export type InterfaceDeclarationWithComment =
     interfaceDeclaration: TSInterfaceDeclaration;
   };
 
-export type NodeModuleImportDeclaration = WithBaseInfo<ImportDeclaration> & {
+export type VariableDeclaratorWithComment =
+  & WithBaseInfo
+  & {
+    type: "VariableDeclaratorWithComment";
+    variableDeclarator: VariableDeclarator;
+  };
+
+export type NodeModuleImportDeclaration = WithBaseInfo & {
   type: "NodeModuleImportDeclaration";
 };
 
-// ============================================
-// 模块组件相关
-// ============================================
+export type Declaration =
+  | InterfaceDeclarationWithComment
+  | FunctionDeclarationWithComment
+  | VariableDeclaratorWithComment
+  | NodeModuleImportDeclaration;
 
-export type WithModuleComponentBaseInfo<T> = {
-  type: T;
-  componentName: string;
-};
-
-export type LocalModuleComponent =
-  & WithModuleComponentBaseInfo<"LocalModuleComponent">
-  & {
+// ============================================
+// 模块组件相关 最终成果
+// ============================================
+export type ModuleComponent =
+  | ({
+    type: "LocalModuleComponent";
+    componentName: string;
     componentDescription: string;
     componentJSXElements: ComponentJSXElement[];
     componentParams: CustomTypeAnnotation[];
-  };
-
-export type NodeModuleComponent =
-  & WithModuleComponentBaseInfo<"NodeModuleComponent">
-  & {
-    packageName: string;
-  };
-
-export type ModuleComponent = LocalModuleComponent | NodeModuleComponent;
+  })
+  | (
+    {
+      type: "NodeModuleComponent";
+      componentName: string;
+      packageName: string;
+    }
+  )
+  | ({
+    type: "UnknownComponent";
+    componentName: string;
+    sourceCode: string;
+  });
 
 export type ComponentJSXElement = {
   type: "ComponentJSXElement";
-  componentName: string;
-  componentParams: any[];
+  elementName: string;
+  elementParams: any[];
   importPath: string;
-  moduleComponent: ModuleComponent;
-  functionDeclaration:
+  elementDeclaration:
     | FunctionDeclarationWithComment
-    | NodeModuleImportDeclaration;
+    | NodeModuleImportDeclaration
+    | VariableDeclaratorWithComment;
+
+  // 测试使用
+  moduleComponent: ModuleComponent;
 };
 
 // ============================================
@@ -155,7 +172,8 @@ export type UndefinedTypeAnnotation = BaseTypeAnnotation<
 
 // 特殊类型
 export type TodoTypeAnnotation = BaseTypeAnnotation<"TodoTypeAnnotation"> & {
-  typeAnnotation: any;
+  typeName: string;
+  data?: any;
 };
 
 export type CustomTypeAnnotation =
@@ -169,29 +187,5 @@ export type CustomTypeAnnotation =
   | NumberKeywordTypeAnnotation
   | BooleanKeywordTypeAnnotation
   | AnyTypeAnnotation
-  | TodoTypeAnnotation
   | UndefinedTypeAnnotation
-  | NullTypeAnnotation
-  | undefined;
-
-// ============================================
-// 杂用
-// ============================================
-
-export type Variable = {
-  name: string;
-  source: Source;
-};
-
-export type Source = CallExpressionSource | IdentifierSource;
-
-export type CallExpressionSource = {
-  type: "CallExpression";
-  calleeName: string;
-  arguments: string[];
-};
-
-export type IdentifierSource = {
-  type: "Identifier";
-  name: string;
-};
+  | TodoTypeAnnotation;

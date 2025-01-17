@@ -1,7 +1,7 @@
 import { test } from "bun:test";
 import { getEntryFilePathsByDir } from "../core/src/entry";
 import { scanAstByFileWithAutoExtension } from "../core/src/ast";
-import { transformFunctionToModuleComponent } from "../core/src/transform";
+import { transformFileContextToModuleComponent } from "../core/src/transform";
 import type { FileContext } from "../core/src/types";
 
 test.skip("core Test", async () => {
@@ -33,8 +33,9 @@ test("ast Test", async () => {
   }
 
   for (const fileContext of globalContext.values()) {
-    const moduleComponents = await transformFunctionToModuleComponent(
+    const moduleComponents = await transformFileContextToModuleComponent(
       fileContext,
     );
+    console.log(moduleComponents);
   }
 });

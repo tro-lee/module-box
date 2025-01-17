@@ -1,7 +1,8 @@
 import path from "path";
 import {
+  ComponentJSXElement,
+  Declaration,
   FileContext,
-  FunctionDeclarationWithComment,
   InterfaceDeclarationWithComment,
   NodeModuleImportDeclaration,
 } from "./types";
@@ -28,22 +29,20 @@ function getTargetItemFromImportDeclarations(
   );
 }
 
-type Declaration =
-  | InterfaceDeclarationWithComment
-  | FunctionDeclarationWithComment
-  | NodeModuleImportDeclaration;
-
 // 获取声明在一个上下文中
 // 如果没有，则直接报错
 async function getDeclarationInContextHelper(
   itemName: string,
   currentContext: FileContext,
   declarationType: "interface" | "function",
-): Promise<Declaration> {
-  // 从当前文件的接口或函数声明中查找目标声明
-  const declarations = declarationType === "interface"
-    ? currentContext.interfacesWithComment
-    : currentContext.functionsWithComment;
+): Promise<Declaration | null> {
+  // 从当前文件的变量声明 函数声明 接口声明中查找目标声明
+  const declarations = [
+    ...currentContext.variablesWithComment,
+    ...(declarationType === "interface"
+      ? currentContext.interfacesWithComment
+      : currentContext.functionsWithComment),
+  ];
   const item = declarations.find((item) => item.id.name === itemName);
   if (item) return item;
 
@@ -71,10 +70,11 @@ async function getDeclarationInContextHelper(
       );
       if (!context) continue;
 
-      const declarations = context[
-        declarationType === "interface"
-          ? "interfacesWithComment"
-          : "functionsWithComment"
+      const declarations = [
+        ...context.variablesWithComment,
+        ...(declarationType === "interface"
+          ? context.interfacesWithComment
+          : context.functionsWithComment),
       ];
       const item = declarations.find((item) => item.id.name === itemName);
       if (item) return item;
@@ -91,11 +91,12 @@ async function getDeclarationInContextHelper(
     }
   }
 
-  // 若寻找导入和导出后仍未找到，则报错
+  // 若仍未找到，则报错
   if (!targetImportDeclaration) {
-    throw new Error(
-      `[${currentContext.path}] 未找到目标声明 ${itemName}`,
+    console.error(
+      `[${currentContext.path}] 未找到目标声明 ${itemName}, 可能暂且不能解析声明语句`,
     );
+    return null;
   }
 
   // ==============================
@@ -143,49 +144,34 @@ async function getDeclarationInContextHelper(
     );
   }
 
-  throw new Error(
+  console.error(
     `[${currentContext.path}] 未找到目标声明 ${itemName}`,
   );
+  return null;
 }
 
 export async function getInterfaceDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
 ): Promise<
-  InterfaceDeclarationWithComment | NodeModuleImportDeclaration
+  InterfaceDeclarationWithComment | NodeModuleImportDeclaration | null
 > {
-  try {
-    const result = await getDeclarationInContextHelper(
-      itemName,
-      currentContext,
-      "interface",
-    );
-    return result as
-      | InterfaceDeclarationWithComment
-      | NodeModuleImportDeclaration;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+  const result = await getDeclarationInContextHelper(
+    itemName,
+    currentContext,
+    "interface",
+  );
+  return result as any;
 }
 
-export async function getFunctionDeclarationInContext(
+export async function getElementDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
-): Promise<
-  FunctionDeclarationWithComment | NodeModuleImportDeclaration
-> {
-  try {
-    const result = await getDeclarationInContextHelper(
-      itemName,
-      currentContext,
-      "function",
-    );
-    return result as
-      | FunctionDeclarationWithComment
-      | NodeModuleImportDeclaration;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+): Promise<ComponentJSXElement["elementDeclaration"] | null> {
+  const result = await getDeclarationInContextHelper(
+    itemName,
+    currentContext,
+    "function",
+  );
+  return result as any;
 }

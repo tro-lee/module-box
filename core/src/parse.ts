@@ -19,29 +19,40 @@ import {
   Prop,
 } from "./types";
 import {
-  getFunctionDeclarationInContext,
+  getElementDeclarationInContext,
   getInterfaceDeclarationInContext,
 } from "./context";
 
 // 解析类型注解
 export async function parseTypeAnnotation(
   typeAnnotation: TSTypeAnnotation | TypeAnnotation | Noop | null | undefined,
-  context: FileContext,
+  context: FileContext
 ): Promise<CustomTypeAnnotation> {
-  if (!typeAnnotation) return;
-
-  if (typeAnnotation.type === "TSTypeAnnotation") {
+  if (typeAnnotation && typeAnnotation.type === "TSTypeAnnotation") {
     const _typeAnnotation = typeAnnotation.typeAnnotation;
 
     // 引用处理
     if (_typeAnnotation.type === "TSTypeReference") {
       const typeName = _typeAnnotation.typeName;
-      if (typeName.type !== "Identifier") return;
+      if (typeName.type !== "Identifier") {
+        return {
+          type: "TodoTypeAnnotation",
+          typeName: "todo",
+          data: _typeAnnotation,
+        };
+      }
 
       const declaration = await getInterfaceDeclarationInContext(
         typeName.name,
-        context,
+        context
       );
+
+      if (!declaration) {
+        return {
+          type: "TodoTypeAnnotation",
+          typeName: typeName.name,
+        };
+      }
 
       // 若来自nodeModule模块
       if (declaration.type === "NodeModuleImportDeclaration") {
@@ -77,7 +88,7 @@ export async function parseTypeAnnotation(
             const propKey = prop.key.name;
             const propType = await parseTypeAnnotation(
               prop.typeAnnotation,
-              declaration.context,
+              declaration.context
             );
 
             interfaceProps.push({
@@ -91,7 +102,7 @@ export async function parseTypeAnnotation(
         const extendsInterface: InterfaceTypeAnnotation[] = [];
         for (const extendsItem of extendsExpression) {
           if (extendsItem.expression.type === "Identifier") {
-            const extendsInterfaceItem = await parseTypeAnnotation(
+            const extendsInterfaceItem = (await parseTypeAnnotation(
               {
                 type: "TSTypeAnnotation",
                 typeAnnotation: {
@@ -99,8 +110,8 @@ export async function parseTypeAnnotation(
                   typeName: extendsItem.expression,
                 },
               },
-              declaration.context,
-            ) as InterfaceTypeAnnotation | undefined;
+              declaration.context
+            )) as InterfaceTypeAnnotation | null;
 
             if (extendsInterfaceItem) {
               extendsInterface.push(extendsInterfaceItem);
@@ -122,27 +133,27 @@ export async function parseTypeAnnotation(
     // 字面量处理
     if (_typeAnnotation.type === "TSTypeLiteral") {
       const properties = _typeAnnotation.members;
-      if (!properties) return;
+      const parsedProperties = (
+        await Promise.all(
+          properties.map(async (property): Promise<Prop | undefined> => {
+            if (
+              property.type === "TSPropertySignature" &&
+              property.key.type === "Identifier"
+            ) {
+              const propKey = property.key.name;
+              const propType = await parseTypeAnnotation(
+                property.typeAnnotation,
+                context
+              );
 
-      const parsedProperties = (await Promise.all(
-        properties.map(async (property): Promise<Prop | undefined> => {
-          if (
-            property.type === "TSPropertySignature" &&
-            property.key.type === "Identifier"
-          ) {
-            const propKey = property.key.name;
-            const propType = await parseTypeAnnotation(
-              property.typeAnnotation,
-              context,
-            );
-
-            return {
-              propKey,
-              propType,
-            };
-          }
-        }),
-      )).filter((v) => v !== undefined);
+              return {
+                propKey,
+                propType,
+              };
+            }
+          })
+        )
+      ).filter((v) => v !== undefined);
 
       return {
         type: "ObjectTypeAnnotation",
@@ -153,8 +164,6 @@ export async function parseTypeAnnotation(
     // Union处理
     if (_typeAnnotation.type === "TSUnionType") {
       const unionMembers = _typeAnnotation.types;
-      if (!unionMembers) return;
-
       const parsedUnionMembers = await Promise.all(
         unionMembers.map(async (member) => {
           return await parseTypeAnnotation(
@@ -162,9 +171,9 @@ export async function parseTypeAnnotation(
               type: "TSTypeAnnotation",
               typeAnnotation: member,
             },
-            context,
+            context
           );
-        }),
+        })
       );
 
       return {
@@ -182,7 +191,7 @@ export async function parseTypeAnnotation(
             type: "TSTypeAnnotation",
             typeAnnotation: _typeAnnotation.elementType,
           },
-          context,
+          context
         ),
       };
     }
@@ -225,19 +234,23 @@ export async function parseTypeAnnotation(
     }
 
     if (_typeAnnotation.type === "TSUndefinedKeyword") {
+      return {
+        type: "UndefinedTypeAnnotation"
+      }
     }
-
-    return {
-      type: "TodoTypeAnnotation",
-      typeAnnotation: _typeAnnotation,
-    };
   }
+
+  return {
+    type: "TodoTypeAnnotation",
+    typeName: typeAnnotation?.type ?? '',
+    data: typeAnnotation,
+  };
 }
 
 // 辅助函数 解析表达式
 // 用于获取表达式中的标识符
 function findIdentifiersInExpression(
-  expression: Expression | null | undefined,
+  expression: Expression | null | undefined
 ): string[] {
   if (!expression) return [];
 
@@ -246,9 +259,9 @@ function findIdentifiersInExpression(
       if (expression.callee.type === "Identifier") {
         return [
           expression.callee.name,
-          ...expression.arguments.map((arg) =>
-            arg.type === "Identifier" ? arg.name : ""
-          ).filter(Boolean),
+          ...expression.arguments
+            .map((arg) => (arg.type === "Identifier" ? arg.name : ""))
+            .filter(Boolean),
         ];
       }
       break;
@@ -260,11 +273,18 @@ function findIdentifiersInExpression(
         ...findIdentifiersInExpression(expression.right),
       ];
     case "ObjectExpression":
-      return expression.properties.map((prop) => {
-        if (prop.type === "ObjectProperty" && prop.key.type === "Identifier") {
-          return prop.key.name;
-        }
-      }).filter((v) => v !== undefined) || [];
+      return (
+        expression.properties
+          .map((prop) => {
+            if (
+              prop.type === "ObjectProperty" &&
+              prop.key.type === "Identifier"
+            ) {
+              return prop.key.name;
+            }
+          })
+          .filter((v) => v !== undefined) || []
+      );
   }
 
   return [];
@@ -273,34 +293,40 @@ function findIdentifiersInExpression(
 // 解析函数体
 // 用于获取变量关系
 export async function parseFunctionBody(functionBody: BlockStatement) {
-  const statementMapWithIdentifiers: Map<string, {
-    leftIdentifiers: string[];
-    rightIdentifiers: string[];
-  }> = new Map();
+  const statementMapWithIdentifiers: Map<
+    string,
+    {
+      leftIdentifiers: string[];
+      rightIdentifiers: string[];
+    }
+  > = new Map();
 
   for (const statement of functionBody.body) {
     const sourceCode = generate(statement).code;
 
     if (statement.type === "VariableDeclaration") {
-      const leftIdentifiers = statement.declarations.map(
-        (variableDeclaration) => {
+      const leftIdentifiers = statement.declarations
+        .map((variableDeclaration) => {
           if (variableDeclaration.id.type === "Identifier") {
             return [variableDeclaration.id.name];
           } else if (variableDeclaration.id.type === "ObjectPattern") {
             return variableDeclaration.id.properties
-              .filter((prop) =>
-                prop.type === "ObjectProperty" && prop.key.type === "Identifier"
+              .filter(
+                (prop) =>
+                  prop.type === "ObjectProperty" &&
+                  prop.key.type === "Identifier"
               )
               .map((prop) => ((prop as ObjectProperty).key as Identifier).name);
           }
           return [];
-        },
-      ).filter((v) => v !== undefined);
+        })
+        .filter((v) => v !== undefined);
 
-      const rightIdentifiers = statement.declarations.map(
-        (variableDeclaration) =>
-          findIdentifiersInExpression(variableDeclaration.init),
-      ).filter((v) => v !== undefined);
+      const rightIdentifiers = statement.declarations
+        .map((variableDeclaration) =>
+          findIdentifiersInExpression(variableDeclaration.init)
+        )
+        .filter((v) => v !== undefined);
 
       statementMapWithIdentifiers.set(sourceCode, {
         leftIdentifiers: leftIdentifiers.flat(),
@@ -321,68 +347,87 @@ export async function parseFunctionBody(functionBody: BlockStatement) {
 
 // 解析JSX元素
 // 只解析组件函数
-export async function parseJSXElement(
-  jsxElement: JSXElement | JSXFragment,
-  currentContext: FileContext,
+export async function parseExpressionToJSXElement(
+  expression: Expression,
+  currentContext: FileContext
 ): Promise<Omit<ComponentJSXElement, "moduleComponent">[]> {
   let jsxElements: Omit<ComponentJSXElement, "moduleComponent">[] = [];
 
-  // 解析当前标签
-  if (jsxElement.type === "JSXFragment") {
-    // fragment不需要额外处理
-  } else if (jsxElement.type === "JSXElement") {
-    // 解析当前jsxElement
+  // 解析表达式
+  if (expression.type === "LogicalExpression") {
+    jsxElements.push(
+      ...(await parseExpressionToJSXElement(expression.left, currentContext)),
+      ...(await parseExpressionToJSXElement(expression.right, currentContext))
+    );
+  }
+
+  // 解析表达式
+  if (expression.type === "ConditionalExpression") {
+    jsxElements.push(
+      ...(await parseExpressionToJSXElement(
+        expression.consequent,
+        currentContext
+      )),
+      ...(await parseExpressionToJSXElement(
+        expression.alternate,
+        currentContext
+      ))
+    );
+  }
+
+  // 解析当前jsxElement
+  if (expression.type === "JSXElement") {
+    const jsxElement = expression as JSXElement;
     if (jsxElement.openingElement.name.type === "JSXIdentifier") {
-      const functionDeclaration = await getFunctionDeclarationInContext(
+      const elementDeclaration = await getElementDeclarationInContext(
         jsxElement.openingElement.name.name,
-        currentContext,
+        currentContext
       );
+
+      if (!elementDeclaration) {
+        return [];
+      }
 
       const elementAttributes = await Promise.all(
-        jsxElement.openingElement.attributes.map(
-          async (attr) => {
-            if (
-              attr.type === "JSXAttribute" &&
-              attr.value &&
-              attr.value.type === "JSXExpressionContainer"
-            ) {
-              return {
-                name: attr.name.name,
-                value: attr.value.expression.type !== "JSXEmptyExpression"
-                  ? findIdentifiersInExpression(
-                    attr.value.expression,
-                  )
+        jsxElement.openingElement.attributes.map(async (attr) => {
+          if (
+            attr.type === "JSXAttribute" &&
+            attr.value &&
+            attr.value.type === "JSXExpressionContainer"
+          ) {
+            return {
+              name: attr.name.name,
+              value:
+                attr.value.expression.type !== "JSXEmptyExpression"
+                  ? findIdentifiersInExpression(attr.value.expression)
                   : [],
-              };
-            }
-          },
-        ),
+            };
+          }
+        })
       );
 
-      jsxElements.push(
-        {
-          type: "ComponentJSXElement",
-          componentName: functionDeclaration.id.name,
-          componentParams: elementAttributes,
-          importPath: functionDeclaration.filePath,
-          functionDeclaration,
-        },
-      );
+      jsxElements.push({
+        type: "ComponentJSXElement",
+        elementName: elementDeclaration.id.name,
+        elementParams: elementAttributes,
+        importPath: elementDeclaration.filePath,
+        elementDeclaration,
+      });
     } else {
       throw new Error("JSXElement name is not a Identifier");
     }
   }
 
-  // 解析子代标签
-  if (jsxElement.children) {
-    for (const child of jsxElement.children) {
-      if (child.type === "JSXElement") {
-        jsxElements.push(
-          ...(await parseJSXElement(
-            child,
-            currentContext,
-          )),
-        );
+  if (expression.type === "JSXElement" || expression.type === "JSXFragment") {
+    const jsxElement = expression as JSXElement | JSXFragment;
+    // 解析子代标签
+    if (jsxElement.children) {
+      for (const child of jsxElement.children) {
+        if (child.type === "JSXElement") {
+          jsxElements.push(
+            ...(await parseExpressionToJSXElement(child, currentContext))
+          );
+        }
       }
     }
   }

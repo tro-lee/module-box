@@ -6,6 +6,7 @@ import {
   Identifier,
   ImportDeclaration,
   TSInterfaceDeclaration,
+  VariableDeclaration,
 } from "@babel/types";
 import { NodePath, parse, ParseResult, traverse } from "@babel/core";
 import path from "path";
@@ -58,6 +59,7 @@ async function scanAstByFile(
     path: filename,
     interfacesWithComment: [],
     functionsWithComment: [],
+    variablesWithComment: [],
     importDeclarations: [],
     exportAllDeclarations: [],
   };
@@ -69,6 +71,7 @@ async function scanAstByFile(
     ExportAllDeclaration(path: NodePath<ExportAllDeclaration>) {
       context.exportAllDeclarations.push(path.node);
     },
+    // 解析函数 箭头函数在这里也是函数
     ArrowFunctionExpression(path: NodePath<ArrowFunctionExpression>) {
       // 保证解析是 解析的顶级域的初始化箭头函数
       // 然后伪装成FunctionDeclaration，我们不对箭头函数和函数进行细微区分
@@ -139,6 +142,7 @@ async function scanAstByFile(
         functionDeclaration,
       });
     },
+    // 解析接口
     TSInterfaceDeclaration(path: NodePath<TSInterfaceDeclaration>) {
       const id = path.node.id;
       if (!id) {
@@ -160,6 +164,27 @@ async function scanAstByFile(
         extendsExpression: path.node.extends ?? [],
         interfaceDeclaration: path.node,
       });
+    },
+    // 解析变量
+    VariableDeclaration(path: NodePath<VariableDeclaration>) {
+      // 跳过变量为箭头函数的情况
+      // 用于做一些奇怪的变量形式 jsx
+      for (const declaration of path.node.declarations) {
+        if (declaration.init?.type === "ArrowFunctionExpression") {
+          return;
+        }
+
+        // 暂时只支持 变量声明
+        if (declaration.id.type === "Identifier") {
+          context.variablesWithComment.push({
+            type: "VariableDeclaratorWithComment",
+            id: declaration.id,
+            filePath: filename,
+            context,
+            variableDeclarator: declaration,
+          });
+        }
+      }
     },
   });
 
