@@ -7,6 +7,7 @@ import {
   ImportDeclaration,
   TSInterfaceDeclaration,
   VariableDeclaration,
+  VariableDeclarator,
 } from "@babel/types";
 import { NodePath, parse, ParseResult, traverse } from "@babel/core";
 import path from "path";
@@ -16,9 +17,7 @@ import { FileContext } from "./types";
 const astContextCache: Record<string, FileContext> = {};
 
 // 返回文件的上下文
-async function scanAstByFile(
-  filePath: string,
-): Promise<FileContext> {
+async function scanAstByFile(filePath: string): Promise<FileContext> {
   const filename = path.resolve(__dirname, filePath);
   if (!fs.existsSync(filename)) {
     throw new Error("file not found: " + filename);
@@ -52,7 +51,7 @@ async function scanAstByFile(
   }
 
   // ==============================
-  // 根据语法术 填充上下文
+  // 根据语法树 填充上下文
   // ==============================
 
   const context: FileContext = {
@@ -65,9 +64,11 @@ async function scanAstByFile(
   };
 
   traverse(ast, {
+    // 处理import
     ImportDeclaration(path: NodePath<ImportDeclaration>) {
       context.importDeclarations.push(path.node);
     },
+    // 处理export * from 'xxx'
     ExportAllDeclaration(path: NodePath<ExportAllDeclaration>) {
       context.exportAllDeclarations.push(path.node);
     },
@@ -92,16 +93,20 @@ async function scanAstByFile(
       if (arrowFunction.body.type !== "BlockStatement") {
         arrowFunction.body = {
           type: "BlockStatement",
-          body: [{
-            type: "ExpressionStatement",
-            expression: arrowFunction.body as Expression,
-          }],
+          body: [
+            {
+              type: "ExpressionStatement",
+              expression: arrowFunction.body as Expression,
+            },
+          ],
           directives: [],
         };
       }
 
       context.functionsWithComment.push({
         type: "FunctionDeclarationWithComment",
+        isArrowFunction: true,
+        nodePath: path,
         id: {
           type: "Identifier",
           name: path.parent.id.name,
@@ -129,12 +134,14 @@ async function scanAstByFile(
         id: Identifier;
       };
 
-      let leadingComments = path.parent?.leadingComments ??
-        path.node.leadingComments;
+      let leadingComments =
+        path.parent?.leadingComments ?? path.node.leadingComments;
       const leadingComment = leadingComments?.at(-1);
 
       context.functionsWithComment.push({
         type: "FunctionDeclarationWithComment",
+        isArrowFunction: false,
+        nodePath: path,
         id,
         leadingComment,
         filePath: filename,
@@ -150,14 +157,15 @@ async function scanAstByFile(
         return;
       }
 
-      let leadingComments = path.parent?.leadingComments ??
-        path.node.leadingComments;
+      let leadingComments =
+        path.parent?.leadingComments ?? path.node.leadingComments;
       const leadingComment = leadingComments?.at(-1);
 
       context.interfacesWithComment.push({
         type: "InterfaceDeclarationWithComment",
         id,
         leadingComment,
+        nodePath: path,
         filePath: filename,
         context,
         tsTypeElements: path.node.body.body,
@@ -165,26 +173,29 @@ async function scanAstByFile(
         interfaceDeclaration: path.node,
       });
     },
+
     // 解析变量
     VariableDeclaration(path: NodePath<VariableDeclaration>) {
-      // 跳过变量为箭头函数的情况
-      // 用于做一些奇怪的变量形式 jsx
-      for (const declaration of path.node.declarations) {
-        if (declaration.init?.type === "ArrowFunctionExpression") {
-          return;
-        }
+      path.traverse({
+        VariableDeclarator(path: NodePath<VariableDeclarator>) {
+          // 跳过变量为箭头函数的情况
+          if (path.node.init?.type === "ArrowFunctionExpression") {
+            return;
+          }
 
-        // 暂时只支持 变量声明
-        if (declaration.id.type === "Identifier") {
-          context.variablesWithComment.push({
-            type: "VariableDeclaratorWithComment",
-            id: declaration.id,
-            filePath: filename,
-            context,
-            variableDeclarator: declaration,
-          });
-        }
-      }
+          // 暂时只支持 变量声明
+          if (path.node.id.type === "Identifier") {
+            context.variablesWithComment.push({
+              type: "VariableDeclaratorWithComment",
+              id: path.node.id,
+              filePath: filename,
+              context,
+              variableDeclarator: path.node,
+              nodePath: path,
+            });
+          }
+        },
+      });
     },
   });
 
@@ -198,21 +209,19 @@ async function scanAstByFile(
 // 比如扫描 /XXX/X 视为 /XXX/X/index.ts
 // 比如扫描 /XXX/X/hi 视为 /XXX/X/hi.ts
 export async function scanAstByFileWithAutoExtension(
-  filePath: string,
+  filePath: string
 ): Promise<FileContext | null> {
-  for (
-    const ext of [
-      "",
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx",
-      "/index.ts",
-      "/index.tsx",
-      "/index.js",
-      "/index.jsx",
-    ]
-  ) {
+  for (const ext of [
+    "",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    "/index.ts",
+    "/index.tsx",
+    "/index.js",
+    "/index.jsx",
+  ]) {
     const _absoluteTargetImportPath = filePath + ext;
     if (
       !fs.existsSync(_absoluteTargetImportPath) ||
@@ -222,9 +231,7 @@ export async function scanAstByFileWithAutoExtension(
     }
 
     try {
-      return await scanAstByFile(
-        _absoluteTargetImportPath,
-      );
+      return await scanAstByFile(_absoluteTargetImportPath);
     } catch (error) {
       console.error(error);
     }

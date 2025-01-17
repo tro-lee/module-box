@@ -1,3 +1,4 @@
+import { Node, NodePath } from "@babel/core";
 import {
   Comment,
   ExportAllDeclaration,
@@ -8,6 +9,7 @@ import {
   TSInterfaceDeclaration,
   TSTypeElement,
   VariableDeclarator,
+  ArrowFunctionExpression,
 } from "@babel/types";
 
 // ============================================
@@ -27,39 +29,48 @@ export type FileContext = {
 // 声明语句相关 上下文内容
 // ============================================
 
-export interface WithBaseInfo {
+export interface WithBaseInfo<T extends Node> {
   id: Identifier;
   filePath: string;
+  nodePath: NodePath<T>;
   leadingComment?: Comment;
   context: FileContext;
 }
 
 export type FunctionDeclarationWithComment =
-  & WithBaseInfo
-  & {
-    type: "FunctionDeclarationWithComment";
-    functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
-      id: Identifier;
-    };
-  };
+  | (WithBaseInfo<FunctionDeclaration> & {
+      type: "FunctionDeclarationWithComment";
+      isArrowFunction: false;
+      functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
+        id: Identifier;
+      };
+    })
+  // 只是为了 兼容 箭头函数
+  | (WithBaseInfo<ArrowFunctionExpression> & {
+      type: "FunctionDeclarationWithComment";
+      isArrowFunction: true;
+      functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
+        id: Identifier;
+      };
+    });
 
 export type InterfaceDeclarationWithComment =
-  & WithBaseInfo
-  & {
+  WithBaseInfo<TSInterfaceDeclaration> & {
     type: "InterfaceDeclarationWithComment";
     tsTypeElements: TSTypeElement[];
     extendsExpression: TSExpressionWithTypeArguments[];
     interfaceDeclaration: TSInterfaceDeclaration;
   };
 
-export type VariableDeclaratorWithComment =
-  & WithBaseInfo
-  & {
-    type: "VariableDeclaratorWithComment";
-    variableDeclarator: VariableDeclarator;
-  };
+export type VariableDeclaratorWithComment = WithBaseInfo<VariableDeclarator> & {
+  type: "VariableDeclaratorWithComment";
+  variableDeclarator: VariableDeclarator;
+};
 
-export type NodeModuleImportDeclaration = WithBaseInfo & {
+export type NodeModuleImportDeclaration = Omit<
+  WithBaseInfo<ImportDeclaration>,
+  "nodePath"
+> & {
   type: "NodeModuleImportDeclaration";
 };
 
@@ -73,25 +84,23 @@ export type Declaration =
 // 模块组件相关 最终成果
 // ============================================
 export type ModuleComponent =
-  | ({
-    type: "LocalModuleComponent";
-    componentName: string;
-    componentDescription: string;
-    componentJSXElements: ComponentJSXElement[];
-    componentParams: CustomTypeAnnotation[];
-  })
-  | (
-    {
+  | {
+      type: "LocalModuleComponent";
+      componentName: string;
+      componentDescription: string;
+      componentJSXElements: ComponentJSXElement[];
+      componentParams: CustomTypeAnnotation[];
+    }
+  | {
       type: "NodeModuleComponent";
       componentName: string;
       packageName: string;
     }
-  )
-  | ({
-    type: "UnknownComponent";
-    componentName: string;
-    sourceCode: string;
-  });
+  | {
+      type: "UnknownComponent";
+      componentName: string;
+      sourceCode: string;
+    };
 
 export type ComponentJSXElement = {
   type: "ComponentJSXElement";
@@ -122,16 +131,14 @@ export type BaseTypeAnnotation<T extends string> = {
 
 // Node模块类型
 export type NodeModuleImportTypeAnnotation =
-  & BaseTypeAnnotation<"NodeModuleImportTypeAnnotation">
-  & {
+  BaseTypeAnnotation<"NodeModuleImportTypeAnnotation"> & {
     typeName: string;
     importPath: string;
   };
 
 // 接口类型
 export type InterfaceTypeAnnotation =
-  & BaseTypeAnnotation<"InterfaceTypeAnnotation">
-  & {
+  BaseTypeAnnotation<"InterfaceTypeAnnotation"> & {
     filePath: string;
     interfaceName: string;
     interfaceDescription: string;
@@ -141,8 +148,7 @@ export type InterfaceTypeAnnotation =
 
 // 复杂类型
 export type ObjectTypeAnnotation =
-  & BaseTypeAnnotation<"ObjectTypeAnnotation">
-  & {
+  BaseTypeAnnotation<"ObjectTypeAnnotation"> & {
     props: Prop[];
   };
 
@@ -156,19 +162,15 @@ export type ArrayTypeAnnotation = BaseTypeAnnotation<"ArrayTypeAnnotation"> & {
 
 // 基础类型
 export type NullTypeAnnotation = BaseTypeAnnotation<"NullTypeAnnotation">;
-export type StringKeywordTypeAnnotation = BaseTypeAnnotation<
-  "StringKeywordTypeAnnotation"
->;
-export type NumberKeywordTypeAnnotation = BaseTypeAnnotation<
-  "NumberKeywordTypeAnnotation"
->;
-export type BooleanKeywordTypeAnnotation = BaseTypeAnnotation<
-  "BooleanKeywordTypeAnnotation"
->;
+export type StringKeywordTypeAnnotation =
+  BaseTypeAnnotation<"StringKeywordTypeAnnotation">;
+export type NumberKeywordTypeAnnotation =
+  BaseTypeAnnotation<"NumberKeywordTypeAnnotation">;
+export type BooleanKeywordTypeAnnotation =
+  BaseTypeAnnotation<"BooleanKeywordTypeAnnotation">;
 export type AnyTypeAnnotation = BaseTypeAnnotation<"AnyTypeAnnotation">;
-export type UndefinedTypeAnnotation = BaseTypeAnnotation<
-  "UndefinedTypeAnnotation"
->;
+export type UndefinedTypeAnnotation =
+  BaseTypeAnnotation<"UndefinedTypeAnnotation">;
 
 // 特殊类型
 export type TodoTypeAnnotation = BaseTypeAnnotation<"TodoTypeAnnotation"> & {

@@ -14,30 +14,32 @@ import {
 
 // 判断是否是jsx组件
 function isJSXFunctionComponent(
-  functionDeclaration: FunctionDeclarationWithComment,
+  functionDeclaration: FunctionDeclarationWithComment
 ) {
-  return functionDeclaration.functionDeclaration.body.type ===
-      "BlockStatement" &&
-    functionDeclaration.functionDeclaration.body.body.some((statement) =>
-      statement.type === "ReturnStatement" &&
-      (statement.argument?.type === "JSXElement" ||
-        statement.argument?.type === "JSXFragment" ||
-        (statement.argument?.type === "ConditionalExpression" &&
-          (statement.argument?.consequent.type === "JSXElement" ||
-            statement.argument?.consequent.type === "JSXFragment" ||
-            statement.argument?.alternate.type === "JSXElement" ||
-            statement.argument?.alternate.type === "JSXFragment")) ||
-        (statement.argument?.type === "LogicalExpression" &&
-          (statement.argument?.left.type === "JSXElement" ||
-            statement.argument?.left.type === "JSXFragment" ||
-            statement.argument?.right.type === "JSXElement" ||
-            statement.argument?.right.type === "JSXFragment")))
-    );
+  return (
+    functionDeclaration.functionDeclaration.body.type === "BlockStatement" &&
+    functionDeclaration.functionDeclaration.body.body.some(
+      (statement) =>
+        statement.type === "ReturnStatement" &&
+        (statement.argument?.type === "JSXElement" ||
+          statement.argument?.type === "JSXFragment" ||
+          (statement.argument?.type === "ConditionalExpression" &&
+            (statement.argument?.consequent.type === "JSXElement" ||
+              statement.argument?.consequent.type === "JSXFragment" ||
+              statement.argument?.alternate.type === "JSXElement" ||
+              statement.argument?.alternate.type === "JSXFragment")) ||
+          (statement.argument?.type === "LogicalExpression" &&
+            (statement.argument?.left.type === "JSXElement" ||
+              statement.argument?.left.type === "JSXFragment" ||
+              statement.argument?.right.type === "JSXElement" ||
+              statement.argument?.right.type === "JSXFragment")))
+    )
+  );
 }
 
 // 将元素声明转换为模块组件
 async function transformElementDeclarationToModuleComponent(
-  elementDeclaration: ComponentJSXElement["elementDeclaration"],
+  elementDeclaration: ComponentJSXElement["elementDeclaration"]
 ): Promise<ModuleComponent | undefined> {
   if (elementDeclaration.type === "NodeModuleImportDeclaration") {
     return {
@@ -64,7 +66,7 @@ async function transformElementDeclarationToModuleComponent(
     if (!isJsxComponent) {
       console.log(elementDeclaration);
       console.error(
-        `[${context.path} ${functionDeclaration.id.name}] 不是jsx组件`,
+        `[${context.path} ${functionDeclaration.id.name}] 不是jsx组件`
       );
       return;
     }
@@ -84,41 +86,38 @@ async function transformElementDeclarationToModuleComponent(
     }
 
     try {
-      const componentParams = await Promise.all(
-        functionDeclaration.params.map(async (param) => {
-          // 解析解构类型声明 类似 {a}: {b} 的参数
-          if (param.typeAnnotation) {
-            return await parseTypeAnnotation(
-              param.typeAnnotation,
-              context,
-            );
-          }
-        }),
-      );
+      const componentParams = (
+        await Promise.all(
+          functionDeclaration.params.map(async (param) => {
+            // 解析解构类型声明 类似 {a}: {b} 的参数
+            if (param.typeAnnotation) {
+              return await parseTypeAnnotation(param.typeAnnotation, context);
+            }
+          })
+        )
+      ).filter((item) => item !== undefined);
 
       const functionBody = await parseFunctionBody(functionDeclaration.body);
 
       let componentJSXElements: ComponentJSXElement[] = [];
       for (const statement of functionDeclaration.body.body) {
-        if (
-          statement.type === "ReturnStatement" && statement.argument
-        ) {
+        if (statement.type === "ReturnStatement" && statement.argument) {
           const result = await parseExpressionToJSXElement(
             statement.argument,
-            context,
+            context
           );
 
           // 解析子组件
           for (const item of result) {
             const _item = item as ComponentJSXElement;
             _item.moduleComponent =
-              await transformElementDeclarationToModuleComponent(
-                _item.elementDeclaration,
-              ) as ModuleComponent;
+              (await transformElementDeclarationToModuleComponent(
+                _item.elementDeclaration
+              )) as ModuleComponent;
 
             if (!_item.moduleComponent) {
               console.error(
-                `[${context.path} ${functionName}] 无法解析子组件: ${_item.elementName}`,
+                `[${context.path} ${functionName}] 无法解析子组件: ${_item.elementName}`
               );
               continue;
             }
@@ -144,7 +143,7 @@ async function transformElementDeclarationToModuleComponent(
 // 将文件上下文转换为模块组件
 // 识别上下文中的所有元素声明
 export async function transformFileContextToModuleComponent(
-  context: FileContext,
+  context: FileContext
 ) {
   const { functionsWithComment } = context;
   const moduleComponents: ModuleComponent[] = [];
@@ -152,7 +151,7 @@ export async function transformFileContextToModuleComponent(
   for (const functionWithComment of functionsWithComment) {
     try {
       const component = await transformElementDeclarationToModuleComponent(
-        functionWithComment,
+        functionWithComment
       );
 
       if (component) {
