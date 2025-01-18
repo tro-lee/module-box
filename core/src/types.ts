@@ -1,7 +1,6 @@
-import { Node, NodePath } from "@babel/core";
+import { Node, NodePath, ParseResult } from "@babel/core";
 import {
   Comment,
-  ExportAllDeclaration,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
@@ -10,6 +9,11 @@ import {
   TSTypeElement,
   VariableDeclarator,
   ArrowFunctionExpression,
+  JSXElement,
+  BlockStatement,
+  ExportAllDeclaration,
+  ExportDefaultDeclaration,
+  ExportNamedDeclaration,
 } from "@babel/types";
 
 // ============================================
@@ -18,11 +22,15 @@ import {
 
 export type FileContext = {
   path: string;
+  ast: ParseResult;
   interfacesWithComment: InterfaceDeclarationWithComment[];
   functionsWithComment: FunctionDeclarationWithComment[];
   variablesWithComment: VariableDeclaratorWithComment[];
-  importDeclarations: ImportDeclaration[];
-  exportAllDeclarations: ExportAllDeclaration[];
+
+  importDeclarationsWithNodePath: NodePath<ImportDeclaration>[];
+  exportDefaultDeclarationWithNodePath?: NodePath<ExportDefaultDeclaration>;
+  exportAllDeclarationsWithNodePath: NodePath<ExportAllDeclaration>[];
+  exportNamedDeclarationsWithNodePath: NodePath<ExportNamedDeclaration>[];
 };
 
 // ============================================
@@ -37,22 +45,22 @@ export interface WithBaseInfo<T extends Node> {
   context: FileContext;
 }
 
-export type FunctionDeclarationWithComment =
+export type FunctionDeclarationWithComment = (
   | (WithBaseInfo<FunctionDeclaration> & {
-      type: "FunctionDeclarationWithComment";
       isArrowFunction: false;
-      functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
-        id: Identifier;
-      };
     })
-  // 只是为了 兼容 箭头函数
   | (WithBaseInfo<ArrowFunctionExpression> & {
-      type: "FunctionDeclarationWithComment";
       isArrowFunction: true;
-      functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
-        id: Identifier;
-      };
-    });
+    })
+) & {
+  type: "FunctionDeclarationWithComment";
+  functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
+    id: Identifier;
+  };
+  // 函数里面具体内容：
+  jsxElementsWithNodePath: NodePath<JSXElement>[]; // 涉及到的所有JSXElement
+  functionBodyWithNodePath: NodePath<BlockStatement>;
+};
 
 export type InterfaceDeclarationWithComment =
   WithBaseInfo<TSInterfaceDeclaration> & {
@@ -68,7 +76,7 @@ export type VariableDeclaratorWithComment = WithBaseInfo<VariableDeclarator> & {
 };
 
 export type NodeModuleImportDeclaration = Omit<
-  WithBaseInfo<ImportDeclaration>,
+  Omit<WithBaseInfo<ImportDeclaration>, "context">,
   "nodePath"
 > & {
   type: "NodeModuleImportDeclaration";
@@ -113,7 +121,7 @@ export type ComponentJSXElement = {
     | VariableDeclaratorWithComment;
 
   // 测试使用
-  moduleComponent: ModuleComponent;
+  moduleComponent?: ModuleComponent;
 };
 
 // ============================================

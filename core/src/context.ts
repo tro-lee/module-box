@@ -7,25 +7,86 @@ import {
   NodeModuleImportDeclaration,
 } from "./types";
 import { scanAstByFileWithAutoExtension } from "./ast";
-import { ImportDeclaration } from "@babel/types";
+import { ImportDeclaration, Identifier } from "@babel/types";
+import { NodePath } from "@babel/traverse";
 
-// 辅助函数 从导入声明中获取声明
-function getTargetItemFromImportDeclarations(
-  importDeclarations: ImportDeclaration[],
+// 从导入声明中获取目标声明
+// 用于解决导入导出问题
+async function getDeclarationInImportDeclarationHelper(
+  currentImportDeclaration: ImportDeclaration,
+  currentContext: FileContext,
   itemName: string
-): ImportDeclaration | undefined {
-  return importDeclarations.find((importDeclaration) =>
-    importDeclaration.specifiers.some(
+): Promise<Declaration | null> {
+  // 若查到为外部引用
+  // TODO 暂时判定开头带@ 为全部索引
+  if (currentImportDeclaration.source.value.startsWith("@")) {
+    return {
+      type: "NodeModuleImportDeclaration",
+      id: {
+        type: "Identifier",
+        name: itemName,
+      },
+      filePath: currentImportDeclaration.source.value,
+    };
+  }
+
+  // 若查到为项目内部引用
+  if (currentImportDeclaration.source.value.startsWith(".")) {
+    const absoluteTargetImportPath = path.resolve(
+      currentContext.path,
+      "../",
+      currentImportDeclaration.source.value
+    );
+
+    const targetContext = await scanAstByFileWithAutoExtension(
+      absoluteTargetImportPath
+    );
+    if (!targetContext) {
+      console.warn(
+        `[${absoluteTargetImportPath}] 未找到目标声明 ${itemName}, 可能暂且不能解析声明语句`
+      );
+      return null;
+    }
+
+    const isExportDefaultDeclaration = currentImportDeclaration.specifiers.some(
       (specifier) =>
-        (specifier.type === "ImportSpecifier" &&
-          specifier.local.name === itemName) ||
-        (specifier.type === "ImportSpecifier" &&
-          specifier.imported.type === "Identifier" &&
-          specifier.imported.name === itemName) ||
-        (specifier.type === "ImportDefaultSpecifier" &&
-          specifier.local.name === itemName)
-    )
+        specifier.type === "ImportDefaultSpecifier" &&
+        specifier.local.name === itemName
+    );
+
+    if (isExportDefaultDeclaration) {
+      // 若引入默认导出，则直接在此处判断了
+      if (!targetContext.exportDefaultDeclarationWithNodePath) {
+        console.warn(
+          `${targetContext.path} 没有默认导出声明，无法找到目标声明 ${itemName}`
+        );
+        return null;
+      }
+
+      let targetDeclaration: Declaration | null = null;
+      targetContext.exportDefaultDeclarationWithNodePath.traverse({
+        CallExpression(path) {
+          console.log(path);
+        },
+        Identifier(path) {
+          console.log(path);
+        },
+      });
+    } else {
+      // 若引入普通导出，则在这里做判断
+      for (const exportNamedDeclaration of targetContext.exportNamedDeclarationsWithNodePath) {
+        console.log(exportNamedDeclaration);
+      }
+      for (const exportAllDeclaration of targetContext.exportAllDeclarationsWithNodePath) {
+        console.log(exportAllDeclaration);
+      }
+    }
+  }
+
+  console.warn(
+    `[${currentContext.path}] 无法解析导入声明 ${currentImportDeclaration.source.value}`
   );
+  return null;
 }
 
 // 获取声明在一个上下文中
@@ -35,7 +96,7 @@ async function getDeclarationInContextHelper(
   currentContext: FileContext,
   declarationType: "interface" | "function"
 ): Promise<Declaration | null> {
-  // 从当前文件的变量声明 函数声明 接口声明中查找目标声明
+  // 从当前文件的变量声明 函数声明/接口声明中查找目标声明
   const declarations = [
     ...currentContext.variablesWithComment,
     ...(declarationType === "interface"
@@ -45,128 +106,32 @@ async function getDeclarationInContextHelper(
   const item = declarations.find((item) => item.id.name === itemName);
   if (item) return item;
 
-  // ==============================
-  // 从当前文件的导入和导出声明中查找目标声明
-  // ==============================
-
   // 从当前文件的导入声明中查找目标声明
-  let targetImportDeclaration = getTargetItemFromImportDeclarations(
-    currentContext.importDeclarations,
-    itemName
-  );
+  let targetImportDeclaration: ImportDeclaration | null = null;
+  currentContext.importDeclarationsWithNodePath.forEach((importDeclaration) => {
+    importDeclaration.traverse({
+      Identifier(path: NodePath<Identifier>) {
+        if (path.node.name === itemName) {
+          targetImportDeclaration = importDeclaration.node;
+        }
+      },
+    });
+  });
 
-  // 从当前文件的导出声明中查找目标声明
+  // 解析导入声明
   if (!targetImportDeclaration) {
-    for (const exportAllDeclaration of currentContext.exportAllDeclarations) {
-      // 获取导出声明所指向的上下文
-      const absoluteTargetImportPath = path.resolve(
-        currentContext.path,
-        "../",
-        exportAllDeclaration.source.value
-      );
-      const context = await scanAstByFileWithAutoExtension(
-        absoluteTargetImportPath
-      );
-      if (!context) continue;
-
-      // 从导出声明的上下文中，尝试拿取目标声明
-      const declarations = [
-        ...context.variablesWithComment,
-        ...(declarationType === "interface"
-          ? context.interfacesWithComment
-          : context.functionsWithComment),
-      ];
-      const item = declarations.find((item) => item.id.name === itemName);
-      if (item) return item;
-
-      // 从导出声明的上下文中，尝试拿取导入声明
-      targetImportDeclaration = getTargetItemFromImportDeclarations(
-        context.importDeclarations,
-        itemName
-      );
-
-      if (targetImportDeclaration) {
-        currentContext = context;
-        break;
-      }
-    }
-  }
-
-  // 若仍未找到，则报错
-  if (!targetImportDeclaration) {
-    console.error(
+    console.warn(
       `[${currentContext.path}] 未找到目标声明 ${itemName}, 可能暂且不能解析声明语句`
     );
+
     return null;
-  }
-
-  // ==============================
-  // 根据引用类型，进一步解析
-  // ==============================
-
-  // 若查到为外部引用
-  // TODO 暂时判定开头带@ 为全部索引
-  if (targetImportDeclaration.source.value.startsWith("@")) {
-    return {
-      type: "NodeModuleImportDeclaration",
-      id: {
-        type: "Identifier",
-        name: itemName,
-      },
-      filePath: targetImportDeclaration.source.value,
-      context: currentContext,
-    };
-  }
-
-  // 若查到为项目内部引用
-  // 则递归获取目标声明
-  if (targetImportDeclaration.source.value.startsWith(".")) {
-    const absoluteTargetImportPath = path.resolve(
-      currentContext.path,
-      "../",
-      targetImportDeclaration.source.value
-    );
-
-    // 获取目标上下文
-    const targetContext = await scanAstByFileWithAutoExtension(
-      absoluteTargetImportPath
-    );
-    if (!targetContext) {
-      throw new Error(`[${currentContext.path}] 未找到目标声明 ${itemName}`);
-    }
-
-    // 若引入默认导出，则直接在此处判断了
-    if (
-      targetImportDeclaration.specifiers.some(
-        (specifier) =>
-          specifier.type === "ImportDefaultSpecifier" &&
-          specifier.local.name === itemName
-      )
-    ) {
-      if (declarationType === "interface") {
-        const targetInterface =
-          targetContext.interfacesWithComment.find(
-            (item) => item.nodePath.parent.type === "ExportDefaultDeclaration"
-          ) || null;
-        return targetInterface;
-      } else if (declarationType === "function") {
-        const targetFunction =
-          targetContext.functionsWithComment.find(
-            (item) => item.nodePath.parent.type === "ExportDefaultDeclaration"
-          ) || null;
-        return targetFunction;
-      }
-    }
-
-    return await getDeclarationInContextHelper(
-      itemName,
-      targetContext,
-      declarationType
+  } else {
+    return await getDeclarationInImportDeclarationHelper(
+      targetImportDeclaration,
+      currentContext,
+      itemName
     );
   }
-
-  console.error(`[${currentContext.path}] 未找到目标声明 ${itemName}`);
-  return null;
 }
 
 export async function getInterfaceDeclarationInContext(

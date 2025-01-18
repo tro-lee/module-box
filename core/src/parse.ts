@@ -1,15 +1,9 @@
 import type {
-  BlockStatement,
-  Expression,
-  Identifier,
   JSXElement,
-  JSXFragment,
   Noop,
-  ObjectProperty,
   TSTypeAnnotation,
   TypeAnnotation,
 } from "@babel/types";
-import generate from "@babel/generator";
 import { parse as parseComment } from "comment-parser";
 import {
   ComponentJSXElement,
@@ -22,6 +16,7 @@ import {
   getElementDeclarationInContext,
   getInterfaceDeclarationInContext,
 } from "./context";
+import { NodePath } from "@babel/core";
 
 // 解析类型注解
 export async function parseTypeAnnotation(
@@ -130,6 +125,7 @@ export async function parseTypeAnnotation(
       }
     }
 
+
     // 字面量处理
     if (_typeAnnotation.type === "TSTypeLiteral") {
       const properties = _typeAnnotation.members;
@@ -235,202 +231,128 @@ export async function parseTypeAnnotation(
 
     if (_typeAnnotation.type === "TSUndefinedKeyword") {
       return {
-        type: "UndefinedTypeAnnotation"
-      }
+        type: "UndefinedTypeAnnotation",
+      };
     }
   }
 
   return {
     type: "TodoTypeAnnotation",
-    typeName: typeAnnotation?.type ?? '',
+    typeName: typeAnnotation?.type ?? "",
     data: typeAnnotation,
   };
 }
 
-// 辅助函数 解析表达式
-// 用于获取表达式中的标识符
-function findIdentifiersInExpression(
-  expression: Expression | null | undefined
-): string[] {
-  if (!expression) return [];
-
-  switch (expression.type) {
-    case "CallExpression":
-      if (expression.callee.type === "Identifier") {
-        return [
-          expression.callee.name,
-          ...expression.arguments
-            .map((arg) => (arg.type === "Identifier" ? arg.name : ""))
-            .filter(Boolean),
-        ];
-      }
-      break;
-    case "Identifier":
-      return [expression.name];
-    case "LogicalExpression":
-      return [
-        ...findIdentifiersInExpression(expression.left),
-        ...findIdentifiersInExpression(expression.right),
-      ];
-    case "ObjectExpression":
-      return (
-        expression.properties
-          .map((prop) => {
-            if (
-              prop.type === "ObjectProperty" &&
-              prop.key.type === "Identifier"
-            ) {
-              return prop.key.name;
-            }
-          })
-          .filter((v) => v !== undefined) || []
-      );
-  }
-
-  return [];
-}
-
 // 解析函数体
 // 用于获取变量关系
-export async function parseFunctionBody(functionBody: BlockStatement) {
-  const statementMapWithIdentifiers: Map<
-    string,
-    {
-      leftIdentifiers: string[];
-      rightIdentifiers: string[];
-    }
-  > = new Map();
+// export async function parseFunctionBodyWithNodePath(
+//   functionBodyWithNodePath: NodePath<BlockStatement>
+// ) {
+//   const statementMapWithIdentifiers: Map<
+//     string,
+//     {
+//       leftIdentifiers: string[];
+//       rightIdentifiers: string[];
+//     }
+//   > = new Map();
 
-  for (const statement of functionBody.body) {
-    const sourceCode = generate(statement).code;
+//   for (const statement of functionBody.body) {
+//     const sourceCode = generate(statement).code;
 
-    if (statement.type === "VariableDeclaration") {
-      const leftIdentifiers = statement.declarations
-        .map((variableDeclaration) => {
-          if (variableDeclaration.id.type === "Identifier") {
-            return [variableDeclaration.id.name];
-          } else if (variableDeclaration.id.type === "ObjectPattern") {
-            return variableDeclaration.id.properties
-              .filter(
-                (prop) =>
-                  prop.type === "ObjectProperty" &&
-                  prop.key.type === "Identifier"
-              )
-              .map((prop) => ((prop as ObjectProperty).key as Identifier).name);
-          }
-          return [];
-        })
-        .filter((v) => v !== undefined);
+//     if (statement.type === "VariableDeclaration") {
+//       const leftIdentifiers = statement.declarations
+//         .map((variableDeclaration) => {
+//           if (variableDeclaration.id.type === "Identifier") {
+//             return [variableDeclaration.id.name];
+//           } else if (variableDeclaration.id.type === "ObjectPattern") {
+//             return variableDeclaration.id.properties
+//               .filter(
+//                 (prop) =>
+//                   prop.type === "ObjectProperty" &&
+//                   prop.key.type === "Identifier"
+//               )
+//               .map((prop) => ((prop as ObjectProperty).key as Identifier).name);
+//           }
+//           return [];
+//         })
+//         .filter((v) => v !== undefined);
 
-      const rightIdentifiers = statement.declarations
-        .map((variableDeclaration) =>
-          findIdentifiersInExpression(variableDeclaration.init)
-        )
-        .filter((v) => v !== undefined);
+//       const rightIdentifiers = statement.declarations
+//         .map((variableDeclaration) =>
+//           findIdentifiersInExpression(variableDeclaration.init)
+//         )
+//         .filter((v) => v !== undefined);
 
-      statementMapWithIdentifiers.set(sourceCode, {
-        leftIdentifiers: leftIdentifiers.flat(),
-        rightIdentifiers: rightIdentifiers.flat(),
-      });
-    } else if (statement.type === "ExpressionStatement") {
-      const identifiers = findIdentifiersInExpression(statement.expression);
+//       statementMapWithIdentifiers.set(sourceCode, {
+//         leftIdentifiers: leftIdentifiers.flat(),
+//         rightIdentifiers: rightIdentifiers.flat(),
+//       });
+//     } else if (statement.type === "ExpressionStatement") {
+//       const identifiers = findIdentifiersInExpression(statement.expression);
 
-      statementMapWithIdentifiers.set(sourceCode, {
-        leftIdentifiers: identifiers,
-        rightIdentifiers: [],
-      });
-    }
-  }
+//       statementMapWithIdentifiers.set(sourceCode, {
+//         leftIdentifiers: identifiers,
+//         rightIdentifiers: [],
+//       });
+//     }
+//   }
 
-  return statementMapWithIdentifiers;
-}
+//   return statementMapWithIdentifiers;
+// }
 
 // 解析JSX元素
 // 只解析组件函数
-export async function parseExpressionToJSXElement(
-  expression: Expression,
+export async function parseJSXElementWithNodePath(
+  jsxElementWithNodePath: NodePath<JSXElement>,
   currentContext: FileContext
-): Promise<Omit<ComponentJSXElement, "moduleComponent">[]> {
-  let jsxElements: Omit<ComponentJSXElement, "moduleComponent">[] = [];
+): Promise<ComponentJSXElement | undefined> {
+  const jsxElement = jsxElementWithNodePath.node;
 
-  // 解析表达式
-  if (expression.type === "LogicalExpression") {
-    jsxElements.push(
-      ...(await parseExpressionToJSXElement(expression.left, currentContext)),
-      ...(await parseExpressionToJSXElement(expression.right, currentContext))
+  // 当前仅支持<Component />写法
+  if (jsxElement.openingElement.name.type === "JSXIdentifier") {
+    const elementDeclaration = await getElementDeclarationInContext(
+      jsxElement.openingElement.name.name,
+      currentContext
     );
-  }
 
-  // 解析表达式
-  if (expression.type === "ConditionalExpression") {
-    jsxElements.push(
-      ...(await parseExpressionToJSXElement(
-        expression.consequent,
-        currentContext
-      )),
-      ...(await parseExpressionToJSXElement(
-        expression.alternate,
-        currentContext
-      ))
-    );
-  }
-
-  // 解析当前jsxElement
-  if (expression.type === "JSXElement") {
-    const jsxElement = expression as JSXElement;
-    if (jsxElement.openingElement.name.type === "JSXIdentifier") {
-      const elementDeclaration = await getElementDeclarationInContext(
-        jsxElement.openingElement.name.name,
-        currentContext
+    if (!elementDeclaration) {
+      console.warn(
+        `在解析JSXElement语句时，未找到elementDeclaration ${jsxElement.openingElement.name.name} ${currentContext.path}`
       );
-
-      if (!elementDeclaration) {
-        return [];
-      }
-
-      const elementAttributes = await Promise.all(
-        jsxElement.openingElement.attributes.map(async (attr) => {
-          if (
-            attr.type === "JSXAttribute" &&
-            attr.value &&
-            attr.value.type === "JSXExpressionContainer"
-          ) {
-            return {
-              name: attr.name.name,
-              value:
-                attr.value.expression.type !== "JSXEmptyExpression"
-                  ? findIdentifiersInExpression(attr.value.expression)
-                  : [],
-            };
-          }
-        })
-      );
-
-      jsxElements.push({
-        type: "ComponentJSXElement",
-        elementName: elementDeclaration.id.name,
-        elementParams: elementAttributes,
-        importPath: elementDeclaration.filePath,
-        elementDeclaration,
-      });
-    } else {
-      throw new Error("JSXElement name is not a Identifier");
+      return undefined;
     }
-  }
 
-  if (expression.type === "JSXElement" || expression.type === "JSXFragment") {
-    const jsxElement = expression as JSXElement | JSXFragment;
-    // 解析子代标签
-    if (jsxElement.children) {
-      for (const child of jsxElement.children) {
-        if (child.type === "JSXElement") {
-          jsxElements.push(
-            ...(await parseExpressionToJSXElement(child, currentContext))
-          );
+
+    // 解析属性，获取{}中的内容
+    const elementAttributes = await Promise.all(
+      jsxElement.openingElement.attributes.map(async (attr) => {
+        if (
+          attr.type === "JSXAttribute" &&
+          attr.value &&
+          attr.value.type === "JSXExpressionContainer"
+        ) {
+          // return {
+          //   name: attr.name.name,
+          //   value:
+          //     attr.value.expression.type !== "JSXEmptyExpression"
+          //       ? findIdentifiersInExpression(attr.value.expression)
+          //       : [],
+          // };
         }
-      }
-    }
+      })
+    );
+
+    return {
+      type: "ComponentJSXElement",
+      elementName: elementDeclaration.id.name,
+      elementParams: elementAttributes,
+      importPath: elementDeclaration.filePath,
+      elementDeclaration,
+      moduleComponent: undefined,
+    };
   }
 
-  return jsxElements;
+  // 当前不支持<Component.Child />写法
+  if (jsxElement.openingElement.name.type === "JSXMemberExpression") {
+  }
 }

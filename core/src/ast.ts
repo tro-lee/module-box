@@ -8,6 +8,10 @@ import {
   TSInterfaceDeclaration,
   VariableDeclaration,
   VariableDeclarator,
+  JSXElement,
+  BlockStatement,
+  ExportDefaultDeclaration,
+  ExportNamedDeclaration,
 } from "@babel/types";
 import { NodePath, parse, ParseResult, traverse } from "@babel/core";
 import path from "path";
@@ -56,22 +60,30 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 
   const context: FileContext = {
     path: filename,
+    ast,
     interfacesWithComment: [],
     functionsWithComment: [],
     variablesWithComment: [],
-    importDeclarations: [],
-    exportAllDeclarations: [],
+    importDeclarationsWithNodePath: [],
+    exportAllDeclarationsWithNodePath: [],
+    exportNamedDeclarationsWithNodePath: [],
   };
 
   traverse(ast, {
-    // 处理import
+    // 塞入声明
     ImportDeclaration(path: NodePath<ImportDeclaration>) {
-      context.importDeclarations.push(path.node);
+      context.importDeclarationsWithNodePath.push(path);
     },
-    // 处理export * from 'xxx'
     ExportAllDeclaration(path: NodePath<ExportAllDeclaration>) {
-      context.exportAllDeclarations.push(path.node);
+      context.exportAllDeclarationsWithNodePath.push(path);
     },
+    ExportDefaultDeclaration(path: NodePath<ExportDefaultDeclaration>) {
+      context.exportDefaultDeclarationWithNodePath = path;
+    },
+    ExportNamedDeclaration(path: NodePath<ExportNamedDeclaration>) {
+      context.exportNamedDeclarationsWithNodePath.push(path);
+    },
+
     // 解析函数 箭头函数在这里也是函数
     ArrowFunctionExpression(path: NodePath<ArrowFunctionExpression>) {
       // 保证解析是 解析的顶级域的初始化箭头函数
@@ -103,6 +115,21 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         };
       }
 
+      const jsxElementsWithNodePath: NodePath<JSXElement>[] = [];
+      let functionBodyWithNodePath: NodePath<BlockStatement> | undefined =
+        undefined;
+
+      path.traverse({
+        JSXElement(path: NodePath<JSXElement>) {
+          jsxElementsWithNodePath.push(path);
+        },
+        BlockStatement(path: NodePath<BlockStatement>) {
+          if (path.key === "body") {
+            functionBodyWithNodePath = path;
+          }
+        },
+      });
+
       context.functionsWithComment.push({
         type: "FunctionDeclarationWithComment",
         isArrowFunction: true,
@@ -122,6 +149,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
           body: arrowFunction.body,
           params: arrowFunction.params,
         },
+        jsxElementsWithNodePath,
+        functionBodyWithNodePath: functionBodyWithNodePath!,
       });
     },
     FunctionDeclaration(path: NodePath<FunctionDeclaration>) {
@@ -138,6 +167,21 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         path.parent?.leadingComments ?? path.node.leadingComments;
       const leadingComment = leadingComments?.at(-1);
 
+      const jsxElementsWithNodePath: NodePath<JSXElement>[] = [];
+      let functionBodyWithNodePath: NodePath<BlockStatement> | undefined =
+        undefined;
+
+      path.traverse({
+        JSXElement(path: NodePath<JSXElement>) {
+          jsxElementsWithNodePath.push(path);
+        },
+        BlockStatement(path: NodePath<BlockStatement>) {
+          if (path.key === "body") {
+            functionBodyWithNodePath = path;
+          }
+        },
+      });
+
       context.functionsWithComment.push({
         type: "FunctionDeclarationWithComment",
         isArrowFunction: false,
@@ -147,6 +191,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         filePath: filename,
         context,
         functionDeclaration,
+        jsxElementsWithNodePath,
+        functionBodyWithNodePath: functionBodyWithNodePath!,
       });
     },
     // 解析接口
@@ -173,7 +219,6 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         interfaceDeclaration: path.node,
       });
     },
-
     // 解析变量
     VariableDeclaration(path: NodePath<VariableDeclaration>) {
       path.traverse({

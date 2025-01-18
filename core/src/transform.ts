@@ -3,39 +3,12 @@ import generate from "@babel/generator";
 import {
   ComponentJSXElement,
   FileContext,
-  FunctionDeclarationWithComment,
   ModuleComponent,
 } from "./types";
 import {
-  parseExpressionToJSXElement,
-  parseFunctionBody,
+  parseJSXElementWithNodePath,
   parseTypeAnnotation,
 } from "./parse";
-
-// 判断是否是jsx组件
-function isJSXFunctionComponent(
-  functionDeclaration: FunctionDeclarationWithComment
-) {
-  return (
-    functionDeclaration.functionDeclaration.body.type === "BlockStatement" &&
-    functionDeclaration.functionDeclaration.body.body.some(
-      (statement) =>
-        statement.type === "ReturnStatement" &&
-        (statement.argument?.type === "JSXElement" ||
-          statement.argument?.type === "JSXFragment" ||
-          (statement.argument?.type === "ConditionalExpression" &&
-            (statement.argument?.consequent.type === "JSXElement" ||
-              statement.argument?.consequent.type === "JSXFragment" ||
-              statement.argument?.alternate.type === "JSXElement" ||
-              statement.argument?.alternate.type === "JSXFragment")) ||
-          (statement.argument?.type === "LogicalExpression" &&
-            (statement.argument?.left.type === "JSXElement" ||
-              statement.argument?.left.type === "JSXFragment" ||
-              statement.argument?.right.type === "JSXElement" ||
-              statement.argument?.right.type === "JSXFragment")))
-    )
-  );
-}
 
 // 将元素声明转换为模块组件
 async function transformElementDeclarationToModuleComponent(
@@ -59,22 +32,25 @@ async function transformElementDeclarationToModuleComponent(
   }
 
   if (elementDeclaration.type === "FunctionDeclarationWithComment") {
-    const { functionDeclaration, leadingComment, context } = elementDeclaration;
+    const {
+      functionDeclaration,
+      jsxElementsWithNodePath,
+      leadingComment,
+      context,
+      functionBodyWithNodePath,
+    } = elementDeclaration;
 
     // 判断是否是jsx组件
-    const isJsxComponent = isJSXFunctionComponent(elementDeclaration);
+    const isJsxComponent =
+      elementDeclaration.jsxElementsWithNodePath.length > 0;
     if (!isJsxComponent) {
-      console.log(elementDeclaration);
       console.error(
         `[${context.path} ${functionDeclaration.id.name}] 不是jsx组件`
       );
       return;
     }
 
-    // 拼出模块组件
-
     const functionName = functionDeclaration.id.name;
-
     const comment = parseComment("/*" + leadingComment?.value + "*/");
     let componentDescription = "";
     for (const item of comment) {
@@ -88,44 +64,23 @@ async function transformElementDeclarationToModuleComponent(
     try {
       const componentParams = (
         await Promise.all(
-          functionDeclaration.params.map(async (param) => {
-            // 解析解构类型声明 类似 {a}: {b} 的参数
-            if (param.typeAnnotation) {
-              return await parseTypeAnnotation(param.typeAnnotation, context);
-            }
-          })
+          functionDeclaration.params
+            .filter((param) => param.type === "Identifier")
+            .map((param) => parseTypeAnnotation(param.typeAnnotation, context))
         )
       ).filter((item) => item !== undefined);
 
-      const functionBody = await parseFunctionBody(functionDeclaration.body);
+      // const functionBody = await parseFunctionBodyWithNodePath(
+      //   functionBodyWithNodePath
+      // );
 
-      let componentJSXElements: ComponentJSXElement[] = [];
-      for (const statement of functionDeclaration.body.body) {
-        if (statement.type === "ReturnStatement" && statement.argument) {
-          const result = await parseExpressionToJSXElement(
-            statement.argument,
-            context
-          );
-
-          // 解析子组件
-          for (const item of result) {
-            const _item = item as ComponentJSXElement;
-            _item.moduleComponent =
-              (await transformElementDeclarationToModuleComponent(
-                _item.elementDeclaration
-              )) as ModuleComponent;
-
-            if (!_item.moduleComponent) {
-              console.error(
-                `[${context.path} ${functionName}] 无法解析子组件: ${_item.elementName}`
-              );
-              continue;
-            }
-
-            componentJSXElements.push(_item);
-          }
-        }
-      }
+      const componentJSXElements: ComponentJSXElement[] = (
+        await Promise.all(
+          jsxElementsWithNodePath.map((jsxElement) =>
+            parseJSXElementWithNodePath(jsxElement, context)
+          )
+        )
+      ).filter((item) => item !== undefined);
 
       return {
         type: "LocalModuleComponent",
