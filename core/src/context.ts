@@ -1,12 +1,7 @@
 import path from "path";
 import { Declaration, FileContext } from "./types";
 import { scanAstByFileWithAutoExtension } from "./ast";
-import {
-  ImportDeclaration,
-  Identifier,
-  ExportNamedDeclaration,
-  ExportSpecifier,
-} from "@babel/types";
+import { ImportDeclaration, Identifier, ExportSpecifier } from "@babel/types";
 import { NodePath } from "@babel/traverse";
 
 // 解析当前文件，若要解析的标识符 是从import导入的，则从import声明里开始解析。
@@ -138,6 +133,37 @@ async function getDeclarationInImportDeclarationHelper(
               type: "ExportSpecifier",
               local: path.node.id,
               exported: path.node.id,
+            };
+          }
+        },
+        // 将export const a = b 转化为 export { b as a }
+        VariableDeclaration(path) {
+          let variableDeclaratorId: Identifier | null = null;
+          let variableDeclaratorInit: Identifier | null = null;
+          path.traverse({
+            Identifier(path) {
+              if (
+                path.parentPath.type === "VariableDeclarator" &&
+                path.key === "id" &&
+                path.node.name === itemName
+              ) {
+                variableDeclaratorId = path.node;
+              }
+
+              if (
+                path.parentPath.type === "VariableDeclarator" &&
+                path.key === "init"
+              ) {
+                variableDeclaratorInit = path.node;
+              }
+            },
+          });
+
+          if (variableDeclaratorId && variableDeclaratorInit) {
+            targetExportSpecifier = {
+              type: "ExportSpecifier",
+              local: variableDeclaratorId,
+              exported: variableDeclaratorInit,
             };
           }
         },
