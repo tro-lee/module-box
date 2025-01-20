@@ -37,7 +37,7 @@ export type FileContext = {
 // 声明语句相关 上下文内容
 // ============================================
 
-export interface WithBaseInfo<T extends Node> {
+interface WithBaseInfo<T extends Node> {
   id: Identifier;
   filePath: string;
   nodePath: NodePath<T>;
@@ -82,11 +82,19 @@ export type NodeModuleImportDeclaration = Omit<
   type: "NodeModuleImportDeclaration";
 };
 
+export type TodoDeclaration = Pick<
+  WithBaseInfo<Node>,
+  "id" | "filePath" | "nodePath" | "context"
+> & {
+  type: "TodoDeclaration";
+};
+
 export type Declaration =
   | InterfaceDeclarationWithComment
   | FunctionDeclarationWithComment
   | VariableDeclaratorWithComment
-  | NodeModuleImportDeclaration;
+  | NodeModuleImportDeclaration
+  | TodoDeclaration;
 
 // ============================================
 // 模块组件相关 最终成果
@@ -115,10 +123,7 @@ export type ComponentJSXElement = {
   elementName: string;
   elementParams: any[];
   importPath: string;
-  elementDeclaration:
-    | FunctionDeclarationWithComment
-    | NodeModuleImportDeclaration
-    | VariableDeclaratorWithComment;
+  elementDeclaration: Declaration;
 
   // 测试使用
   moduleComponent?: ModuleComponent;

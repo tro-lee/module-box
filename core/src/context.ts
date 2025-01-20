@@ -1,14 +1,16 @@
 import path from "path";
-import {
-  ComponentJSXElement,
-  Declaration,
-  FileContext,
-  InterfaceDeclarationWithComment,
-  NodeModuleImportDeclaration,
-} from "./types";
+import { Declaration, FileContext } from "./types";
 import { scanAstByFileWithAutoExtension } from "./ast";
-import { ImportDeclaration, Identifier } from "@babel/types";
+import {
+  ImportDeclaration,
+  Identifier,
+  ExportNamedDeclaration,
+  ExportSpecifier,
+} from "@babel/types";
 import { NodePath } from "@babel/traverse";
+
+// 解析当前文件，若要解析的标识符 是从import导入的，则从import声明里开始解析。
+// 根据import 拿到目标文件，从目标文件的export开始解析。
 
 // 从导入声明中获取目标声明
 // 用于解决导入导出问题
@@ -31,10 +33,11 @@ async function getDeclarationInImportDeclarationHelper(
   }
 
   // 若查到为项目内部引用
+  // 获取目标上下文，然后传入getDeclarationInContext继续处理
   if (currentImportDeclaration.source.value.startsWith(".")) {
+    // 获取目标上下文
     const absoluteTargetImportPath = path.resolve(
-      currentContext.path,
-      "../",
+      path.dirname(currentContext.path),
       currentImportDeclaration.source.value
     );
 
@@ -42,66 +45,155 @@ async function getDeclarationInImportDeclarationHelper(
       absoluteTargetImportPath
     );
     if (!targetContext) {
-      console.warn(
-        `[${absoluteTargetImportPath}] 未找到目标声明 ${itemName}, 可能暂且不能解析声明语句`
-      );
+      console.warn(`[${absoluteTargetImportPath}] 不存在`);
       return null;
     }
 
-    const isExportDefaultDeclaration = currentImportDeclaration.specifiers.some(
-      (specifier) =>
-        specifier.type === "ImportDefaultSpecifier" &&
-        specifier.local.name === itemName
-    );
-
-    if (isExportDefaultDeclaration) {
-      // 若引入默认导出，则直接在此处判断了
+    // ============================================
+    // 处理默认导出 export default xxx
+    // 例如export default a 则直接从本上下文获取
+    // 例如export default observer(a) 则直接从上下文中获取a
+    // ============================================
+    if (
+      currentImportDeclaration.specifiers.some(
+        (specifier) =>
+          specifier.type === "ImportDefaultSpecifier" &&
+          specifier.local.name === itemName
+      )
+    ) {
       if (!targetContext.exportDefaultDeclarationWithNodePath) {
-        console.warn(
-          `${targetContext.path} 没有默认导出声明，无法找到目标声明 ${itemName}`
-        );
+        console.warn(`存在异常导出问题`);
         return null;
       }
 
+      let targetIdentifier: Identifier | null = null;
       let targetDeclaration: Declaration | null = null;
       targetContext.exportDefaultDeclarationWithNodePath.traverse({
-        CallExpression(path) {
-          console.log(path);
-        },
+        // 解析第一个函数参数
         Identifier(path) {
-          console.log(path);
+          if (path.listKey === "arguments" && path.key === 0) {
+            // 解决export default B(A)
+            targetIdentifier = path.node;
+          } else if (path.key === "declaration") {
+            // 解决export default A;
+            targetIdentifier = path.node;
+          } else if (path.parentPath.type === "FunctionDeclaration") {
+            // 解决export default A() {}
+            targetIdentifier = path.node;
+          } else if (path.parentPath.type === "ClassDeclaration") {
+            // 解决export default class A {}
+            targetDeclaration = {
+              type: "TodoDeclaration",
+              id: path.node,
+              nodePath: path.parentPath,
+              filePath: targetContext.path,
+              context: targetContext,
+            };
+          }
         },
       });
-    } else {
-      // 若引入普通导出，则在这里做判断
-      for (const exportNamedDeclaration of targetContext.exportNamedDeclarationsWithNodePath) {
-        console.log(exportNamedDeclaration);
+
+      if (targetDeclaration) {
+        return targetDeclaration;
       }
-      for (const exportAllDeclaration of targetContext.exportAllDeclarationsWithNodePath) {
-        console.log(exportAllDeclaration);
+
+      if (!targetDeclaration && targetIdentifier) {
+        return await getDeclarationInContext(
+          (targetIdentifier as Identifier).name,
+          targetContext
+        );
       }
     }
+
+    // ============================================
+    // 处理类似export { a } 的声明
+    // 判断下当前导出声明中 是否提及itemName即可
+    // ============================================
+    let targetExportSpecifier: ExportSpecifier | null = null;
+    targetContext.exportNamedDeclarationsWithNodePath.forEach((item) => {
+      item.traverse({
+        ExportSpecifier(path) {
+          if (
+            path.node.local.name === itemName ||
+            (path.node.exported.type === "Identifier" &&
+              path.node.exported.name === itemName)
+          ) {
+            targetExportSpecifier = path.node;
+          }
+        },
+        // 将export function a() {} 转换为 export { a }
+        FunctionDeclaration(path) {
+          if (path.node.id?.name === itemName) {
+            targetExportSpecifier = {
+              type: "ExportSpecifier",
+              local: path.node.id,
+              exported: path.node.id,
+            };
+          }
+        },
+        // 将export interface a {} 转换为 export { a }
+        TSInterfaceDeclaration(path) {
+          if (path.node.id?.name === itemName) {
+            targetExportSpecifier = {
+              type: "ExportSpecifier",
+              local: path.node.id,
+              exported: path.node.id,
+            };
+          }
+        },
+      });
+    });
+
+    if (targetExportSpecifier) {
+      const exportedName = (targetExportSpecifier as ExportSpecifier).exported;
+      const actualExportName =
+        exportedName.type === "Identifier" ? exportedName.name : itemName;
+      const declaration = await getDeclarationInContext(
+        actualExportName,
+        targetContext
+      );
+      return declaration || null;
+    }
+
+    // ============================================
+    // 处理类似export * from '...' 的声明
+    // 遍历所有export * from '...' 的声明，直到找到目标上下文为止
+    // ============================================
+    for (const exportAllDeclaration of targetContext.exportAllDeclarationsWithNodePath) {
+      const sourceValue = exportAllDeclaration.node.source.value;
+      const resolvedPath = path.resolve(
+        path.dirname(targetContext.path),
+        sourceValue
+      );
+
+      const newContext = await scanAstByFileWithAutoExtension(resolvedPath);
+      if (newContext) {
+        const result = await getDeclarationInContext(itemName, newContext);
+        if (result) {
+          return result;
+        }
+      }
+    }
+
+    console.warn(
+      `[${currentContext.path}] 的 ${targetContext.path} 无法解析导入声明 ${itemName}`
+    );
   }
 
-  console.warn(
-    `[${currentContext.path}] 无法解析导入声明 ${currentImportDeclaration.source.value}`
-  );
   return null;
 }
 
 // 获取声明在一个上下文中
 // 如果没有，则直接报错
-async function getDeclarationInContextHelper(
+export async function getDeclarationInContext(
   itemName: string,
-  currentContext: FileContext,
-  declarationType: "interface" | "function"
+  currentContext: FileContext
 ): Promise<Declaration | null> {
   // 从当前文件的变量声明 函数声明/接口声明中查找目标声明
   const declarations = [
     ...currentContext.variablesWithComment,
-    ...(declarationType === "interface"
-      ? currentContext.interfacesWithComment
-      : currentContext.functionsWithComment),
+    ...currentContext.interfacesWithComment,
+    ...currentContext.functionsWithComment,
   ];
   const item = declarations.find((item) => item.id.name === itemName);
   if (item) return item;
@@ -118,44 +210,11 @@ async function getDeclarationInContextHelper(
     });
   });
 
-  // 解析导入声明
-  if (!targetImportDeclaration) {
-    console.warn(
-      `[${currentContext.path}] 未找到目标声明 ${itemName}, 可能暂且不能解析声明语句`
-    );
-
-    return null;
-  } else {
-    return await getDeclarationInImportDeclarationHelper(
-      targetImportDeclaration,
-      currentContext,
-      itemName
-    );
-  }
-}
-
-export async function getInterfaceDeclarationInContext(
-  itemName: string,
-  currentContext: FileContext
-): Promise<
-  InterfaceDeclarationWithComment | NodeModuleImportDeclaration | null
-> {
-  const result = await getDeclarationInContextHelper(
-    itemName,
-    currentContext,
-    "interface"
-  );
-  return result as any;
-}
-
-export async function getElementDeclarationInContext(
-  itemName: string,
-  currentContext: FileContext
-): Promise<ComponentJSXElement["elementDeclaration"] | null> {
-  const result = await getDeclarationInContextHelper(
-    itemName,
-    currentContext,
-    "function"
-  );
-  return result as any;
+  return targetImportDeclaration
+    ? getDeclarationInImportDeclarationHelper(
+        targetImportDeclaration,
+        currentContext,
+        itemName
+      )
+    : null;
 }

@@ -12,10 +12,7 @@ import {
   InterfaceTypeAnnotation,
   Prop,
 } from "./types";
-import {
-  getElementDeclarationInContext,
-  getInterfaceDeclarationInContext,
-} from "./context";
+import { getDeclarationInContext } from "./context";
 import { NodePath } from "@babel/core";
 
 // 解析类型注解
@@ -37,10 +34,7 @@ export async function parseTypeAnnotation(
         };
       }
 
-      const declaration = await getInterfaceDeclarationInContext(
-        typeName.name,
-        context
-      );
+      const declaration = await getDeclarationInContext(typeName.name, context);
 
       if (!declaration) {
         return {
@@ -124,7 +118,6 @@ export async function parseTypeAnnotation(
         };
       }
     }
-
 
     // 字面量处理
     if (_typeAnnotation.type === "TSTypeLiteral") {
@@ -310,7 +303,7 @@ export async function parseJSXElementWithNodePath(
 
   // 当前仅支持<Component />写法
   if (jsxElement.openingElement.name.type === "JSXIdentifier") {
-    const elementDeclaration = await getElementDeclarationInContext(
+    const elementDeclaration = await getDeclarationInContext(
       jsxElement.openingElement.name.name,
       currentContext
     );
@@ -321,7 +314,6 @@ export async function parseJSXElementWithNodePath(
       );
       return undefined;
     }
-
 
     // 解析属性，获取{}中的内容
     const elementAttributes = await Promise.all(

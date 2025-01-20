@@ -81,6 +81,12 @@ async function transformElementDeclarationToModuleComponent(
           )
         )
       ).filter((item) => item !== undefined);
+      for (const componentJSXElement of componentJSXElements) {
+        const component = await transformElementDeclarationToModuleComponent(
+          componentJSXElement.elementDeclaration
+        );
+        componentJSXElement.moduleComponent = component;
+      }
 
       return {
         type: "LocalModuleComponent",
@@ -117,6 +123,5 @@ export async function transformFileContextToModuleComponent(
     }
   }
 
-  console.log(moduleComponents);
   return moduleComponents;
 }

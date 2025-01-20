@@ -36,6 +36,5 @@ test("ast Test", async () => {
     const moduleComponents = await transformFileContextToModuleComponent(
       fileContext,
     );
-    console.log(moduleComponents);
   }
 });

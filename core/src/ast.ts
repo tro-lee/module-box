@@ -276,9 +276,9 @@ export async function scanAstByFileWithAutoExtension(
     }
 
     try {
-      return await scanAstByFile(_absoluteTargetImportPath);
+      return scanAstByFile(_absoluteTargetImportPath);
     } catch (error) {
-      console.error(error);
+      console.warn(error);
     }
   }
 
