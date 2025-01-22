@@ -299,52 +299,58 @@ export async function parseJSXElementWithNodePath(
   jsxElementWithNodePath: NodePath<JSXElement>,
   currentContext: FileContext
 ): Promise<ComponentJSXElement | undefined> {
-  const jsxElement = jsxElementWithNodePath.node;
+  let elementName: string | undefined = undefined;
+  let elementAttributes: ComponentJSXElement["elementAttributes"] = [];
 
-  // 当前仅支持<Component />写法
-  if (jsxElement.openingElement.name.type === "JSXIdentifier") {
-    const elementDeclaration = await getDeclarationInContext(
-      jsxElement.openingElement.name.name,
-      currentContext
+  jsxElementWithNodePath.traverse({
+    JSXIdentifier(path) {
+      if (path.parentPath.type === "JSXOpeningElement" && path.key === "name") {
+        elementName = path.node.name;
+      }
+    },
+    // 当前仅能解析<AAA attr="123" />
+    JSXAttribute(path) {
+      if (
+        path.parentPath.type === "JSXOpeningElement" &&
+        path.listKey === "attributes"
+      ) {
+        const attrName =
+          path.node.name.type === "JSXIdentifier"
+            ? path.node.name.name
+            : path.node.name.namespace.name + ":" + path.node.name.name;
+        const attrValue = path.node.value;
+        elementAttributes.push({
+          attrName,
+          attrValue,
+        });
+      }
+    },
+  });
+
+  if (!elementName) {
+    console.warn(
+      `在解析JSXElement语句时，未找到elementName ${jsxElementWithNodePath.node.openingElement.name} ${currentContext.path}`
     );
-
-    if (!elementDeclaration) {
-      console.warn(
-        `在解析JSXElement语句时，未找到elementDeclaration ${jsxElement.openingElement.name.name} ${currentContext.path}`
-      );
-      return undefined;
-    }
-
-    // 解析属性，获取{}中的内容
-    const elementAttributes = await Promise.all(
-      jsxElement.openingElement.attributes.map(async (attr) => {
-        if (
-          attr.type === "JSXAttribute" &&
-          attr.value &&
-          attr.value.type === "JSXExpressionContainer"
-        ) {
-          // return {
-          //   name: attr.name.name,
-          //   value:
-          //     attr.value.expression.type !== "JSXEmptyExpression"
-          //       ? findIdentifiersInExpression(attr.value.expression)
-          //       : [],
-          // };
-        }
-      })
-    );
-
-    return {
-      type: "ComponentJSXElement",
-      elementName: elementDeclaration.id.name,
-      elementParams: elementAttributes,
-      importPath: elementDeclaration.filePath,
-      elementDeclaration,
-      moduleComponent: undefined,
-    };
+    return undefined;
   }
 
-  // 当前不支持<Component.Child />写法
-  if (jsxElement.openingElement.name.type === "JSXMemberExpression") {
+  const elementDeclaration = await getDeclarationInContext(
+    elementName,
+    currentContext
+  );
+
+  if (!elementDeclaration) {
+    console.warn(
+      `在解析JSXElement语句时，未找到elementDeclaration ${elementName} ${currentContext.path}`
+    );
+    return undefined;
   }
+
+  return {
+    type: "ComponentJSXElement",
+    elementName,
+    elementAttributes,
+    importPath: currentContext.path,
+    elementDeclaration,
+  };
 }

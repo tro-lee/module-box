@@ -121,7 +121,10 @@ export type ModuleComponent =
 export type ComponentJSXElement = {
   type: "ComponentJSXElement";
   elementName: string;
-  elementParams: any[];
+  elementAttributes: {
+    attrName: string;
+    attrValue: any | null;
+  }[];
   importPath: string;
   elementDeclaration: Declaration;
 
