@@ -6,6 +6,7 @@ import {
   ModuleComponent,
 } from "./types";
 import {
+  parseBlockStatementWithNodePath,
   parseJSXElementWithNodePath,
   parseTypeAnnotation,
 } from "./parse";
@@ -37,7 +38,7 @@ async function transformElementDeclarationToModuleComponent(
       jsxElementsWithNodePath,
       leadingComment,
       context,
-      functionBodyWithNodePath,
+      blockStateWithNodePath,
     } = elementDeclaration;
 
     // 判断是否是jsx组件
@@ -70,9 +71,9 @@ async function transformElementDeclarationToModuleComponent(
         )
       ).filter((item) => item !== undefined);
 
-      // const functionBody = await parseFunctionBodyWithNodePath(
-      //   functionBodyWithNodePath
-      // );
+      const componentFunctionBody = await parseBlockStatementWithNodePath(
+        blockStateWithNodePath
+      );
 
       const componentJSXElements: ComponentJSXElement[] = (
         await Promise.all(

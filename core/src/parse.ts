@@ -3,6 +3,11 @@ import type {
   Noop,
   TSTypeAnnotation,
   TypeAnnotation,
+  BlockStatement,
+  Node,
+  ExpressionStatement,
+  VariableDeclaration,
+  MemberExpression,
 } from "@babel/types";
 import { parse as parseComment } from "comment-parser";
 import {
@@ -14,6 +19,7 @@ import {
 } from "./types";
 import { getDeclarationInContext } from "./context";
 import { NodePath } from "@babel/core";
+import generate from "@babel/generator";
 
 // 解析类型注解
 export async function parseTypeAnnotation(
@@ -236,62 +242,63 @@ export async function parseTypeAnnotation(
   };
 }
 
+type CustomBinding = {
+  name: string;
+  usedProperties: string[];
+  referenceStatements: string[];
+};
+
 // 解析函数体
-// 用于获取变量关系
-// export async function parseFunctionBodyWithNodePath(
-//   functionBodyWithNodePath: NodePath<BlockStatement>
-// ) {
-//   const statementMapWithIdentifiers: Map<
-//     string,
-//     {
-//       leftIdentifiers: string[];
-//       rightIdentifiers: string[];
-//     }
-//   > = new Map();
+// TODO: 当前还没有做 更里的作用域
+export async function parseBlockStatementWithNodePath(
+  blockStatementWithNodePath: NodePath<BlockStatement>
+) {
+  const totalBindings: CustomBinding[] = [];
 
-//   for (const statement of functionBody.body) {
-//     const sourceCode = generate(statement).code;
+  for (const [key, binding] of Object.entries(
+    blockStatementWithNodePath.scope.bindings
+  )) {
+    // 获取所有引用语句
+    let referenceStatements = [binding.path, ...binding.referencePaths]
+      .map((referencePath) => {
+        let refCurrentPath: NodePath<Node> | null = referencePath;
+        while (
+          refCurrentPath &&
+          refCurrentPath.type !== "ExpressionStatement" &&
+          refCurrentPath.type !== "VariableDeclaration" &&
+          refCurrentPath.type !== "JSXElement"
+        ) {
+          refCurrentPath = refCurrentPath.parentPath;
+        }
+        return refCurrentPath ? generate(refCurrentPath.node).code : "";
+      })
+      .filter((v) => v !== "");
+    referenceStatements = Array.from(new Set(referenceStatements));
 
-//     if (statement.type === "VariableDeclaration") {
-//       const leftIdentifiers = statement.declarations
-//         .map((variableDeclaration) => {
-//           if (variableDeclaration.id.type === "Identifier") {
-//             return [variableDeclaration.id.name];
-//           } else if (variableDeclaration.id.type === "ObjectPattern") {
-//             return variableDeclaration.id.properties
-//               .filter(
-//                 (prop) =>
-//                   prop.type === "ObjectProperty" &&
-//                   prop.key.type === "Identifier"
-//               )
-//               .map((prop) => ((prop as ObjectProperty).key as Identifier).name);
-//           }
-//           return [];
-//         })
-//         .filter((v) => v !== undefined);
+    // 获取Binding被用到所有属性
+    let usedProperties = binding.referencePaths
+      .map((reference) => {
+        if (reference.parentPath?.type === "MemberExpression") {
+          const memberExpression = reference.parentPath
+            .node as MemberExpression;
+          if (memberExpression.property.type === "Identifier") {
+            return memberExpression.property.name;
+          }
+        }
+        return "";
+      })
+      .filter((v) => v !== "");
+    usedProperties = Array.from(new Set(usedProperties));
 
-//       const rightIdentifiers = statement.declarations
-//         .map((variableDeclaration) =>
-//           findIdentifiersInExpression(variableDeclaration.init)
-//         )
-//         .filter((v) => v !== undefined);
+    totalBindings.push({
+      name: key,
+      referenceStatements,
+      usedProperties,
+    });
+  }
 
-//       statementMapWithIdentifiers.set(sourceCode, {
-//         leftIdentifiers: leftIdentifiers.flat(),
-//         rightIdentifiers: rightIdentifiers.flat(),
-//       });
-//     } else if (statement.type === "ExpressionStatement") {
-//       const identifiers = findIdentifiersInExpression(statement.expression);
-
-//       statementMapWithIdentifiers.set(sourceCode, {
-//         leftIdentifiers: identifiers,
-//         rightIdentifiers: [],
-//       });
-//     }
-//   }
-
-//   return statementMapWithIdentifiers;
-// }
+  console.log(totalBindings);
+}
 
 // 解析JSX元素
 // 只解析组件函数

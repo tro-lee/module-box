@@ -116,7 +116,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
       }
 
       const jsxElementsWithNodePath: NodePath<JSXElement>[] = [];
-      let functionBodyWithNodePath: NodePath<BlockStatement> | undefined =
+      let blockStateWithNodePath: NodePath<BlockStatement> | undefined =
         undefined;
 
       path.traverse({
@@ -124,8 +124,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
           jsxElementsWithNodePath.push(path);
         },
         BlockStatement(path: NodePath<BlockStatement>) {
-          if (path.key === "body") {
-            functionBodyWithNodePath = path;
+          if (path.container === arrowFunction) {
+            blockStateWithNodePath = path;
           }
         },
       });
@@ -150,7 +150,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
           params: arrowFunction.params,
         },
         jsxElementsWithNodePath,
-        functionBodyWithNodePath: functionBodyWithNodePath!,
+        blockStateWithNodePath: blockStateWithNodePath!,
       });
     },
     FunctionDeclaration(path: NodePath<FunctionDeclaration>) {
@@ -168,7 +168,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
       const leadingComment = leadingComments?.at(-1);
 
       const jsxElementsWithNodePath: NodePath<JSXElement>[] = [];
-      let functionBodyWithNodePath: NodePath<BlockStatement> | undefined =
+      let blockStateWithNodePath: NodePath<BlockStatement> | undefined =
         undefined;
 
       path.traverse({
@@ -177,7 +177,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         },
         BlockStatement(path: NodePath<BlockStatement>) {
           if (path.key === "body") {
-            functionBodyWithNodePath = path;
+            blockStateWithNodePath = path;
           }
         },
       });
@@ -192,7 +192,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         context,
         functionDeclaration,
         jsxElementsWithNodePath,
-        functionBodyWithNodePath: functionBodyWithNodePath!,
+        blockStateWithNodePath: blockStateWithNodePath!,
       });
     },
     // 解析接口

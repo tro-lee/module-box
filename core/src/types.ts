@@ -59,7 +59,7 @@ export type FunctionDeclarationWithComment = (
   };
   // 函数里面具体内容：
   jsxElementsWithNodePath: NodePath<JSXElement>[]; // 涉及到的所有JSXElement
-  functionBodyWithNodePath: NodePath<BlockStatement>;
+  blockStateWithNodePath: NodePath<BlockStatement>;
 };
 
 export type InterfaceDeclarationWithComment =
