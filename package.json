@@ -3,10 +3,11 @@
   "module": "index.ts",
   "type": "module",
   "workspaces": [
-    "core"
+    "packages/*"
   ],
   "scripts": {
-    "test-core": "bun test test/core.test.ts -- -debug"
+    "core:test": "bun test test/core.test.ts -- -debug",
+    "web:dev": "cd packages/web && bun --bun run dev"
   },
   "devDependencies": {
     "@types/bun": "latest"

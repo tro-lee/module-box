@@ -72,7 +72,8 @@ async function transformElementDeclarationToModuleComponent(
       ).filter((item) => item !== undefined);
 
       const componentFunctionBody = await parseBlockStatementWithNodePath(
-        blockStateWithNodePath
+        blockStateWithNodePath,
+        context
       );
 
       const componentJSXElements: ComponentJSXElement[] = (
