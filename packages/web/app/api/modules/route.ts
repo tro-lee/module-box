@@ -1,13 +1,13 @@
-import { test } from "bun:test";
 import {
+  FileContext,
   getEntryFilePathsByDir,
   scanAstByFileWithAutoExtension,
   transformFileContextToModuleComponent,
-} from "core-library";
-import type { FileContext } from "core-library";
-import { XMLBuilder } from "fast-xml-parser";
+} from "library";
 
-test("ast Test", async () => {
+import type { ModuleComponent } from "../../../../library/index.ts";
+
+export async function GET(request: Request) {
   const entryFiles = await getEntryFilePathsByDir(
     "/Users/trolee02/Documents/Work/biz-mrn-food-deal",
     {
@@ -23,13 +23,15 @@ test("ast Test", async () => {
     globalContext.set(file, ast);
   }
 
-  const builder = new XMLBuilder();
+  const moduleList: ModuleComponent[] = [];
   for (const fileContext of globalContext.values()) {
     const moduleComponents = await transformFileContextToModuleComponent(
       fileContext
     );
-
-    const xml = builder.build(moduleComponents);
-    console.log(xml);
+    moduleList.push(...moduleComponents);
   }
-});
+
+  return Response.json({
+    data: moduleList,
+  });
+}

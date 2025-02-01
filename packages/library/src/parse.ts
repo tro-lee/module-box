@@ -344,8 +344,6 @@ export async function parseBlockStatementWithNodePath(
       initHook,
     });
   }
-
-  console.log(totalBindings);
 }
 
 // 解析JSX元素
@@ -355,7 +353,6 @@ export async function parseJSXElementWithNodePath(
   currentContext: FileContext
 ): Promise<ComponentJSXElement | undefined> {
   let elementName: string | undefined = undefined;
-  let elementAttributes: ComponentJSXElement["elementAttributes"] = [];
 
   jsxElementWithNodePath.traverse({
     JSXIdentifier(path) {
@@ -363,23 +360,23 @@ export async function parseJSXElementWithNodePath(
         elementName = path.node.name;
       }
     },
-    // 当前仅能解析<AAA attr="123" />
-    JSXAttribute(path) {
-      if (
-        path.parentPath.type === "JSXOpeningElement" &&
-        path.listKey === "attributes"
-      ) {
-        const attrName =
-          path.node.name.type === "JSXIdentifier"
-            ? path.node.name.name
-            : path.node.name.namespace.name + ":" + path.node.name.name;
-        const attrValue = path.node.value;
-        elementAttributes.push({
-          attrName,
-          attrValue,
-        });
-      }
-    },
+    // // 当前仅能解析<AAA attr="123" />
+    // JSXAttribute(path) {
+    //   if (
+    //     path.parentPath.type === "JSXOpeningElement" &&
+    //     path.listKey === "attributes"
+    //   ) {
+    //     const attrName =
+    //       path.node.name.type === "JSXIdentifier"
+    //         ? path.node.name.name
+    //         : path.node.name.namespace.name + ":" + path.node.name.name;
+    //     const attrValue = path.node.value;
+    //     elementAttributes.push({
+    //       attrName,
+    //       attrValue,
+    //     });
+    //   }
+    // },
   });
 
   if (!elementName) {
@@ -404,8 +401,6 @@ export async function parseJSXElementWithNodePath(
   return {
     type: "ComponentJSXElement",
     elementName,
-    elementAttributes,
     importPath: currentContext.path,
-    elementDeclaration,
   };
 }

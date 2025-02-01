@@ -10,9 +10,13 @@
     "web:dev": "cd packages/web && bun --bun run dev"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "library": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.1"
   }
 }

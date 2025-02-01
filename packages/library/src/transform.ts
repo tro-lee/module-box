@@ -2,6 +2,7 @@ import { parse as parseComment } from "comment-parser";
 import generate from "@babel/generator";
 import {
   ComponentJSXElement,
+  Declaration,
   FileContext,
   ModuleComponent,
 } from "./types";
@@ -13,7 +14,7 @@ import {
 
 // 将元素声明转换为模块组件
 async function transformElementDeclarationToModuleComponent(
-  elementDeclaration: ComponentJSXElement["elementDeclaration"]
+  elementDeclaration: Declaration
 ): Promise<ModuleComponent | undefined> {
   if (elementDeclaration.type === "NodeModuleImportDeclaration") {
     return {
@@ -83,17 +84,10 @@ async function transformElementDeclarationToModuleComponent(
           )
         )
       ).filter((item) => item !== undefined);
-      for (const componentJSXElement of componentJSXElements) {
-        const component = await transformElementDeclarationToModuleComponent(
-          componentJSXElement.elementDeclaration
-        );
-        componentJSXElement.moduleComponent = component;
-      }
 
       return {
         type: "LocalModuleComponent",
         componentName: functionName,
-        componentDescription,
         componentJSXElements,
         componentParams,
       };

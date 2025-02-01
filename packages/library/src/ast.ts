@@ -38,7 +38,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 
   let ast: ParseResult | null = null;
   try {
-    const sourceCode = await Bun.file(filename).text();
+    const sourceCode = await fs.promises.readFile(filename, 'utf-8');
 
     ast = parse(sourceCode, {
       filename,
