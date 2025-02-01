@@ -88,6 +88,7 @@ async function transformElementDeclarationToModuleComponent(
       return {
         type: "LocalModuleComponent",
         componentName: functionName,
+        componentDescription,
         componentJSXElements,
         componentParams,
       };

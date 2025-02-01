@@ -7,7 +7,7 @@ import {
 
 import type { ModuleComponent } from "../../../../library/index.ts";
 
-export async function GET(request: Request) {
+export async function GET() {
   const entryFiles = await getEntryFilePathsByDir(
     "/Users/trolee02/Documents/Work/biz-mrn-food-deal",
     {

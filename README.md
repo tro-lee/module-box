@@ -1,0 +1,1 @@
+需安装依赖tsc，bun，node 23(用于next)

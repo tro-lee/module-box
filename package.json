@@ -1,12 +1,11 @@
 {
   "name": "module-toolbox",
-  "module": "index.ts",
-  "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "core:test": "bun test test/core.test.ts -- -debug",
+    "library:test": "bun test test/core.test.ts -- -debug",
+    "library:build": "cd packages/library && tsc && bun build",
     "web:dev": "cd packages/web && bun --bun run dev"
   },
   "devDependencies": {
