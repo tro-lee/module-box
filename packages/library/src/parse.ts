@@ -59,7 +59,7 @@ export async function parseTypeAnnotation(
       }
 
       // 若是本地文件
-      if (declaration.type === "InterfaceDeclarationWithComment") {
+      if (declaration.type === "InterfaceDeclarationWithBaseInfo") {
         const { id, leadingComment, tsTypeElements, extendsExpression } =
           declaration;
         const comment = parseComment("/*" + leadingComment?.value + "*/");
@@ -399,8 +399,9 @@ export async function parseJSXElementWithNodePath(
   }
 
   return {
-    type: "ComponentJSXElement",
     elementName,
-    importPath: currentContext.path,
+    componentName: elementDeclaration.id.name,
+    componentFilePath: elementDeclaration.filePath,
+    componentKey: `${elementDeclaration.id.name}-${elementDeclaration.filePath}`,
   };
 }

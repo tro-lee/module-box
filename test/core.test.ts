@@ -1,11 +1,8 @@
 import { test } from "bun:test";
 import {
   getEntryFilePathsByDir,
-  scanAstByFileWithAutoExtension,
-  transformFileContextToModuleComponent,
-} from "core-library";
-import type { FileContext } from "core-library";
-import { XMLBuilder } from "fast-xml-parser";
+  transformFilePathsToModule,
+} from "../packages/library/index";
 
 test("ast Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(
@@ -16,20 +13,7 @@ test("ast Test", async () => {
     }
   );
 
-  const globalContext: Map<string, FileContext> = new Map();
-  for (const file of entryFiles) {
-    const ast = await scanAstByFileWithAutoExtension(file);
-    if (!ast) continue;
-    globalContext.set(file, ast);
-  }
-
-  const builder = new XMLBuilder();
-  for (const fileContext of globalContext.values()) {
-    const moduleComponents = await transformFileContextToModuleComponent(
-      fileContext
-    );
-
-    const xml = builder.build(moduleComponents);
-    console.log(xml);
-  }
+  const { modules, components } = await transformFilePathsToModule(entryFiles);
+  console.log(modules);
+  console.log(components);
 });

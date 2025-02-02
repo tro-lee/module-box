@@ -1,39 +1,25 @@
 import { parse as parseComment } from "comment-parser";
 import generate from "@babel/generator";
 import {
+  Component,
   ComponentJSXElement,
   Declaration,
   FileContext,
-  ModuleComponent,
+  Module,
 } from "./types";
 import {
   parseBlockStatementWithNodePath,
   parseJSXElementWithNodePath,
   parseTypeAnnotation,
 } from "./parse";
+import { getDeclarationInContext } from "./context";
+import { scanAstByFileWithAutoExtension } from "./ast";
 
-// 将元素声明转换为模块组件
-async function transformElementDeclarationToModuleComponent(
+// 将函数声明转换为组件
+async function transformElementDeclarationToComponent(
   elementDeclaration: Declaration
-): Promise<ModuleComponent | undefined> {
-  if (elementDeclaration.type === "NodeModuleImportDeclaration") {
-    return {
-      type: "NodeModuleComponent",
-      componentName: elementDeclaration.id.name,
-      packageName: elementDeclaration.filePath,
-    };
-  }
-
-  if (elementDeclaration.type === "VariableDeclaratorWithComment") {
-    const sourceCode = generate(elementDeclaration.variableDeclarator);
-    return {
-      type: "UnknownComponent",
-      componentName: elementDeclaration.id.name,
-      sourceCode: sourceCode.code,
-    };
-  }
-
-  if (elementDeclaration.type === "FunctionDeclarationWithComment") {
+): Promise<Component | undefined> {
+  if (elementDeclaration.type === "FunctionDeclarationWithBaseInfo") {
     const {
       functionDeclaration,
       jsxElementsWithNodePath,
@@ -52,18 +38,18 @@ async function transformElementDeclarationToModuleComponent(
       return;
     }
 
-    const functionName = functionDeclaration.id.name;
-    const comment = parseComment("/*" + leadingComment?.value + "*/");
-    let componentDescription = "";
-    for (const item of comment) {
-      item.tags.forEach((tag) => {
-        if (tag.name === "description") {
-          componentDescription = tag.name;
-        }
-      });
-    }
-
     try {
+      const functionName = functionDeclaration.id.name;
+
+      let componentDescription = "";
+      for (const item of parseComment("/*" + leadingComment?.value + "*/")) {
+        item.tags.forEach((tag) => {
+          if (tag.name === "description") {
+            componentDescription = tag.name;
+          }
+        });
+      }
+
       const componentParams = (
         await Promise.all(
           functionDeclaration.params
@@ -77,48 +63,166 @@ async function transformElementDeclarationToModuleComponent(
         context
       );
 
-      const componentJSXElements: ComponentJSXElement[] = (
-        await Promise.all(
-          jsxElementsWithNodePath.map((jsxElement) =>
-            parseJSXElementWithNodePath(jsxElement, context)
+      const componentJSXElements: ComponentJSXElement[] = Array.from(
+        new Map(
+          (
+            await Promise.all(
+              jsxElementsWithNodePath.map((jsxElement) =>
+                parseJSXElementWithNodePath(jsxElement, context)
+              )
+            )
           )
-        )
-      ).filter((item) => item !== undefined);
+            .filter((item): item is ComponentJSXElement => item !== undefined)
+            .map((item) => [`${item.elementName}-${context.path}`, item])
+        ).values()
+      );
 
-      return {
-        type: "LocalModuleComponent",
+      const component: Component = {
+        type: "LocalComponent",
         componentName: functionName,
+        componentFilePath: context.path,
+        componentKey: `${functionName}-${context.path}`,
         componentDescription,
         componentJSXElements,
         componentParams,
       };
+      globalComponentContext.set(component.componentKey, component);
+
+      // 副作用
+      // 顺便将jsx元素中的组件声明也转换为组件
+      for (const jsxElement of componentJSXElements) {
+        const declaration = await getDeclarationInContext(
+          jsxElement.elementName,
+          context
+        );
+
+        if (declaration) {
+          const component = await transformElementDeclarationToComponent(
+            declaration
+          );
+          if (component) {
+            globalComponentContext.set(component.componentKey, component);
+          }
+        }
+      }
+
+      return component;
     } catch (e) {
       console.error(e);
+      return;
     }
+  }
+  if (elementDeclaration.type === "NodeModuleImportDeclaration") {
+    const componentKey = `${elementDeclaration.id.name}-${elementDeclaration.filePath}`;
+
+    globalComponentContext.set(componentKey, {
+      type: "NodeComponent",
+      componentName: elementDeclaration.id.name,
+      packageName: elementDeclaration.filePath,
+      componentKey: componentKey,
+    });
   }
 }
 
-// 将文件上下文转换为模块组件
-// 识别上下文中的所有元素声明
-export async function transformFileContextToModuleComponent(
-  context: FileContext
-) {
-  const { functionsWithComment } = context;
-  const moduleComponents: ModuleComponent[] = [];
+// 将元素声明转换为模块
+async function transformElementDeclarationToModule(
+  elementDeclaration: Declaration
+): Promise<Module | undefined> {
+  if (elementDeclaration.type === "NodeModuleImportDeclaration") {
+    return {
+      type: "NodeModule",
+      componentName: elementDeclaration.id.name,
+      packageName: elementDeclaration.filePath,
+    };
+  }
 
-  for (const functionWithComment of functionsWithComment) {
-    try {
-      const component = await transformElementDeclarationToModuleComponent(
-        functionWithComment
+  if (elementDeclaration.type === "VariableDeclaratorWithBaseInfo") {
+    const sourceCode = generate(elementDeclaration.variableDeclarator);
+    return {
+      type: "UnknownModule",
+      componentName: elementDeclaration.id.name,
+      sourceCode: sourceCode.code,
+    };
+  }
+
+  if (elementDeclaration.type === "FunctionDeclarationWithBaseInfo") {
+    const component = await transformElementDeclarationToComponent(
+      elementDeclaration
+    );
+
+    // 若出问题
+    if (!component || component.type !== "LocalComponent") {
+      return;
+    }
+
+    return {
+      type: "LocalModule",
+      componentFilePath: component.componentFilePath,
+      componentName: component.componentName,
+      componentKey: component.componentKey,
+    };
+  }
+}
+
+let globalComponentContext: Map<string, Component> = new Map();
+
+// 将文件上下文转换为模块
+// 识别上下文中的所有元素声明
+async function transformFileContextToModule(
+  context: FileContext,
+  _globalComponentContext: Map<string, Component>
+) {
+  // 将老的组件上下文转入新的组件上下文
+  if (_globalComponentContext !== globalComponentContext) {
+    globalComponentContext.forEach((component, key) => {
+      _globalComponentContext.set(key, component);
+    });
+    globalComponentContext = _globalComponentContext;
+  }
+
+  const moduleComponents: Module[] = [];
+
+  try {
+    for (const functionWithBaseInfo of context.functionsWithBaseInfo) {
+      const component = await transformElementDeclarationToModule(
+        functionWithBaseInfo
       );
 
       if (component) {
         moduleComponents.push(component);
       }
-    } catch (error) {
-      console.error(error);
     }
+  } catch (error) {
+    console.error(error);
   }
 
   return moduleComponents;
+}
+
+// 将文件路径转换为模块
+export async function transformFilePathsToModule(filePaths: string[]) {
+  const fileContexts: Map<string, FileContext> = new Map();
+  for (const filePath of filePaths) {
+    const fileContext = await scanAstByFileWithAutoExtension(filePath);
+    if (!fileContext) continue;
+    fileContexts.set(filePath, fileContext);
+  }
+
+  const resultModules: Map<string, Module> = new Map();
+  const resultComponentContext = new Map<string, Component>();
+
+  for (const fileContext of fileContexts.values()) {
+    const modules = await transformFileContextToModule(
+      fileContext,
+      resultComponentContext
+    );
+    for (const module of modules) {
+      resultModules.set(module.componentName, module);
+    }
+  }
+
+  return {
+    modules: resultModules,
+    components: resultComponentContext,
+  };
 }

@@ -61,9 +61,9 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
   const context: FileContext = {
     path: filename,
     ast,
-    interfacesWithComment: [],
-    functionsWithComment: [],
-    variablesWithComment: [],
+    interfacesWithBaseInfo: [],
+    functionsWithBaseInfo: [],
+    variablesWithBaseInfo: [],
     importDeclarationsWithNodePath: [],
     exportAllDeclarationsWithNodePath: [],
     exportNamedDeclarationsWithNodePath: [],
@@ -130,8 +130,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         },
       });
 
-      context.functionsWithComment.push({
-        type: "FunctionDeclarationWithComment",
+      context.functionsWithBaseInfo.push({
+        type: "FunctionDeclarationWithBaseInfo",
         isArrowFunction: true,
         nodePath: path,
         id: {
@@ -182,8 +182,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         },
       });
 
-      context.functionsWithComment.push({
-        type: "FunctionDeclarationWithComment",
+      context.functionsWithBaseInfo.push({
+        type: "FunctionDeclarationWithBaseInfo",
         isArrowFunction: false,
         nodePath: path,
         id,
@@ -207,8 +207,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         path.parent?.leadingComments ?? path.node.leadingComments;
       const leadingComment = leadingComments?.at(-1);
 
-      context.interfacesWithComment.push({
-        type: "InterfaceDeclarationWithComment",
+      context.interfacesWithBaseInfo.push({
+        type: "InterfaceDeclarationWithBaseInfo",
         id,
         leadingComment,
         nodePath: path,
@@ -230,8 +230,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 
           // 暂时只支持 变量声明
           if (path.node.id.type === "Identifier") {
-            context.variablesWithComment.push({
-              type: "VariableDeclaratorWithComment",
+            context.variablesWithBaseInfo.push({
+              type: "VariableDeclaratorWithBaseInfo",
               id: path.node.id,
               filePath: filename,
               context,

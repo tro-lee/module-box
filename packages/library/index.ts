@@ -1,11 +1,9 @@
 import { getEntryFilePathsByDir } from "./src/entry";
-import { scanAstByFileWithAutoExtension } from "./src/ast";
-import { transformFileContextToModuleComponent } from "./src/transform";
+import { transformFilePathsToModule } from "./src/transform";
 
 export {
   getEntryFilePathsByDir,
-  scanAstByFileWithAutoExtension,
-  transformFileContextToModuleComponent,
+  transformFilePathsToModule,
 };
 
 export * from "./src/types";

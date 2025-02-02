@@ -23,9 +23,9 @@ import {
 export type FileContext = {
   path: string;
   ast: ParseResult;
-  interfacesWithComment: InterfaceDeclarationWithComment[];
-  functionsWithComment: FunctionDeclarationWithComment[];
-  variablesWithComment: VariableDeclaratorWithComment[];
+  interfacesWithBaseInfo: InterfaceDeclarationWithBaseInfo[];
+  functionsWithBaseInfo: FunctionDeclarationWithBaseInfo[];
+  variablesWithBaseInfo: VariableDeclaratorWithBaseInfo[];
 
   importDeclarationsWithNodePath: NodePath<ImportDeclaration>[];
   exportDefaultDeclarationWithNodePath?: NodePath<ExportDefaultDeclaration>;
@@ -45,7 +45,7 @@ interface WithBaseInfo<T extends Node> {
   context: FileContext;
 }
 
-export type FunctionDeclarationWithComment = (
+type FunctionDeclarationWithBaseInfo = (
   | (WithBaseInfo<FunctionDeclaration> & {
       isArrowFunction: false;
     })
@@ -53,7 +53,7 @@ export type FunctionDeclarationWithComment = (
       isArrowFunction: true;
     })
 ) & {
-  type: "FunctionDeclarationWithComment";
+  type: "FunctionDeclarationWithBaseInfo";
   functionDeclaration: Pick<FunctionDeclaration, "body" | "params"> & {
     id: Identifier;
   };
@@ -62,27 +62,28 @@ export type FunctionDeclarationWithComment = (
   blockStateWithNodePath: NodePath<BlockStatement>;
 };
 
-export type InterfaceDeclarationWithComment =
+type InterfaceDeclarationWithBaseInfo =
   WithBaseInfo<TSInterfaceDeclaration> & {
-    type: "InterfaceDeclarationWithComment";
+    type: "InterfaceDeclarationWithBaseInfo";
     tsTypeElements: TSTypeElement[];
     extendsExpression: TSExpressionWithTypeArguments[];
     interfaceDeclaration: TSInterfaceDeclaration;
   };
 
-export type VariableDeclaratorWithComment = WithBaseInfo<VariableDeclarator> & {
-  type: "VariableDeclaratorWithComment";
-  variableDeclarator: VariableDeclarator;
-};
+type VariableDeclaratorWithBaseInfo =
+  WithBaseInfo<VariableDeclarator> & {
+    type: "VariableDeclaratorWithBaseInfo";
+    variableDeclarator: VariableDeclarator;
+  };
 
-export type NodeModuleImportDeclaration = Omit<
+type NodeModuleImportDeclaration = Omit<
   Omit<WithBaseInfo<ImportDeclaration>, "context">,
   "nodePath"
 > & {
   type: "NodeModuleImportDeclaration";
 };
 
-export type TodoDeclaration = Pick<
+type TodoDeclaration = Pick<
   WithBaseInfo<Node>,
   "id" | "filePath" | "nodePath" | "context"
 > & {
@@ -90,42 +91,59 @@ export type TodoDeclaration = Pick<
 };
 
 export type Declaration =
-  | InterfaceDeclarationWithComment
-  | FunctionDeclarationWithComment
-  | VariableDeclaratorWithComment
+  | InterfaceDeclarationWithBaseInfo
+  | FunctionDeclarationWithBaseInfo
+  | VariableDeclaratorWithBaseInfo
   | NodeModuleImportDeclaration
   | TodoDeclaration;
 
 // ============================================
 // 模块组件相关 最终成果
 // ============================================
-export type ModuleComponent =
+export type Module =
   | {
-      type: "LocalModuleComponent";
+      type: "LocalModule";
       componentName: string;
+      componentFilePath: string;
+      componentKey: string; // 组件唯一标识Name-FilePath
+    }
+  | {
+      type: "NodeModule";
+      componentName: string;
+      packageName: string;
+    }
+  | {
+      type: "UnknownModule";
+      componentName: string;
+      sourceCode: string;
+    };
+
+export type Component =
+  | {
+      type: "LocalComponent";
+      componentName: string;
+      componentFilePath: string;
+      componentKey: string; // 组件唯一标识Name-FilePath
       componentDescription: string;
       componentJSXElements: ComponentJSXElement[];
       componentParams: CustomTypeAnnotation[];
     }
   | {
-      type: "NodeModuleComponent";
+      type: "NodeComponent";
       componentName: string;
       packageName: string;
-    }
-  | {
-      type: "UnknownComponent";
-      componentName: string;
-      sourceCode: string;
+      componentKey: string; // 组件唯一标识Name-PackageName
     };
 
 export type ComponentJSXElement = {
-  type: "ComponentJSXElement";
   elementName: string;
-  importPath: string;
+  componentName: string; // 故意冗余 方便使用
+  componentFilePath: string; // 故意冗余 方便使用
+  componentKey: string; // 组件唯一标识Name-FilePath
 };
 
 // ============================================
-// 类型注解
+// 类型注解 给外部使用
 // ============================================
 
 export interface Prop {
@@ -133,7 +151,7 @@ export interface Prop {
   propType?: CustomTypeAnnotation;
 }
 
-export type BaseTypeAnnotation<T extends string> = {
+type BaseTypeAnnotation<T extends string> = {
   type: T;
 };
 

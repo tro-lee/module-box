@@ -209,20 +209,32 @@ async function getDeclarationInImportDeclarationHelper(
   return null;
 }
 
+// 缓存已查询过的声明，避免重复查询
+const declarationCache = new Map<string, Declaration | null>();
+
 // 获取声明在一个上下文中
 // 如果没有，则直接报错
 export async function getDeclarationInContext(
   itemName: string,
   currentContext: FileContext
 ): Promise<Declaration | null> {
+  const cacheKey = `${currentContext.path}-${itemName}`;
+  const cachedDeclaration = declarationCache.get(cacheKey);
+  if (cachedDeclaration) {
+    return cachedDeclaration;
+  }
+
   // 从当前文件的变量声明 函数声明/接口声明中查找目标声明
   const declarations = [
-    ...currentContext.variablesWithComment,
-    ...currentContext.interfacesWithComment,
-    ...currentContext.functionsWithComment,
+    ...currentContext.variablesWithBaseInfo,
+    ...currentContext.interfacesWithBaseInfo,
+    ...currentContext.functionsWithBaseInfo,
   ];
   const item = declarations.find((item) => item.id.name === itemName);
-  if (item) return item;
+  if (item) {
+    declarationCache.set(cacheKey, item);
+    return item;
+  }
 
   // 从当前文件的导入声明中查找目标声明
   let targetImportDeclaration: ImportDeclaration | null = null;
@@ -236,11 +248,17 @@ export async function getDeclarationInContext(
     });
   });
 
-  return targetImportDeclaration
-    ? getDeclarationInImportDeclarationHelper(
+  // 递归获取
+  const declaration = targetImportDeclaration
+    ? await getDeclarationInImportDeclarationHelper(
         targetImportDeclaration,
         currentContext,
         itemName
       )
     : null;
+
+  if (declaration) {
+    declarationCache.set(cacheKey, declaration);
+  }
+  return declaration;
 }

@@ -1,4 +1,4 @@
-import { BuildConfig } from "bun";
+import type { BuildConfig } from "bun";
 
 const config: BuildConfig = {
   entrypoints: ["./index.ts"],
