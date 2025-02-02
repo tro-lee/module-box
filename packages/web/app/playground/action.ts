@@ -1,38 +1,16 @@
 "use server";
 
-import {
-  FileContext,
-  getEntryFilePathsByDir,
-  scanAstByFileWithAutoExtension,
-  transformFileContextToModuleComponent,
-} from "library";
-import type { ModuleComponent } from "library";
+import { ModuleComponent } from "library";
 
-export async function getAllModuleDirectoryData() {
-  "use server";
+const BASE_URL = "http://localhost:3000";
 
-  const entryFiles = await getEntryFilePathsByDir(
-    "/Users/trolee02/Documents/Work/biz-mrn-food-deal",
-    {
-      exclude: ["test", "node_modules"],
-      include: ["src", "core"],
-    }
-  );
+export async function getAllModuleDirectoryData(): Promise<ModuleComponent[]> {
+  const res = await fetch(`${BASE_URL}/modules`);
+  const data = await res.json();
 
-  const globalContext: Map<string, FileContext> = new Map();
-  for (const file of entryFiles) {
-    const ast = await scanAstByFileWithAutoExtension(file);
-    if (!ast) continue;
-    globalContext.set(file, ast);
+  if (data.status !== "success") {
+    throw new Error("Failed to fetch modules");
   }
 
-  const moduleList: ModuleComponent[] = [];
-  for (const fileContext of globalContext.values()) {
-    const moduleComponents = await transformFileContextToModuleComponent(
-      fileContext
-    );
-    moduleList.push(...moduleComponents);
-  }
-
-  return moduleList;
+  return data.data;
 }

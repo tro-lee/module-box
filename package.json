@@ -4,9 +4,13 @@
     "packages/*"
   ],
   "scripts": {
-    "library:test": "bun test test/core.test.ts -- -debug",
-    "library:build": "cd packages/library && tsc && bun build",
-    "web:dev": "cd packages/web && bun --bun run dev"
+    "library:build": "cd packages/library && tsc && bun run build.ts",
+    "server:dev": "bun library:build && cd packages/server && bun run --hot src/index.ts",
+    "web:dev": "cd packages/web && next dev --port 8000",
+
+    "web:build": "cd packages/web && next build",
+    "web:start": "cd packages/web && next start",
+    "web:lint": "cd packages/web && next lint"
   },
   "devDependencies": {
     "@types/bun": "latest",
