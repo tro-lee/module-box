@@ -86,12 +86,7 @@ async function generateComponentDoc(component: Component): Promise<string[]> {
   return chunks;
 }
 
-/**
- * 收集组件的所有依赖组件
- * @param component 起始组件
- * @param componentContext 组件上下文
- * @returns 依赖组件数组
- */
+// 收集组件的所有依赖组件
 async function collectReferencedComponents(
   component: Component,
   componentContext: Map<string, Component>
@@ -120,12 +115,7 @@ async function collectReferencedComponents(
   return Array.from(processedComponents);
 }
 
-/**
- * 生成模块的完整文档
- * @param module 模块信息
- * @param componentContext 组件上下文
- * @returns Markdown格式的文档Blob
- */
+// 生成模块的完整文档
 export async function generateModuleDoc(
   module: Module,
   componentContext: Map<string, Component>
