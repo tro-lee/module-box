@@ -112,6 +112,7 @@ async function transformElementDeclarationToComponent(
       return;
     }
   }
+
   if (elementDeclaration.type === "NodeModuleImportDeclaration") {
     const componentKey = `${elementDeclaration.id.name}-${elementDeclaration.filePath}`;
 
@@ -121,6 +122,40 @@ async function transformElementDeclarationToComponent(
       packageName: elementDeclaration.filePath,
       componentKey: componentKey,
     });
+  }
+}
+
+// 将组件转换为函数声明
+export async function transformComponentToDeclaration(
+  component: Component
+): Promise<Declaration | undefined> {
+  if (component.type === "LocalComponent") {
+    const fileContext = await scanAstByFileWithAutoExtension(
+      component.componentFilePath
+    );
+    if (!fileContext) {
+      return;
+    }
+
+    const functionDeclaration = fileContext.functionsWithBaseInfo.find(
+      (item) => item.functionDeclaration.id.name === component.componentName
+    );
+    if (!functionDeclaration) {
+      return;
+    }
+
+    return functionDeclaration;
+  }
+
+  if (component.type === "NodeComponent") {
+    return {
+      type: "NodeModuleImportDeclaration",
+      id: {
+        name: component.componentName,
+        type: "Identifier",
+      },
+      filePath: component.packageName,
+    };
   }
 }
 
@@ -166,9 +201,9 @@ async function transformElementDeclarationToModule(
 
 let globalComponentContext: Map<string, Component> = new Map();
 
-// 将文件上下文转换为模块
+// 将文件上下文转换为模块和组件
 // 识别上下文中的所有元素声明
-async function transformFileContextToModule(
+async function transformFileContextToModuleAndComponent(
   context: FileContext,
   _globalComponentContext: Map<string, Component>
 ) {
@@ -199,8 +234,10 @@ async function transformFileContextToModule(
   return moduleComponents;
 }
 
-// 将文件路径转换为模块
-export async function transformFilePathsToModule(filePaths: string[]) {
+// 将文件路径转换为模块和组件
+export async function transformFilePathsToModuleAndComponent(
+  filePaths: string[]
+) {
   const fileContexts: Map<string, FileContext> = new Map();
   for (const filePath of filePaths) {
     const fileContext = await scanAstByFileWithAutoExtension(filePath);
@@ -212,7 +249,7 @@ export async function transformFilePathsToModule(filePaths: string[]) {
   const resultComponentContext = new Map<string, Component>();
 
   for (const fileContext of fileContexts.values()) {
-    const modules = await transformFileContextToModule(
+    const modules = await transformFileContextToModuleAndComponent(
       fileContext,
       resultComponentContext
     );
