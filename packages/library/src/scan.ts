@@ -17,6 +17,9 @@ import { NodePath, parse, ParseResult, traverse } from "@babel/core";
 import path from "path";
 import fs from "fs";
 import { FileContext } from "./types";
+import * as postcss from "postcss";
+import * as sass from "sass";
+import { camelCase } from "lodash";
 
 const astContextCache: Record<string, FileContext> = {};
 
@@ -38,7 +41,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 
   let ast: ParseResult | null = null;
   try {
-    const sourceCode = await fs.promises.readFile(filename, 'utf-8');
+    const sourceCode = await fs.promises.readFile(filename, "utf-8");
 
     ast = parse(sourceCode, {
       filename,
@@ -285,6 +288,27 @@ export async function scanAstByFileWithAutoExtension(
   return null;
 }
 
-export async function scanCSSAstByFile(filePath: string): Promise<FileContext | null> {
+// 扫描sass文件，返回样式对象(暂定RN样式格式)
+export function scanSASSFile(filePath: string) {
+  if (!filePath.endsWith(".sass") && !filePath.endsWith(".scss")) {
+    throw new Error("file is not a sass file");
+  }
 
+  // 编译sass并解析CSS
+  const css = postcss.parse(
+    sass.compile(filePath, { style: "compressed" }).css,
+    { from: filePath }
+  );
+
+  // 转换CSS规则为RN样式对象
+  const styles: Record<string, Record<string, string | number>> = {};
+  css.walkRules((rule) => {
+    const style: Record<string, string | number> = {};
+    rule.walkDecls((decl) => {
+      style[decl.prop] = decl.value;
+    });
+    styles[rule.selector.replace(/^\./, "")] = style;
+  });
+
+  return styles;
 }

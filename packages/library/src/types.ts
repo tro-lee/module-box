@@ -62,19 +62,17 @@ type FunctionDeclarationWithBaseInfo = (
   blockStateWithNodePath: NodePath<BlockStatement>;
 };
 
-type InterfaceDeclarationWithBaseInfo =
-  WithBaseInfo<TSInterfaceDeclaration> & {
-    type: "InterfaceDeclarationWithBaseInfo";
-    tsTypeElements: TSTypeElement[];
-    extendsExpression: TSExpressionWithTypeArguments[];
-    interfaceDeclaration: TSInterfaceDeclaration;
-  };
+type InterfaceDeclarationWithBaseInfo = WithBaseInfo<TSInterfaceDeclaration> & {
+  type: "InterfaceDeclarationWithBaseInfo";
+  tsTypeElements: TSTypeElement[];
+  extendsExpression: TSExpressionWithTypeArguments[];
+  interfaceDeclaration: TSInterfaceDeclaration;
+};
 
-type VariableDeclaratorWithBaseInfo =
-  WithBaseInfo<VariableDeclarator> & {
-    type: "VariableDeclaratorWithBaseInfo";
-    variableDeclarator: VariableDeclarator;
-  };
+type VariableDeclaratorWithBaseInfo = WithBaseInfo<VariableDeclarator> & {
+  type: "VariableDeclaratorWithBaseInfo";
+  variableDeclarator: VariableDeclarator;
+};
 
 type NodeModuleImportDeclaration = Omit<
   Omit<WithBaseInfo<ImportDeclaration>, "context">,
@@ -127,7 +125,7 @@ export type Component =
       componentDescription: string;
       componentJSXElements: ComponentJSXElement[];
       componentParams: CustomTypeAnnotation[];
-      componentStyleClass: string[]; // 所涉及的样式类
+      componentCssStyles: Record<string, Record<string, string | number>>; // 所涉及的样式类
     }
   | {
       type: "NodeComponent";

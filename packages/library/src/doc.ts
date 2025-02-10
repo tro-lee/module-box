@@ -15,7 +15,8 @@ const DOC_CONSTANTS = {
     PACKAGE: "\t- Package: {package}\n",
     TYPE: "\t- Component Type: {type}\n",
     DESCRIPTION: "\t- Component Description: {description}\n",
-    CODE: "\t- Core Code (Minified):\n```tsx\n{code}\n```\n",
+    CODE: "\t- Core Code (Minified):\n\t```tsx\n\t{code}\n\t```\n",
+    CSS_STYLES: "\t- CSS Styles:\n\t```css\n\t{css}\n\t```\n",
   },
 } as const;
 
@@ -54,6 +55,19 @@ async function generateComponentDoc(component: Component): Promise<string[]> {
       );
     }
 
+    if (Object.keys(component.componentCssStyles).length > 0) {
+      chunks.push(
+        DOC_CONSTANTS.COMPONENT_INFO.CSS_STYLES.replace(
+          "{css}",
+          Object.entries(component.componentCssStyles)
+            .map(([cls, styles]) => 
+              `.${cls}{${Object.entries(styles).map(([p, v]) => `${p}:${v};`).join('')}}`
+            )
+            .join('')
+        )
+      );
+    }
+
     const declaration = await transformComponentToDeclaration(component);
     if (declaration?.type === "FunctionDeclarationWithBaseInfo") {
       const { id, params, body } = declaration.functionDeclaration;
@@ -67,7 +81,7 @@ async function generateComponentDoc(component: Component): Promise<string[]> {
           async: false,
         },
         { compact: true, minified: true }
-      ).code;
+      ).code.replace(/\n/g, "\n\t");
 
       chunks.push(DOC_CONSTANTS.COMPONENT_INFO.CODE.replace("{code}", code));
     } else {

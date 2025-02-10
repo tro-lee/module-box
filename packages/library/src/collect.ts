@@ -21,6 +21,8 @@ import {
 import { getDeclarationInContext } from "./context";
 import { NodePath } from "@babel/core";
 import generate from "@babel/generator";
+import { scanSASSFile } from "./scan";
+import path from "path";
 
 // 解析类型注解
 export async function collectCustomTypeAnnotation(
@@ -349,43 +351,51 @@ export async function collectCustomBinding(
 
 // 收集样式类
 // 收集函数中所有提及的样式类
-export async function collectStyleClass(
-  blockStatementWithNodePath: NodePath<BlockStatement>,
-  context: FileContext
-) {
-  const styleClasses: Set<string> = new Set();
+export async function collectCssStyles(context: FileContext) {
+  const styles: Record<string, Record<string, string | number>> = {};
 
   const { importDeclarationsWithNodePath } = context;
   importDeclarationsWithNodePath.forEach((importDeclaration) => {
-    // 遍历导入声明，寻找 styles in jsx 语法
+    // 遍历导入声明，寻找样式文件导入
     importDeclaration.traverse({
-      ImportDefaultSpecifier(path) {
-        // 检查导入的文件是否是样式文件
-        const importPath = (path.parentPath.node as ImportDeclaration).source
-          .value;
-        if (importPath.endsWith(".css") || importPath.endsWith(".scss")) {
-          const binding = path.scope.getBinding(path.node.local.name);
-          if (binding) {
-            // 收集所有样式引用
-            binding.referencePaths.forEach((referencePath) => {
-              if (referencePath.parentPath?.type === "MemberExpression") {
-                const memberExpression = referencePath.parentPath?.node;
-                if (
-                  memberExpression?.type === "MemberExpression" &&
-                  memberExpression.object.type === "Identifier" &&
-                  memberExpression.property.type === "Identifier"
-                ) {
-                  styleClasses.add(memberExpression.property.name);
-                }
-              }
-            });
-          }
+      ImportDefaultSpecifier(nodePath) {
+        const importPath = (nodePath.parentPath.node as ImportDeclaration)
+          .source.value;
+
+        // 只处理 CSS/SCSS 文件
+        if (!importPath.endsWith(".css") && !importPath.endsWith(".scss")) {
+          return;
         }
+
+        // 收集样式类名引用
+        const binding = nodePath.scope.getBinding(nodePath.node.local.name);
+        const classNames = new Set<string>();
+
+        binding?.referencePaths.forEach((referencePath) => {
+          const memberExpr = referencePath.parentPath?.node;
+          if (
+            memberExpr?.type === "MemberExpression" &&
+            memberExpr.object.type === "Identifier" &&
+            memberExpr.property.type === "Identifier"
+          ) {
+            classNames.add(memberExpr.property.name);
+          }
+        });
+
+        // 解析样式文件
+        const absoluteFilePath = path.resolve(
+          path.dirname(context.path),
+          importPath
+        );
+        const sassStyles = scanSASSFile(absoluteFilePath);
+        classNames.forEach((className) => {
+          styles[className] = sassStyles[className] ?? {};
+        });
       },
     });
   });
 
-  console.log(styleClasses);
+  return styles;
 }
 
 // 解析JSX元素

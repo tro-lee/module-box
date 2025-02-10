@@ -1,6 +1,6 @@
 import path from "path";
 import { Declaration, FileContext } from "./types";
-import { scanAstByFileWithAutoExtension } from "./ast";
+import { scanAstByFileWithAutoExtension } from "./scan";
 import { ImportDeclaration, Identifier, ExportSpecifier } from "@babel/types";
 import { NodePath } from "@babel/traverse";
 

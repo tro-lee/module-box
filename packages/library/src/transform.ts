@@ -11,10 +11,10 @@ import {
   collectCustomBinding,
   collectComponentJSXElement,
   collectCustomTypeAnnotation,
-  collectStyleClass,
+  collectCssStyles,
 } from "./collect";
 import { getDeclarationInContext } from "./context";
-import { scanAstByFileWithAutoExtension } from "./ast";
+import { scanAstByFileWithAutoExtension } from "./scan";
 
 // 将函数声明转换为组件
 async function transformElementDeclarationToComponent(
@@ -67,11 +67,6 @@ async function transformElementDeclarationToComponent(
         context
       );
 
-      const componentStyleClass = await collectStyleClass(
-        blockStateWithNodePath,
-        context
-      );
-
       // 去重收集JSX元素
       const componentJSXElements: ComponentJSXElement[] = Array.from(
         new Map(
@@ -87,6 +82,8 @@ async function transformElementDeclarationToComponent(
         ).values()
       );
 
+      const componentCssStyles = await collectCssStyles(context);
+
       const component: Component = {
         type: "LocalComponent",
         componentName: functionName,
@@ -95,6 +92,7 @@ async function transformElementDeclarationToComponent(
         componentDescription,
         componentJSXElements,
         componentParams,
+        componentCssStyles,
       };
       globalComponentContext.set(component.componentKey, component);
 
