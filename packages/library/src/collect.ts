@@ -7,6 +7,7 @@ import type {
   Node,
   MemberExpression,
   VariableDeclarator,
+  ImportDeclaration,
 } from "@babel/types";
 import { parse as parseComment } from "comment-parser";
 import {
@@ -22,7 +23,7 @@ import { NodePath } from "@babel/core";
 import generate from "@babel/generator";
 
 // 解析类型注解
-export async function parseTypeAnnotation(
+export async function collectCustomTypeAnnotation(
   typeAnnotation: TSTypeAnnotation | TypeAnnotation | Noop | null | undefined,
   context: FileContext
 ): Promise<CustomTypeAnnotation> {
@@ -81,7 +82,7 @@ export async function parseTypeAnnotation(
             prop.key.type === "Identifier"
           ) {
             const propKey = prop.key.name;
-            const propType = await parseTypeAnnotation(
+            const propType = await collectCustomTypeAnnotation(
               prop.typeAnnotation,
               declaration.context
             );
@@ -97,7 +98,7 @@ export async function parseTypeAnnotation(
         const extendsInterface: InterfaceTypeAnnotation[] = [];
         for (const extendsItem of extendsExpression) {
           if (extendsItem.expression.type === "Identifier") {
-            const extendsInterfaceItem = (await parseTypeAnnotation(
+            const extendsInterfaceItem = (await collectCustomTypeAnnotation(
               {
                 type: "TSTypeAnnotation",
                 typeAnnotation: {
@@ -136,7 +137,7 @@ export async function parseTypeAnnotation(
               property.key.type === "Identifier"
             ) {
               const propKey = property.key.name;
-              const propType = await parseTypeAnnotation(
+              const propType = await collectCustomTypeAnnotation(
                 property.typeAnnotation,
                 context
               );
@@ -161,7 +162,7 @@ export async function parseTypeAnnotation(
       const unionMembers = _typeAnnotation.types;
       const parsedUnionMembers = await Promise.all(
         unionMembers.map(async (member) => {
-          return await parseTypeAnnotation(
+          return await collectCustomTypeAnnotation(
             {
               type: "TSTypeAnnotation",
               typeAnnotation: member,
@@ -181,7 +182,7 @@ export async function parseTypeAnnotation(
     if (_typeAnnotation.type === "TSArrayType") {
       return {
         type: "ArrayTypeAnnotation",
-        elementType: await parseTypeAnnotation(
+        elementType: await collectCustomTypeAnnotation(
           {
             type: "TSTypeAnnotation",
             typeAnnotation: _typeAnnotation.elementType,
@@ -252,7 +253,7 @@ type CustomBinding = {
 
 // 解析函数体
 // TODO: 当前还没有做 更里的作用域
-export async function parseBlockStatementWithNodePath(
+export async function collectCustomBinding(
   blockStatementWithNodePath: NodePath<BlockStatement>,
   context: FileContext
 ) {
@@ -346,9 +347,50 @@ export async function parseBlockStatementWithNodePath(
   }
 }
 
+// 收集样式类
+// 收集函数中所有提及的样式类
+export async function collectStyleClass(
+  blockStatementWithNodePath: NodePath<BlockStatement>,
+  context: FileContext
+) {
+  const styleClasses: Set<string> = new Set();
+
+  const { importDeclarationsWithNodePath } = context;
+  importDeclarationsWithNodePath.forEach((importDeclaration) => {
+    // 遍历导入声明，寻找 styles in jsx 语法
+    importDeclaration.traverse({
+      ImportDefaultSpecifier(path) {
+        // 检查导入的文件是否是样式文件
+        const importPath = (path.parentPath.node as ImportDeclaration).source
+          .value;
+        if (importPath.endsWith(".css") || importPath.endsWith(".scss")) {
+          const binding = path.scope.getBinding(path.node.local.name);
+          if (binding) {
+            // 收集所有样式引用
+            binding.referencePaths.forEach((referencePath) => {
+              if (referencePath.parentPath?.type === "MemberExpression") {
+                const memberExpression = referencePath.parentPath?.node;
+                if (
+                  memberExpression?.type === "MemberExpression" &&
+                  memberExpression.object.type === "Identifier" &&
+                  memberExpression.property.type === "Identifier"
+                ) {
+                  styleClasses.add(memberExpression.property.name);
+                }
+              }
+            });
+          }
+        }
+      },
+    });
+  });
+
+  console.log(styleClasses);
+}
+
 // 解析JSX元素
 // 只解析组件函数
-export async function parseJSXElementWithNodePath(
+export async function collectComponentJSXElement(
   jsxElementWithNodePath: NodePath<JSXElement>,
   currentContext: FileContext
 ): Promise<ComponentJSXElement | undefined> {

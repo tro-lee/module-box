@@ -127,6 +127,7 @@ export type Component =
       componentDescription: string;
       componentJSXElements: ComponentJSXElement[];
       componentParams: CustomTypeAnnotation[];
+      componentStyleClass: string[]; // 所涉及的样式类
     }
   | {
       type: "NodeComponent";

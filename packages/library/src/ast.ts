@@ -284,3 +284,7 @@ export async function scanAstByFileWithAutoExtension(
 
   return null;
 }
+
+export async function scanCSSAstByFile(filePath: string): Promise<FileContext | null> {
+
+}

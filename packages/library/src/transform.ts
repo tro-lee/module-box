@@ -8,10 +8,11 @@ import {
   Module,
 } from "./types";
 import {
-  parseBlockStatementWithNodePath,
-  parseJSXElementWithNodePath,
-  parseTypeAnnotation,
-} from "./parse";
+  collectCustomBinding,
+  collectComponentJSXElement,
+  collectCustomTypeAnnotation,
+  collectStyleClass,
+} from "./collect";
 import { getDeclarationInContext } from "./context";
 import { scanAstByFileWithAutoExtension } from "./ast";
 
@@ -50,25 +51,34 @@ async function transformElementDeclarationToComponent(
         });
       }
 
+      // 收集所有自定义类型注解
       const componentParams = (
         await Promise.all(
           functionDeclaration.params
             .filter((param) => param.type === "Identifier")
-            .map((param) => parseTypeAnnotation(param.typeAnnotation, context))
+            .map((param) =>
+              collectCustomTypeAnnotation(param.typeAnnotation, context)
+            )
         )
       ).filter((item) => item !== undefined);
 
-      const componentFunctionBody = await parseBlockStatementWithNodePath(
+      const componentFunctionBody = await collectCustomBinding(
         blockStateWithNodePath,
         context
       );
 
+      const componentStyleClass = await collectStyleClass(
+        blockStateWithNodePath,
+        context
+      );
+
+      // 去重收集JSX元素
       const componentJSXElements: ComponentJSXElement[] = Array.from(
         new Map(
           (
             await Promise.all(
               jsxElementsWithNodePath.map((jsxElement) =>
-                parseJSXElementWithNodePath(jsxElement, context)
+                collectComponentJSXElement(jsxElement, context)
               )
             )
           )
