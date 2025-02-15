@@ -18,6 +18,16 @@
       "type": "bun",
       "internalConsoleOptions": "neverOpen",
       "request": "launch",
+      "name": "Debug File: llm.test.ts",
+      "program": "${workspaceFolder}/test/llm.test.ts",
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false,
+      "watchMode": false
+    },
+    {
+      "type": "bun",
+      "internalConsoleOptions": "neverOpen",
+      "request": "launch",
       "name": "Run File",
       "program": "${file}",
       "cwd": "${workspaceFolder}",

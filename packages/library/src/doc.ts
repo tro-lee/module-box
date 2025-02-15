@@ -16,7 +16,6 @@ const DOC_CONSTANTS = {
     TYPE: "\t- Component Type: {type}\n",
     DESCRIPTION: "\t- Component Description: {description}\n",
     CODE: "\t- Core Code (Minified):\n\t```tsx\n\t{code}\n\t```\n",
-    CSS_STYLES: "\t- CSS Styles:\n\t```css\n\t{css}\n\t```\n",
   },
 } as const;
 
@@ -51,19 +50,6 @@ async function generateComponentDoc(component: Component): Promise<string[]> {
         DOC_CONSTANTS.COMPONENT_INFO.DESCRIPTION.replace(
           "{description}",
           component.componentDescription
-        )
-      );
-    }
-
-    if (Object.keys(component.componentCssStyles).length > 0) {
-      chunks.push(
-        DOC_CONSTANTS.COMPONENT_INFO.CSS_STYLES.replace(
-          "{css}",
-          Object.entries(component.componentCssStyles)
-            .map(([cls, styles]) => 
-              `.${cls}{${Object.entries(styles).map(([p, v]) => `${p}:${v};`).join('')}}`
-            )
-            .join('')
         )
       );
     }

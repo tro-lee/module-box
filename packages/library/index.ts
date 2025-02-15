@@ -1,9 +1,13 @@
 import { generateModuleDoc } from "./src/doc";
 import { getEntryFilePathsByDir } from "./src/entry";
-import { transformFilePathsToModuleAndComponent } from "./src/transform";
+import {
+  transformFilePathsToModuleAndComponent,
+  transformFilePathToModuleAndComponent,
+} from "./src/transform";
 
 export {
   getEntryFilePathsByDir,
+  transformFilePathToModuleAndComponent,
   transformFilePathsToModuleAndComponent,
   generateModuleDoc,
 };

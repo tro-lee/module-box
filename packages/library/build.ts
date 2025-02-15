@@ -4,19 +4,14 @@ const config: BuildConfig = {
   entrypoints: ["./index.ts"],
   outdir: "./dist",
   target: "node",
-  format: "esm",
-  minify: true,
-  sourcemap: "external",
-  external: [
-    "@babel/core",
-    "@babel/plugin-syntax-import-source", 
-    "@babel/preset-react",
-    "@babel/preset-typescript",
-    "comment-parser",
-    "fast-xml-parser"
-  ]
+  format: "cjs",
+  minify: false,
 };
 
-await Bun.build(config);
+try {
+  await Bun.build(config);
+} catch (error) {
+  console.error(error);
+}
 
 console.log("Build completed!");

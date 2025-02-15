@@ -21,7 +21,6 @@ import {
 import { getDeclarationInContext } from "./context";
 import { NodePath } from "@babel/core";
 import generate from "@babel/generator";
-import { scanSASSFile } from "./scan";
 import path from "path";
 
 // 解析类型注解
@@ -347,55 +346,6 @@ export async function collectCustomBinding(
       initHook,
     });
   }
-}
-
-// 收集样式类
-// 收集函数中所有提及的样式类
-export async function collectCssStyles(context: FileContext) {
-  const styles: Record<string, Record<string, string | number>> = {};
-
-  const { importDeclarationsWithNodePath } = context;
-  importDeclarationsWithNodePath.forEach((importDeclaration) => {
-    // 遍历导入声明，寻找样式文件导入
-    importDeclaration.traverse({
-      ImportDefaultSpecifier(nodePath) {
-        const importPath = (nodePath.parentPath.node as ImportDeclaration)
-          .source.value;
-
-        // 只处理 CSS/SCSS 文件
-        if (!importPath.endsWith(".css") && !importPath.endsWith(".scss")) {
-          return;
-        }
-
-        // 收集样式类名引用
-        const binding = nodePath.scope.getBinding(nodePath.node.local.name);
-        const classNames = new Set<string>();
-
-        binding?.referencePaths.forEach((referencePath) => {
-          const memberExpr = referencePath.parentPath?.node;
-          if (
-            memberExpr?.type === "MemberExpression" &&
-            memberExpr.object.type === "Identifier" &&
-            memberExpr.property.type === "Identifier"
-          ) {
-            classNames.add(memberExpr.property.name);
-          }
-        });
-
-        // 解析样式文件
-        const absoluteFilePath = path.resolve(
-          path.dirname(context.path),
-          importPath
-        );
-        const sassStyles = scanSASSFile(absoluteFilePath);
-        classNames.forEach((className) => {
-          styles[className] = sassStyles[className] ?? {};
-        });
-      },
-    });
-  });
-
-  return styles;
 }
 
 // 解析JSX元素

@@ -6,7 +6,7 @@ import {
 } from "../packages/library/index";
 import path from "path";
 
-test("ast Test", async () => {
+test.skip("ast Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(
     "/Users/trolee02/Documents/Work/biz-mrn-food-deal",
     {

@@ -11,7 +11,6 @@ import {
   collectCustomBinding,
   collectComponentJSXElement,
   collectCustomTypeAnnotation,
-  collectCssStyles,
 } from "./collect";
 import { getDeclarationInContext } from "./context";
 import { scanAstByFileWithAutoExtension } from "./scan";
@@ -82,8 +81,6 @@ async function transformElementDeclarationToComponent(
         ).values()
       );
 
-      const componentCssStyles = await collectCssStyles(context);
-
       const component: Component = {
         type: "LocalComponent",
         componentName: functionName,
@@ -92,7 +89,6 @@ async function transformElementDeclarationToComponent(
         componentDescription,
         componentJSXElements,
         componentParams,
-        componentCssStyles,
       };
       globalComponentContext.set(component.componentKey, component);
 
@@ -242,7 +238,30 @@ async function transformFileContextToModuleAndComponent(
   return moduleComponents;
 }
 
-// 将文件路径转换为模块和组件
+// 将单一文件路径转换为模块和组件
+export async function transformFilePathToModuleAndComponent(filePath: string) {
+  const fileContext = await scanAstByFileWithAutoExtension(filePath);
+  if (!fileContext) return;
+
+  const resultModules: Map<string, Module> = new Map();
+  const resultComponentContext = new Map<string, Component>();
+
+  const modules = await transformFileContextToModuleAndComponent(
+    fileContext,
+    resultComponentContext
+  );
+
+  for (const module of modules) {
+    resultModules.set(module.componentName, module);
+  }
+
+  return {
+    modules: resultModules,
+    components: resultComponentContext,
+  };
+}
+
+// 将文件路径列表转换为模块和组件
 export async function transformFilePathsToModuleAndComponent(
   filePaths: string[]
 ) {

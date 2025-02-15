@@ -13,26 +13,19 @@ import {
   ExportDefaultDeclaration,
   ExportNamedDeclaration,
 } from "@babel/types";
-import { NodePath, parse, ParseResult, traverse } from "@babel/core";
+import * as babel from "@babel/parser";
+import { NodePath, ParseResult, traverse } from "@babel/core";
 import path from "path";
 import fs from "fs";
 import { FileContext } from "./types";
-import * as postcss from "postcss";
-import * as sass from "sass";
-import { camelCase } from "lodash";
 
 const astContextCache: Record<string, FileContext> = {};
 
 // 返回文件的上下文
 async function scanAstByFile(filePath: string): Promise<FileContext> {
-  const filename = path.resolve(__dirname, filePath);
-  if (!fs.existsSync(filename)) {
-    throw new Error("file not found: " + filename);
-  }
-
   // 缓存逻辑
-  if (filename in astContextCache) {
-    return astContextCache[filename];
+  if (filePath in astContextCache) {
+    return astContextCache[filePath];
   }
 
   // ==============================
@@ -40,17 +33,16 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
   // ==============================
 
   let ast: ParseResult | null = null;
-  try {
-    const sourceCode = await fs.promises.readFile(filename, "utf-8");
 
-    ast = parse(sourceCode, {
-      filename,
+  const sourceCode = fs.readFileSync(filePath, "utf-8");
+
+  try {
+    ast = babel.parse(sourceCode, {
       sourceType: "module",
-      plugins: ["@babel/plugin-syntax-import-source"],
-      presets: ["@babel/preset-typescript", "@babel/preset-react"],
+      plugins: ["jsx", "typescript"],
     });
   } catch (e) {
-    throw new Error("file not found: " + filename);
+    throw new Error("解析失败: " + filePath + "\n" + e);
   }
 
   if (!ast) {
@@ -62,7 +54,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
   // ==============================
 
   const context: FileContext = {
-    path: filename,
+    path: filePath,
     ast,
     interfacesWithBaseInfo: [],
     functionsWithBaseInfo: [],
@@ -142,7 +134,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
           name: path.parent.id.name,
         },
         leadingComment,
-        filePath: filename,
+        filePath,
         context,
         functionDeclaration: {
           id: {
@@ -191,7 +183,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         nodePath: path,
         id,
         leadingComment,
-        filePath: filename,
+        filePath,
         context,
         functionDeclaration,
         jsxElementsWithNodePath,
@@ -215,7 +207,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         id,
         leadingComment,
         nodePath: path,
-        filePath: filename,
+        filePath,
         context,
         tsTypeElements: path.node.body.body,
         extendsExpression: path.node.extends ?? [],
@@ -236,7 +228,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
             context.variablesWithBaseInfo.push({
               type: "VariableDeclaratorWithBaseInfo",
               id: path.node.id,
-              filePath: filename,
+              filePath,
               context,
               variableDeclarator: path.node,
               nodePath: path,
@@ -247,9 +239,8 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
     },
   });
 
-  astContextCache[filename] = context;
-
-  return astContextCache[filename];
+  astContextCache[filePath] = context;
+  return astContextCache[filePath];
 }
 
 // 扫描文件，返回文件的上下文
@@ -286,29 +277,4 @@ export async function scanAstByFileWithAutoExtension(
   }
 
   return null;
-}
-
-// 扫描sass文件，返回样式对象(暂定RN样式格式)
-export function scanSASSFile(filePath: string) {
-  if (!filePath.endsWith(".sass") && !filePath.endsWith(".scss")) {
-    throw new Error("file is not a sass file");
-  }
-
-  // 编译sass并解析CSS
-  const css = postcss.parse(
-    sass.compile(filePath, { style: "compressed" }).css,
-    { from: filePath }
-  );
-
-  // 转换CSS规则为RN样式对象
-  const styles: Record<string, Record<string, string | number>> = {};
-  css.walkRules((rule) => {
-    const style: Record<string, string | number> = {};
-    rule.walkDecls((decl) => {
-      style[decl.prop] = decl.value;
-    });
-    styles[rule.selector.replace(/^\./, "")] = style;
-  });
-
-  return styles;
 }
