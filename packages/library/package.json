@@ -1,5 +1,5 @@
 {
-  "name": "@meishi/module-toolbox-library",
+  "name": "module-toolbox-library",
   "version": "0.1.7-beta.1",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
