@@ -1,11 +1,7 @@
 {
   "name": "module-toolbox-library",
   "version": "0.1.7-beta.1",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "module": "./index.ts",
   "devDependencies": {
     "@types/babel__core": "^7.20.5",
     "@types/bun": "latest"

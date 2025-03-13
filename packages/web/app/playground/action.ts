@@ -1,16 +1,24 @@
 "use server";
+import { Module } from "module-toolbox-library";
 
-import { ModuleComponent } from "library";
-
-const BASE_URL = "http://localhost:3000";
-
-export async function getAllModuleDirectoryData(): Promise<ModuleComponent[]> {
-  const res = await fetch(`${BASE_URL}/modules`);
-  const data = await res.json();
-
-  if (data.status !== "success") {
-    throw new Error("Failed to fetch modules");
-  }
-
-  return data.data;
+export async function getAllModuleDirectoryData(): Promise<Module[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          type: "LocalModule",
+          componentName: "Button",
+          componentFilePath: "packages/library/src/components/button.tsx",
+          componentKey: "Button-packages/library/src/components/button.tsx",
+          key: "Button-packages/library/src/components/button.tsx",
+        },
+        {
+          type: "NodeModule",
+          componentName: "Button",
+          packageName: "react-button",
+          key: "react-button",
+        },
+      ]);
+    }, 1000);
+  });
 }
