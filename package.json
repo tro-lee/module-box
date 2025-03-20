@@ -6,10 +6,10 @@
   "scripts": {
     "library:build": "cd packages/library && tsc && bun run build.ts",
     "server:dev": "bun library:build && cd packages/server && bun run --hot src/index.ts",
-    "web:dev": "cd packages/web && next dev --port 8000",
-    "web:build": "cd packages/web && next build",
-    "web:start": "cd packages/web && next start",
-    "web:lint": "cd packages/web && next lint"
+    "web:dev": "cd packages/web && bun run dev",
+    "web:build": "cd packages/web && bun run build",
+    "web:start": "cd packages/web && bun run start",
+    "web:lint": "cd packages/web && bun run lint"
   },
   "devDependencies": {
     "@types/bun": "latest",

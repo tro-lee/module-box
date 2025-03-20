@@ -1,4 +1,5 @@
 "use client";
+"use module";
 
 import { Fragment, use } from "react";
 import { Folder, Tree, File } from "../ui/file-tree";
@@ -32,14 +33,12 @@ export function ModuleListSkeleton() {
 }
 
 // 模块列表 用于展示模块资源信息
-export default function ModuleList() {
-  use(
-    new Promise((resovle) => {
-      setTimeout(() => {
-        resovle(1);
-      }, 2000);
-    })
-  );
+export default function ModuleListComponent({
+  promise,
+}: {
+  promise: Promise<number>;
+}) {
+  use(promise);
   return (
     <Tree
       className="p-2 overflow-hidden rounded-md"

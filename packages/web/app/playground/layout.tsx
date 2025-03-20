@@ -6,8 +6,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <SidebarProvider>
-      <main className="p-4">{children}</main>
-    </SidebarProvider>
+    <div className="h-screen w-screen">
+      <SidebarProvider>{children}</SidebarProvider>
+    </div>
   );
 }
