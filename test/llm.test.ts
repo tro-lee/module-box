@@ -58,7 +58,7 @@ const personSchema = z.object({
   gender: z.optional(z.enum(["male", "female"])).describe("性别"),
 });
 
-test(
+test.skip(
   "human test message",
   async () => {
     const llm = new ChatOpenAI({

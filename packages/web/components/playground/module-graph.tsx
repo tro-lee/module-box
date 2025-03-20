@@ -1,4 +1,6 @@
 "use client";
+"use module";
+
 import React, { Fragment, useCallback } from "react";
 import {
   addEdge,

@@ -15,6 +15,41 @@ import {
 import { getDeclarationInContext } from "./context";
 import { scanAstByFileWithAutoExtension } from "./scan";
 
+
+// 将组件转换为函数声明
+export async function transformComponentToDeclaration(
+  component: Component
+): Promise<Declaration | undefined> {
+  if (component.type === "LocalComponent") {
+    const fileContext = await scanAstByFileWithAutoExtension(
+      component.componentFilePath
+    );
+    if (!fileContext) {
+      return;
+    }
+
+    const functionDeclaration = fileContext.functionsWithBaseInfo.find(
+      (item) => item.functionDeclaration.id.name === component.componentName
+    );
+    if (!functionDeclaration) {
+      return;
+    }
+
+    return functionDeclaration;
+  }
+
+  if (component.type === "NodeComponent") {
+    return {
+      type: "NodeModuleImportDeclaration",
+      id: {
+        name: component.componentName,
+        type: "Identifier",
+      },
+      filePath: component.packageName,
+    };
+  }
+}
+
 // 将函数声明转换为组件
 async function transformElementDeclarationToComponent(
   elementDeclaration: Declaration
@@ -129,40 +164,6 @@ async function transformElementDeclarationToComponent(
   }
 }
 
-// 将组件转换为函数声明
-export async function transformComponentToDeclaration(
-  component: Component
-): Promise<Declaration | undefined> {
-  if (component.type === "LocalComponent") {
-    const fileContext = await scanAstByFileWithAutoExtension(
-      component.componentFilePath
-    );
-    if (!fileContext) {
-      return;
-    }
-
-    const functionDeclaration = fileContext.functionsWithBaseInfo.find(
-      (item) => item.functionDeclaration.id.name === component.componentName
-    );
-    if (!functionDeclaration) {
-      return;
-    }
-
-    return functionDeclaration;
-  }
-
-  if (component.type === "NodeComponent") {
-    return {
-      type: "NodeModuleImportDeclaration",
-      id: {
-        name: component.componentName,
-        type: "Identifier",
-      },
-      filePath: component.packageName,
-    };
-  }
-}
-
 // 将元素声明转换为模块
 async function transformElementDeclarationToModule(
   elementDeclaration: Declaration
@@ -170,6 +171,7 @@ async function transformElementDeclarationToModule(
   if (elementDeclaration.type === "NodeModuleImportDeclaration") {
     return {
       type: "NodeModule",
+      key: `${elementDeclaration.id.name}-${elementDeclaration.filePath}`,
       componentName: elementDeclaration.id.name,
       packageName: elementDeclaration.filePath,
     };
@@ -179,6 +181,7 @@ async function transformElementDeclarationToModule(
     const sourceCode = generate(elementDeclaration.variableDeclarator);
     return {
       type: "UnknownModule",
+      key: `${elementDeclaration.id.name}-${sourceCode.code.slice(0, 10)}`,
       componentName: elementDeclaration.id.name,
       sourceCode: sourceCode.code,
     };
@@ -196,6 +199,7 @@ async function transformElementDeclarationToModule(
 
     return {
       type: "LocalModule",
+      key: component.componentKey,
       componentFilePath: component.componentFilePath,
       componentName: component.componentName,
       componentKey: component.componentKey,

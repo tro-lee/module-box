@@ -6,12 +6,12 @@ import {
 } from "../packages/library/index";
 import path from "path";
 
-test.skip("ast Test", async () => {
+test("ast Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(
-    "/Users/trolee02/Documents/module-box",
+    "/Users/trolee/Documents/module-box",
     {
       exclude: ["test", "node_modules"],
-      include: ["src", "core"],
+      include: ["src", "packages"],
     }
   );
 
@@ -20,7 +20,6 @@ test.skip("ast Test", async () => {
   );
 
   console.log(modules);
-
   // for (const module of Array.from(modules.values())) {
   //   if (module.type === "LocalModule") {
   //     const component = components.get(module.componentKey);
