@@ -98,26 +98,13 @@ export type Declaration =
 // ============================================
 // 模块组件相关 最终成果
 // ============================================
-export type Module =
-  | {
-      type: "LocalModule";
-      key: string; // componentKey 的别名
-      componentName: string;
-      componentFilePath: string;
-      componentKey: string; // 组件唯一标识Name-FilePath
-    }
-  | {
-      type: "NodeModule";
-      key: string; // 唯一标识Name-PackageName
-      componentName: string;
-      packageName: string;
-    }
-  | {
-      type: "UnknownModule";
-      key: string; // 唯一标识Name-随机标识
-      componentName: string;
-      sourceCode: string;
-    };
+export type Module = {
+  type: "LocalModule";
+  key: string; // componentKey 的别名
+  componentName: string;
+  componentFilePath: string;
+  componentKey: string; // 组件唯一标识Name-FilePath
+};
 
 export type Component =
   | {

@@ -2,7 +2,6 @@ import { test } from "bun:test";
 import {
   getEntryFilePathsByDir,
   transformFilePathsToModuleAndComponent,
-  generateModuleDoc,
 } from "../packages/library/index";
 import path from "path";
 
@@ -15,11 +14,12 @@ test("ast Test", async () => {
     }
   );
 
-  const { modules, components } = await transformFilePathsToModuleAndComponent(
+  const result = await transformFilePathsToModuleAndComponent(
     entryFiles
   );
 
-  console.log(modules);
+  const file = Bun.file(path.join(__dirname, "./demo/test.json"));
+  await Bun.write(file, JSON.stringify(result, null, 2));
   // for (const module of Array.from(modules.values())) {
   //   if (module.type === "LocalModule") {
   //     const component = components.get(module.componentKey);
