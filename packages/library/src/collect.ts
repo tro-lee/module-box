@@ -7,7 +7,6 @@ import type {
   Node,
   MemberExpression,
   VariableDeclarator,
-  ImportDeclaration,
 } from "@babel/types";
 import { parse as parseComment } from "comment-parser";
 import {
@@ -21,7 +20,6 @@ import {
 import { getDeclarationInContext } from "./context";
 import { NodePath } from "@babel/core";
 import generate from "@babel/generator";
-import path from "path";
 
 // 解析类型注解
 export async function collectCustomTypeAnnotation(

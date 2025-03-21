@@ -4,13 +4,18 @@ import { SidebarHeader } from "@/components/ui/sidebar";
 import ModuleListComponent, {
   ModuleListSkeleton,
 } from "@/components/playground/module-list";
-import ModuleGraphComponent from "@/components/playground/module-graph";
+import ModuleGraphComponent, {
+  ModuleGraphSkeleton,
+} from "@/components/playground/module-graph/module-graph";
+import { getModulesAndComponents } from "./action";
 
 export default async function DashboardPage() {
   return (
     <div className="h-full w-full flex">
       <ModuleExplorer />
-      <ModuleGraph />
+      <Suspense fallback={<ModuleGraphSkeleton />}>
+        <ModuleGraph />
+      </Suspense>
     </div>
   );
 }
@@ -37,9 +42,10 @@ function ModuleExplorer() {
 }
 
 function ModuleGraph() {
+  const promise = getModulesAndComponents();
   return (
     <div className="flex-1">
-      <ModuleGraphComponent />
+      <ModuleGraphComponent promise={promise} />
     </div>
   );
 }

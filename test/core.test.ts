@@ -18,7 +18,7 @@ test("ast Test", async () => {
     entryFiles
   );
 
-  const file = Bun.file(path.join(__dirname, "./demo/test.json"));
+  const file = Bun.file(path.join(__dirname, "../public/test.json"));
   await Bun.write(file, JSON.stringify(result, null, 2));
   // for (const module of Array.from(modules.values())) {
   //   if (module.type === "LocalModule") {
