@@ -167,7 +167,7 @@ function CustomFlow({
   );
 }
 
-const ModuleGraphComponent = memo(function ModuleGraphComponent({
+export const ModuleGraphComponent = memo(function ModuleGraphComponent({
   promise,
 }: {
   promise: Promise<{

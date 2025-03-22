@@ -36,11 +36,13 @@
       "request": "launch",
       "url": "http://localhost:8000"
     },
-  ],
-  "compounds": [
     {
-      "name": "Web: Compound",
-      "configurations": ["Web: debug server-side", "Web: debug client-side"]
+      "type": "bun",
+      "internalConsoleOptions": "neverOpen",
+      "request": "attach",
+      "name": "Attach Bun",
+      "url": "ws://localhost:6499/",
+      "stopOnEntry": false
     }
   ]
 }
