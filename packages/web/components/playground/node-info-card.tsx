@@ -8,5 +8,6 @@ export function NodeInfoCardComponent() {
   if (!currentNode) {
     return null;
   }
+
   return <div>{currentNode.componentName}</div>;
 }
