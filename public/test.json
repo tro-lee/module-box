@@ -2,24 +2,31 @@
   "modules": {
     "ModuleListSkeleton": {
       "type": "LocalModule",
-      "key": "ModuleListSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx",
+      "key": "Module-ModuleListSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx",
       "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx",
       "componentName": "ModuleListSkeleton",
       "componentKey": "ModuleListSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx"
     },
     "ModuleListComponent": {
       "type": "LocalModule",
-      "key": "ModuleListComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx",
+      "key": "Module-ModuleListComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx",
       "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx",
       "componentName": "ModuleListComponent",
       "componentKey": "ModuleListComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-list.tsx"
     },
+    "ModuleGraphSkeleton": {
+      "type": "LocalModule",
+      "key": "Module-ModuleGraphSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
+      "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
+      "componentName": "ModuleGraphSkeleton",
+      "componentKey": "ModuleGraphSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx"
+    },
     "ModuleGraphComponent": {
       "type": "LocalModule",
-      "key": "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph.tsx",
-      "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph.tsx",
+      "key": "Module-ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
+      "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
       "componentName": "ModuleGraphComponent",
-      "componentKey": "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph.tsx"
+      "componentKey": "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx"
     }
   },
   "components": {
@@ -57,11 +64,20 @@
       "componentJSXElements": [],
       "componentParams": []
     },
-    "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph.tsx": {
+    "ModuleGraphSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx": {
+      "type": "LocalComponent",
+      "componentName": "ModuleGraphSkeleton",
+      "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
+      "componentKey": "ModuleGraphSkeleton-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
+      "componentDescription": "",
+      "componentJSXElements": [],
+      "componentParams": []
+    },
+    "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx": {
       "type": "LocalComponent",
       "componentName": "ModuleGraphComponent",
-      "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph.tsx",
-      "componentKey": "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph.tsx",
+      "componentFilePath": "/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
+      "componentKey": "ModuleGraphComponent-/Users/trolee/Documents/module-box/packages/web/components/playground/module-graph/module-graph.tsx",
       "componentDescription": "",
       "componentJSXElements": [
         {

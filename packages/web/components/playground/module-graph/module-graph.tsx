@@ -2,12 +2,14 @@
 "use module";
 
 import React, { use, useCallback, useMemo } from "react";
+import Dagre from "@dagrejs/dagre";
 import {
   addEdge,
   Background,
   BackgroundVariant,
   Connection,
   Controls,
+  Node,
   Edge,
   MiniMap,
   Panel,
@@ -15,26 +17,107 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-
-import "@xyflow/react/dist/style.css";
 import { Button } from "../../ui/button";
 import { CustomNodeType } from "./custom-node";
 import { Module, Component } from "module-toolbox-library";
 
-const initialEdges = [
-  { id: "e1-2", source: "1", target: "2" },
-  {
-    id: "e2-3",
-    source: "2",
-    target: "3",
-    animated: true,
-    sourceHandle: "fuck",
-  },
-  { id: "e3-4", source: "3", target: "2", type: "custom" },
-] as Edge[];
+import "@xyflow/react/dist/style.css";
 
 export function ModuleGraphSkeleton() {
   return <div>Loading...</div>;
+}
+
+// 布局处理
+function layoutProcess(
+  nodes: Node[],
+  edges: Edge[],
+  options: { direction: "TB" | "LR" }
+) {
+  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+  g.setGraph({ rankdir: options.direction });
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) =>
+    g.setNode(node.id, {
+      ...node,
+      width: node.measured?.width ?? 200,
+      height: node.measured?.height ?? 50,
+    })
+  );
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const position = g.node(node.id);
+      return { ...node, position: { x: position.x || 0, y: position.y || 0 } };
+    }),
+    edges,
+  };
+}
+
+// 获取初始节点和边数据
+function useInitialGraphData(
+  promise: Promise<{
+    modules: Record<string, Module>;
+    components: Record<string, Component>;
+  }>
+) {
+  const { modules, components } = use(promise);
+
+  const { nodes, edges } = useMemo(() => {
+    // 处理节点部分
+    const nodes: Node[] = [];
+
+    Object.values(modules).forEach((module) => {
+      nodes.push({
+        id: module.key,
+        position: { x: 0, y: 0 },
+        data: { label: module.componentName },
+      });
+    });
+    Object.values(components).forEach((component) => {
+      nodes.push({
+        id: component.componentKey,
+        position: { x: 0, y: 0 },
+        data: { label: component.componentName },
+      });
+    });
+
+    // 处理边部分
+    const edges: Edge[] = [];
+
+    Object.values(modules).forEach((module) => {
+      edges.push({
+        id: `edge-${module.key}-${module.componentKey}`,
+        source: module.key,
+        target: module.componentKey,
+        animated: true,
+      });
+    });
+    Object.values(components).forEach((component) => {
+      if (component.type === "LocalComponent") {
+        for (const jsxElement of component.componentJSXElements) {
+          edges.push({
+            id: `edge-${component.componentKey}-${jsxElement.componentKey}`,
+            source: component.componentKey,
+            target: jsxElement.componentKey,
+          });
+        }
+      }
+    });
+
+    const layout = layoutProcess(nodes, edges, {
+      direction: "LR",
+    });
+
+    return { nodes: layout.nodes, edges: layout.edges };
+  }, [modules, components]);
+
+  return {
+    initialNodes: nodes,
+    initialEdges: edges,
+  };
 }
 
 export default function ModuleGraphComponent({
@@ -45,26 +128,7 @@ export default function ModuleGraphComponent({
     components: Record<string, Component>;
   }>;
 }) {
-  const { modules, components } = use(promise);
-
-  // 获取所有节点
-  // 不同类型节点，数据结构不一样
-  const initialNodes = useMemo(() => {
-    const moduleNodes = Object.values(modules).map((module) => ({
-      id: module.componentKey,
-      position: { x: 0, y: 0 },
-      data: { label: module.componentName },
-    }));
-
-    const componentNodes = Object.values(components).map((component) => ({
-      id: component.componentKey,
-      position: { x: 0, y: 0 },
-      data: { label: component.componentName },
-    }));
-
-    return [...moduleNodes, ...componentNodes];
-  }, [modules, components]);
-
+  const { initialNodes, initialEdges } = useInitialGraphData(promise);
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 

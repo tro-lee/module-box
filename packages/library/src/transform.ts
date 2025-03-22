@@ -190,7 +190,7 @@ async function transformFileContextToModuleAndComponent(
 
     modules.push({
       type: "LocalModule",
-      key: component.componentKey,
+      key: "Module-" + component.componentKey,
       componentFilePath: component.componentFilePath,
       componentName: component.componentName,
       componentKey: component.componentKey,

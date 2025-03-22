@@ -100,7 +100,7 @@ export type Declaration =
 // ============================================
 export type Module = {
   type: "LocalModule";
-  key: string; // componentKey 的别名
+  key: string; // module + componentKey
   componentName: string;
   componentFilePath: string;
   componentKey: string; // 组件唯一标识Name-FilePath
