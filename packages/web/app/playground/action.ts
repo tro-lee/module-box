@@ -25,7 +25,7 @@ export async function getModulesAndComponents(): Promise<{
 }> {
   return new Promise((resolve) => {
     fs.readFile(
-      path.join(process.cwd(), "../../public/test.json"),
+      path.join(process.cwd(), "./temp/test.json"),
       "utf-8",
       (err, json) => {
         if (err) {

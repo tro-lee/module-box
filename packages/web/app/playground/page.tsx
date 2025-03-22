@@ -6,8 +6,9 @@ import ModuleListComponent, {
 } from "@/components/playground/module-list";
 import ModuleGraphComponent, {
   ModuleGraphSkeleton,
-} from "@/components/playground/module-graph/module-graph";
+} from "@/components/playground/module-graph";
 import { getModulesAndComponents } from "./action";
+import { NodeInfoCardComponent } from "@/components/playground/node-info-card";
 
 export default async function DashboardPage() {
   return (
@@ -16,6 +17,7 @@ export default async function DashboardPage() {
       <Suspense fallback={<ModuleGraphSkeleton />}>
         <ModuleGraph />
       </Suspense>
+      <NodeInfoCard />
     </div>
   );
 }
@@ -48,4 +50,8 @@ function ModuleGraph() {
       <ModuleGraphComponent promise={promise} />
     </div>
   );
+}
+
+function NodeInfoCard() {
+  return <NodeInfoCardComponent />;
 }

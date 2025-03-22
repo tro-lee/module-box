@@ -2,10 +2,10 @@ import { test } from "bun:test";
 import {
   getEntryFilePathsByDir,
   transformFilePathsToModuleAndComponent,
-} from "../packages/library/index";
+} from "module-toolbox-library";
 import path from "path";
 
-test("ast Test", async () => {
+test.skip("ast Test", async () => {
   const entryFiles = await getEntryFilePathsByDir(
     "/Users/trolee/Documents/module-box",
     {
@@ -18,7 +18,7 @@ test("ast Test", async () => {
     entryFiles
   );
 
-  const file = Bun.file(path.join(__dirname, "../public/test.json"));
+  const file = Bun.file(path.join(__dirname, "./dist/test.json"));
   await Bun.write(file, JSON.stringify(result, null, 2));
   // for (const module of Array.from(modules.values())) {
   //   if (module.type === "LocalModule") {

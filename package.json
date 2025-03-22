@@ -12,6 +12,7 @@
     "web:lint": "cd packages/web && bun run lint"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^17.4.4",
     "@types/bun": "latest",
     "module-toolbox-library": "workspace:*"
   },

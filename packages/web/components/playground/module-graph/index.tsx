@@ -1,7 +1,7 @@
 "use client";
 "use module";
 
-import React, { use, useCallback, useEffect, useMemo } from "react";
+import React, { memo, use, useCallback, useEffect, useMemo } from "react";
 import Dagre from "@dagrejs/dagre";
 import {
   Background,
@@ -167,7 +167,7 @@ function CustomFlow({
   );
 }
 
-export default function ModuleGraphComponent({
+const ModuleGraphComponent = memo(function ModuleGraphComponent({
   promise,
 }: {
   promise: Promise<{
@@ -180,4 +180,6 @@ export default function ModuleGraphComponent({
       <CustomFlow promise={promise} />
     </ReactFlowProvider>
   );
-}
+});
+
+export default ModuleGraphComponent;
