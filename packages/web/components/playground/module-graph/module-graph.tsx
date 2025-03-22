@@ -1,23 +1,21 @@
 "use client";
 "use module";
 
-import React, { use, useCallback, useMemo } from "react";
+import React, { use, useCallback, useEffect, useMemo } from "react";
 import Dagre from "@dagrejs/dagre";
 import {
-  addEdge,
   Background,
   BackgroundVariant,
-  Connection,
   Controls,
   Node,
   Edge,
-  MiniMap,
-  Panel,
   ReactFlow,
   useEdgesState,
   useNodesState,
+  ReactFlowProvider,
+  useNodesInitialized,
+  useReactFlow,
 } from "@xyflow/react";
-import { Button } from "../../ui/button";
 import { CustomNodeType } from "./custom-node";
 import { Module, Component } from "module-toolbox-library";
 
@@ -34,14 +32,19 @@ function layoutProcess(
   options: { direction: "TB" | "LR" }
 ) {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: options.direction });
+  g.setGraph({
+    rankdir: options.direction,
+    nodesep: 10,
+    edgesep: 100,
+    ranksep: 100,
+  });
 
   edges.forEach((edge) => g.setEdge(edge.source, edge.target));
   nodes.forEach((node) =>
     g.setNode(node.id, {
       ...node,
-      width: node.measured?.width ?? 200,
-      height: node.measured?.height ?? 50,
+      width: node.measured?.width ?? 0,
+      height: node.measured?.height ?? 0,
     })
   );
 
@@ -73,14 +76,16 @@ function useInitialGraphData(
       nodes.push({
         id: module.key,
         position: { x: 0, y: 0 },
-        data: { label: module.componentName },
+        data: { module },
+        type: "module",
       });
     });
     Object.values(components).forEach((component) => {
       nodes.push({
         id: component.componentKey,
         position: { x: 0, y: 0 },
-        data: { label: component.componentName },
+        data: { component },
+        type: "component",
       });
     });
 
@@ -107,17 +112,59 @@ function useInitialGraphData(
       }
     });
 
-    const layout = layoutProcess(nodes, edges, {
-      direction: "LR",
-    });
-
-    return { nodes: layout.nodes, edges: layout.edges };
+    return { nodes, edges };
   }, [modules, components]);
 
   return {
     initialNodes: nodes,
     initialEdges: edges,
   };
+}
+
+function CustomFlow({
+  promise,
+}: {
+  promise: Promise<{
+    modules: Record<string, Module>;
+    components: Record<string, Component>;
+  }>;
+}) {
+  const { initialNodes, initialEdges } = useInitialGraphData(promise);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const { fitView } = useReactFlow();
+  const onLayout = useCallback(() => {
+    const layout = layoutProcess(nodes, edges, { direction: "LR" });
+    setNodes(layout.nodes);
+    setEdges(layout.edges);
+
+    // 保证节点布局完成后，再进行视角调整
+    window.requestAnimationFrame(() => {
+      fitView({ duration: 1000, maxZoom: 0.8 });
+    });
+  }, [edges, nodes, setEdges, setNodes, fitView]);
+
+  const isNodesInitialized = useNodesInitialized();
+  useEffect(() => {
+    if (isNodesInitialized) {
+      onLayout();
+    }
+  }, [isNodesInitialized]);
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      fitView
+      nodeTypes={CustomNodeType}
+    >
+      <Controls />
+      <Background variant={BackgroundVariant.Cross} gap={50} />
+    </ReactFlow>
+  );
 }
 
 export default function ModuleGraphComponent({
@@ -128,33 +175,9 @@ export default function ModuleGraphComponent({
     components: Record<string, Component>;
   }>;
 }) {
-  const { initialNodes, initialEdges } = useInitialGraphData(promise);
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
   return (
-    <div className="w-full h-full">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-        nodeTypes={CustomNodeType}
-      >
-        <Controls />
-        <Background variant={BackgroundVariant.Cross} gap={50} />
-        <MiniMap />
-        <Panel position="top-right">
-          <Button variant="outline">Add Node</Button>
-        </Panel>
-      </ReactFlow>
-    </div>
+    <ReactFlowProvider>
+      <CustomFlow promise={promise} />
+    </ReactFlowProvider>
   );
 }

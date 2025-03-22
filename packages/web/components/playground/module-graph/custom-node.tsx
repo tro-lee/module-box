@@ -1,29 +1,48 @@
 "use client";
 
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import { Module } from "module-toolbox-library";
+import { Component, Module } from "module-toolbox-library";
 import { Fragment } from "react";
 
 // 图表 模块节点
 function GraphModuleNode({
   data,
-}: NodeProps<Node> & { data: { module: Module } }) {
+}: NodeProps<Node> & {
+  data: { module: Module };
+}) {
   const { module } = data;
 
   return (
     <Fragment>
-      <Handle type="target" position={Position.Top} />
-      <div className="flex flex-col items-center justify-center w-48 h-24 bg-white border-2 border-gray-300 rounded-full">
-        <div className="font-medium text-gray-800">{module.componentName}</div>
-        <div className="text-xs text-gray-500 truncate max-w-[90%]">
-          {module.componentFilePath}
-        </div>
+      <Handle type="target" position={Position.Left} />
+      <div className="flex flex-col bg-white border-2 border-gray-300 rounded-xl p-2">
+        <h3>{module.componentName}</h3>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Right} />
+    </Fragment>
+  );
+}
+
+// 图表 组件节点
+function GraphComponentNode({
+  data,
+}: NodeProps<Node> & {
+  data: { component: Component };
+}) {
+  const { component } = data;
+
+  return (
+    <Fragment>
+      <Handle type="target" position={Position.Left} />
+      <div className="flex flex-col bg-white border-2 border-gray-300 rounded-xl p-2">
+        <h3>{component.componentName}</h3>
+      </div>
+      <Handle type="source" position={Position.Right} />
     </Fragment>
   );
 }
 
 export const CustomNodeType = {
   module: GraphModuleNode,
+  component: GraphComponentNode,
 };
