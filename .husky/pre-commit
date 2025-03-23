@@ -1,8 +1,11 @@
 echo "Running pre-commit checks..."
 
+echo "Running lint..."
 bun run lint
 
 if [ $? -ne 0 ]; then
   echo "Lint check failed. Please fix the issues before committing."
   exit 1
 fi
+
+echo "Lint check passed."
