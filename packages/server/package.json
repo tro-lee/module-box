@@ -2,11 +2,11 @@
   "name": "server",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
   "dependencies": {
-    "@langchain/deepseek": "^0.0.1",
-    "@langchain/openai": "^0.0.14",
     "hono": "^4.6.20",
-    "langchain": "^0.1.25",
     "module-toolbox-library": "workspace:*",
     "zod": "^3.22.4"
   },

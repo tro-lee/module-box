@@ -4,31 +4,30 @@
     "packages/*"
   ],
   "scripts": {
-    "library:build": "cd packages/library && tsc && bun run build.ts",
-    "server:dev": "bun library:build && cd packages/server && bun run --hot src/index.ts",
+    "library:build": "cd packages/library && bun run build",
+    "server:dev": "cd packages/server && bun run --hot src/index.ts",
     "web:dev": "cd packages/web && bun run dev",
     "web:build": "cd packages/web && bun run build",
     "web:start": "cd packages/web && bun run start",
     "web:lint": "cd packages/web && bun run lint",
-    "prepare": "husky",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.39",
-    "@langchain/openai": "^0.4.3",
-    "fast-xml-parser": "^4.5.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.10.2",
     "@happy-dom/global-registrator": "^17.4.4",
+    "@langchain/core": "^0.3.39",
+    "@langchain/openai": "^0.4.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/bun": "latest",
     "eslint": "^9.23.0",
+    "fast-xml-parser": "^4.5.1",
     "husky": "^9.1.7",
     "module-toolbox-library": "workspace:*"
   }

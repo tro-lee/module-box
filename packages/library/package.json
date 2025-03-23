@@ -1,7 +1,15 @@
 {
   "name": "module-toolbox-library",
-  "version": "0.1.7-beta.1",
-  "module": "./index.ts",
+  "version": "0.2.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && bun run build.ts"
+  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },

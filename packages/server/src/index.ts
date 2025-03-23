@@ -3,49 +3,45 @@ import { cors } from 'hono/cors'
 import {
   getEntryFilePathsByDir,
   transformFilePathsToModuleAndComponent,
-} from 'library'
-
-import { LLMService } from './services/llm.service'
+} from 'module-toolbox-library'
 
 const app = new Hono()
-const llmService = new LLMService()
 
-app.use('/*', cors())
+app.use('/*', cors({
+  origin: 'localhost', // 当前服务仅限本地运行，不做身份验证
+}))
 
 app.get('/modules', async (c) => {
+  const filepath = c.req.query('filepath') || ''
+  const exclude = c.req.query('exclude')?.split(',') || ['test', 'node_modules']
+  const include = c.req.query('include')?.split(',') || ['src', 'packages']
+
+  if (!filepath) {
+    return c.json({
+      status: 'error',
+      message: 'filepath is required',
+    }, 400)
+  }
+
   const entryFiles = await getEntryFilePathsByDir(
-    '/Users/trolee02/Documents/Work/biz-mrn-food-deal',
+    filepath,
     {
-      exclude: ['test', 'node_modules'],
-      include: ['src', 'core'],
+      exclude,
+      include,
     },
   )
-
-  const { modules, components } = await transformFilePathsToModuleAndComponent(
+  const result = await transformFilePathsToModuleAndComponent(
     entryFiles,
   )
 
   return c.json({
     status: 'success',
-    data: modules,
+    data: result,
+  }, {
+    headers: {
+      'Cache-Control': 'max-age=600' // 十分钟强制缓存，后面改为根据文件内容进行ETag协商缓存
+    }
   })
-})
-
-app.post('/ai/chat', async (c) => {
-  const { message } = await c.req.json()
-
-  if (!message) {
-    return c.json({ error: 'Message is required' }, 400)
-  }
-
-  try {
-    const response = await llmService.chat(message)
-    return c.json({ response })
-  }
-  catch (error) {
-    console.error('Chat error:', error)
-    return c.json({ error: 'Failed to process chat request' }, 500)
-  }
 })
 
 const port = Number.parseInt(process.env.PORT || '3000')
