@@ -2,10 +2,6 @@
   "name": "module-toolbox-library",
   "version": "0.1.7-beta.1",
   "module": "./index.ts",
-  "devDependencies": {
-    "@types/babel__core": "^7.20.5",
-    "@types/bun": "latest"
-  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
@@ -16,5 +12,9 @@
     "comment-parser": "^1.4.1",
     "fast-xml-parser": "^4.5.1",
     "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/bun": "latest"
   }
 }

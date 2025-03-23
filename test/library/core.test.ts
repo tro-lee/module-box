@@ -1,25 +1,25 @@
-import { test } from "bun:test";
+import path from 'node:path'
+import { test } from 'bun:test'
 import {
   getEntryFilePathsByDir,
   transformFilePathsToModuleAndComponent,
-} from "module-toolbox-library";
-import path from "path";
+} from 'module-toolbox-library'
 
-test.skip("ast Test", async () => {
+test.skip('ast Test', async () => {
   const entryFiles = await getEntryFilePathsByDir(
-    "/Users/trolee/Documents/module-box",
+    '/Users/trolee/Documents/module-box',
     {
-      exclude: ["test", "node_modules"],
-      include: ["src", "packages"],
-    }
-  );
+      exclude: ['test', 'node_modules'],
+      include: ['src', 'packages'],
+    },
+  )
 
   const result = await transformFilePathsToModuleAndComponent(
-    entryFiles
-  );
+    entryFiles,
+  )
 
-  const file = Bun.file(path.join(__dirname, "./dist/test.json"));
-  await Bun.write(file, JSON.stringify(result, null, 2));
+  const file = Bun.file(path.join(__dirname, './dist/test.json'))
+  await Bun.write(file, JSON.stringify(result, null, 2))
   // for (const module of Array.from(modules.values())) {
   //   if (module.type === "LocalModule") {
   //     const component = components.get(module.componentKey);
@@ -33,4 +33,4 @@ test.skip("ast Test", async () => {
   //     }
   //   }
   // }
-});
+})

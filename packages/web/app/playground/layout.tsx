@@ -1,13 +1,13 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider } from '@/components/ui/sidebar'
 
-export default function DashboardLayout({
+export default function PlaygroundLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <div className="h-screen w-screen">
       <SidebarProvider>{children}</SidebarProvider>
     </div>
-  );
+  )
 }

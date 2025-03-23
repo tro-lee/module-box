@@ -9,16 +9,9 @@
     "web:dev": "cd packages/web && bun run dev",
     "web:build": "cd packages/web && bun run build",
     "web:start": "cd packages/web && bun run start",
-    "web:lint": "cd packages/web && bun run lint"
-  },
-  "devDependencies": {
-    "@happy-dom/global-registrator": "^17.4.4",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
-    "@types/bun": "latest",
-    "eslint": "^9.23.0",
-    "module-toolbox-library": "workspace:*"
+    "web:lint": "cd packages/web && bun run lint",
+    "prepare": "husky",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -27,5 +20,16 @@
     "@langchain/core": "^0.3.39",
     "@langchain/openai": "^0.4.3",
     "fast-xml-parser": "^4.5.1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.10.2",
+    "@happy-dom/global-registrator": "^17.4.4",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@types/bun": "latest",
+    "eslint": "^9.23.0",
+    "husky": "^9.1.7",
+    "module-toolbox-library": "workspace:*"
   }
 }

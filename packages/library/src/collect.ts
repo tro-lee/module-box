@@ -1,340 +1,341 @@
+import type { NodePath } from '@babel/core'
 import type {
+  BlockStatement,
   JSXElement,
+  MemberExpression,
+  Node,
   Noop,
   TSTypeAnnotation,
   TypeAnnotation,
-  BlockStatement,
-  Node,
-  MemberExpression,
   VariableDeclarator,
-} from "@babel/types";
-import { parse as parseComment } from "comment-parser";
-import {
+} from '@babel/types'
+import type {
   ComponentJSXElement,
   CustomTypeAnnotation,
+  Declaration,
   FileContext,
   InterfaceTypeAnnotation,
   Prop,
-  Declaration,
-} from "./types";
-import { getDeclarationInContext } from "./context";
-import { NodePath } from "@babel/core";
-import generate from "@babel/generator";
+} from './types'
+import generate from '@babel/generator'
+import { parse as parseComment } from 'comment-parser'
+import { getDeclarationInContext } from './context'
 
 // 解析类型注解
 export async function collectCustomTypeAnnotation(
   typeAnnotation: TSTypeAnnotation | TypeAnnotation | Noop | null | undefined,
-  context: FileContext
+  context: FileContext,
 ): Promise<CustomTypeAnnotation> {
-  if (typeAnnotation && typeAnnotation.type === "TSTypeAnnotation") {
-    const _typeAnnotation = typeAnnotation.typeAnnotation;
+  if (typeAnnotation && typeAnnotation.type === 'TSTypeAnnotation') {
+    const _typeAnnotation = typeAnnotation.typeAnnotation
 
     // 引用处理
-    if (_typeAnnotation.type === "TSTypeReference") {
-      const typeName = _typeAnnotation.typeName;
-      if (typeName.type !== "Identifier") {
+    if (_typeAnnotation.type === 'TSTypeReference') {
+      const typeName = _typeAnnotation.typeName
+      if (typeName.type !== 'Identifier') {
         return {
-          type: "TodoTypeAnnotation",
-          typeName: "todo",
+          type: 'TodoTypeAnnotation',
+          typeName: 'todo',
           data: _typeAnnotation,
-        };
+        }
       }
 
-      const declaration = await getDeclarationInContext(typeName.name, context);
+      const declaration = await getDeclarationInContext(typeName.name, context)
 
       if (!declaration) {
         return {
-          type: "TodoTypeAnnotation",
+          type: 'TodoTypeAnnotation',
           typeName: typeName.name,
-        };
+        }
       }
 
       // 若来自nodeModule模块
-      if (declaration.type === "NodeModuleImportDeclaration") {
+      if (declaration.type === 'NodeModuleImportDeclaration') {
         return {
-          type: "NodeModuleImportTypeAnnotation",
+          type: 'NodeModuleImportTypeAnnotation',
           typeName: typeName.name,
           importPath: declaration.filePath,
-        };
+        }
       }
 
       // 若是本地文件
-      if (declaration.type === "InterfaceDeclarationWithBaseInfo") {
-        const { id, leadingComment, tsTypeElements, extendsExpression } =
-          declaration;
-        const comment = parseComment("/*" + leadingComment?.value + "*/");
+      if (declaration.type === 'InterfaceDeclarationWithBaseInfo') {
+        const { id, leadingComment, tsTypeElements, extendsExpression }
+          = declaration
+        const comment = parseComment(`/*${leadingComment?.value}*/`)
 
-        let interfaceDescription = "";
+        let interfaceDescription = ''
         for (const item of comment) {
           item.tags.forEach((tag) => {
-            if (tag.name === "description") {
-              interfaceDescription = tag.name;
+            if (tag.name === 'description') {
+              interfaceDescription = tag.name
             }
-          });
+          })
         }
 
         // 解析接口属性
-        const interfaceProps: InterfaceTypeAnnotation["interfaceProps"] = [];
+        const interfaceProps: InterfaceTypeAnnotation['interfaceProps'] = []
         for (const prop of tsTypeElements) {
           if (
-            prop.type === "TSPropertySignature" &&
-            prop.key.type === "Identifier"
+            prop.type === 'TSPropertySignature'
+            && prop.key.type === 'Identifier'
           ) {
-            const propKey = prop.key.name;
+            const propKey = prop.key.name
             const propType = await collectCustomTypeAnnotation(
               prop.typeAnnotation,
-              declaration.context
-            );
+              declaration.context,
+            )
 
             interfaceProps.push({
               propKey,
               propType,
-            });
+            })
           }
         }
 
         // 解析接口继承
-        const extendsInterface: InterfaceTypeAnnotation[] = [];
+        const extendsInterface: InterfaceTypeAnnotation[] = []
         for (const extendsItem of extendsExpression) {
-          if (extendsItem.expression.type === "Identifier") {
+          if (extendsItem.expression.type === 'Identifier') {
             const extendsInterfaceItem = (await collectCustomTypeAnnotation(
               {
-                type: "TSTypeAnnotation",
+                type: 'TSTypeAnnotation',
                 typeAnnotation: {
-                  type: "TSTypeReference",
+                  type: 'TSTypeReference',
                   typeName: extendsItem.expression,
                 },
               },
-              declaration.context
-            )) as InterfaceTypeAnnotation | null;
+              declaration.context,
+            )) as InterfaceTypeAnnotation | null
 
             if (extendsInterfaceItem) {
-              extendsInterface.push(extendsInterfaceItem);
+              extendsInterface.push(extendsInterfaceItem)
             }
           }
         }
 
         return {
-          type: "InterfaceTypeAnnotation",
+          type: 'InterfaceTypeAnnotation',
           filePath: declaration.filePath,
           interfaceName: id.name,
           interfaceDescription,
           interfaceProps,
           interfaceExtends: extendsInterface,
-        };
+        }
       }
     }
 
     // 字面量处理
-    if (_typeAnnotation.type === "TSTypeLiteral") {
-      const properties = _typeAnnotation.members;
+    if (_typeAnnotation.type === 'TSTypeLiteral') {
+      const properties = _typeAnnotation.members
       const parsedProperties = (
         await Promise.all(
           properties.map(async (property): Promise<Prop | undefined> => {
             if (
-              property.type === "TSPropertySignature" &&
-              property.key.type === "Identifier"
+              property.type === 'TSPropertySignature'
+              && property.key.type === 'Identifier'
             ) {
-              const propKey = property.key.name;
+              const propKey = property.key.name
               const propType = await collectCustomTypeAnnotation(
                 property.typeAnnotation,
-                context
-              );
+                context,
+              )
 
               return {
                 propKey,
                 propType,
-              };
+              }
             }
-          })
+          }),
         )
-      ).filter((v) => v !== undefined);
+      ).filter(v => v !== undefined)
 
       return {
-        type: "ObjectTypeAnnotation",
+        type: 'ObjectTypeAnnotation',
         props: parsedProperties,
-      };
+      }
     }
 
     // Union处理
-    if (_typeAnnotation.type === "TSUnionType") {
-      const unionMembers = _typeAnnotation.types;
+    if (_typeAnnotation.type === 'TSUnionType') {
+      const unionMembers = _typeAnnotation.types
       const parsedUnionMembers = await Promise.all(
         unionMembers.map(async (member) => {
           return await collectCustomTypeAnnotation(
             {
-              type: "TSTypeAnnotation",
+              type: 'TSTypeAnnotation',
               typeAnnotation: member,
             },
-            context
-          );
-        })
-      );
+            context,
+          )
+        }),
+      )
 
       return {
-        type: "UnionTypeAnnotation",
+        type: 'UnionTypeAnnotation',
         members: parsedUnionMembers,
-      };
+      }
     }
 
     // 数组处理
-    if (_typeAnnotation.type === "TSArrayType") {
+    if (_typeAnnotation.type === 'TSArrayType') {
       return {
-        type: "ArrayTypeAnnotation",
+        type: 'ArrayTypeAnnotation',
         elementType: await collectCustomTypeAnnotation(
           {
-            type: "TSTypeAnnotation",
+            type: 'TSTypeAnnotation',
             typeAnnotation: _typeAnnotation.elementType,
           },
-          context
+          context,
         ),
-      };
+      }
     }
 
     // 以下是基础的类型处理
 
     // null处理
-    if (_typeAnnotation.type === "TSNullKeyword") {
+    if (_typeAnnotation.type === 'TSNullKeyword') {
       return {
-        type: "NullTypeAnnotation",
-      };
+        type: 'NullTypeAnnotation',
+      }
     }
 
     // string处理
-    if (_typeAnnotation.type === "TSStringKeyword") {
+    if (_typeAnnotation.type === 'TSStringKeyword') {
       return {
-        type: "StringKeywordTypeAnnotation",
-      };
+        type: 'StringKeywordTypeAnnotation',
+      }
     }
 
     // number处理
-    if (_typeAnnotation.type === "TSNumberKeyword") {
+    if (_typeAnnotation.type === 'TSNumberKeyword') {
       return {
-        type: "NumberKeywordTypeAnnotation",
-      };
+        type: 'NumberKeywordTypeAnnotation',
+      }
     }
 
     // boolean处理
-    if (_typeAnnotation.type === "TSBooleanKeyword") {
+    if (_typeAnnotation.type === 'TSBooleanKeyword') {
       return {
-        type: "BooleanKeywordTypeAnnotation",
-      };
+        type: 'BooleanKeywordTypeAnnotation',
+      }
     }
 
     // any处理
-    if (_typeAnnotation.type === "TSAnyKeyword") {
+    if (_typeAnnotation.type === 'TSAnyKeyword') {
       return {
-        type: "AnyTypeAnnotation",
-      };
+        type: 'AnyTypeAnnotation',
+      }
     }
 
-    if (_typeAnnotation.type === "TSUndefinedKeyword") {
+    if (_typeAnnotation.type === 'TSUndefinedKeyword') {
       return {
-        type: "UndefinedTypeAnnotation",
-      };
+        type: 'UndefinedTypeAnnotation',
+      }
     }
   }
 
   return {
-    type: "TodoTypeAnnotation",
-    typeName: typeAnnotation?.type ?? "",
+    type: 'TodoTypeAnnotation',
+    typeName: typeAnnotation?.type ?? '',
     data: typeAnnotation,
-  };
+  }
 }
 
-type CustomBinding = {
-  name: string;
-  usedProperties: string[];
-  referenceStatements: string[];
-  referencePaths: NodePath<Node>[];
-  initHook: Declaration | null;
-};
+interface CustomBinding {
+  name: string
+  usedProperties: string[]
+  referenceStatements: string[]
+  referencePaths: NodePath<Node>[]
+  initHook: Declaration | null
+}
 
 // 解析函数体
 // TODO: 当前还没有做 更里的作用域
 export async function collectCustomBinding(
   blockStatementWithNodePath: NodePath<BlockStatement>,
-  context: FileContext
+  context: FileContext,
 ) {
-  const totalBindings: CustomBinding[] = [];
+  const totalBindings: CustomBinding[] = []
 
   for (const [key, binding] of Object.entries(
-    blockStatementWithNodePath.scope.bindings
+    blockStatementWithNodePath.scope.bindings,
   )) {
     // 获取初始化函数
-    let initHook: Declaration | null = null;
-    let hookName = "";
+    let initHook: Declaration | null = null
+    let hookName = ''
     binding.path.traverse({
       Identifier(path) {
-        if (path.key === "callee") {
-          hookName = path.node.name;
+        if (path.key === 'callee') {
+          hookName = path.node.name
         }
       },
-    });
+    })
     if (hookName) {
-      initHook = await getDeclarationInContext(hookName, context);
+      initHook = await getDeclarationInContext(hookName, context)
     }
 
     // 获取所有引用语句
     let referencePaths = [binding.path, ...binding.referencePaths]
       .map((referencePath) => {
-        let refCurrentPath: NodePath<Node> | null = referencePath;
+        let refCurrentPath: NodePath<Node> | null = referencePath
         while (
-          refCurrentPath &&
-          refCurrentPath.type !== "ExpressionStatement" &&
-          refCurrentPath.type !== "VariableDeclaration" &&
-          refCurrentPath.type !== "JSXElement"
+          refCurrentPath
+          && refCurrentPath.type !== 'ExpressionStatement'
+          && refCurrentPath.type !== 'VariableDeclaration'
+          && refCurrentPath.type !== 'JSXElement'
         ) {
-          refCurrentPath = refCurrentPath.parentPath;
+          refCurrentPath = refCurrentPath.parentPath
         }
-        return refCurrentPath;
+        return refCurrentPath
       })
-      .filter((v) => v !== null);
+      .filter(v => v !== null)
     let referenceStatements = referencePaths.map((path) => {
-      return generate(path.node).code;
-    });
-    referencePaths = Array.from(new Set(referencePaths));
-    referenceStatements = Array.from(new Set(referenceStatements));
+      return generate(path.node).code
+    })
+    referencePaths = Array.from(new Set(referencePaths))
+    referenceStatements = Array.from(new Set(referenceStatements))
 
     // 获取Binding被用到所有属性
     let usedProperties = referencePaths
       .map((reference) => {
         // 比如 a.b
-        if (reference.parentPath?.type === "MemberExpression") {
+        if (reference.parentPath?.type === 'MemberExpression') {
           const memberExpression = reference.parentPath
-            .node as MemberExpression;
-          if (memberExpression.property.type === "Identifier") {
-            return memberExpression.property.name;
+            .node as MemberExpression
+          if (memberExpression.property.type === 'Identifier') {
+            return memberExpression.property.name
           }
         }
 
         // 比如 const {a, ...c} = b
-        if (reference.parentPath?.type === "VariableDeclarator") {
+        if (reference.parentPath?.type === 'VariableDeclarator') {
           const variableDeclarator = reference.parentPath
-            .node as VariableDeclarator;
-          if (variableDeclarator.id.type === "ObjectPattern") {
+            .node as VariableDeclarator
+          if (variableDeclarator.id.type === 'ObjectPattern') {
             return variableDeclarator.id.properties.map((property) => {
               if (
-                property.type === "ObjectProperty" &&
-                property.key.type === "Identifier"
+                property.type === 'ObjectProperty'
+                && property.key.type === 'Identifier'
               ) {
-                return property.key.name;
-              } else if (
-                property.type === "RestElement" &&
-                property.argument.type === "Identifier"
-              ) {
-                return property.argument.name;
+                return property.key.name
               }
-              return "";
-            });
+              else if (
+                property.type === 'RestElement'
+                && property.argument.type === 'Identifier'
+              ) {
+                return property.argument.name
+              }
+              return ''
+            })
           }
         }
 
-        return "";
+        return ''
       })
       .flat()
-      .filter((v) => v !== "");
-    usedProperties = Array.from(new Set(usedProperties));
+      .filter(v => v !== '')
+    usedProperties = Array.from(new Set(usedProperties))
 
     totalBindings.push({
       name: key,
@@ -342,7 +343,7 @@ export async function collectCustomBinding(
       referenceStatements,
       usedProperties,
       initHook,
-    });
+    })
   }
 }
 
@@ -350,14 +351,14 @@ export async function collectCustomBinding(
 // 只解析组件函数
 export async function collectComponentJSXElement(
   jsxElementWithNodePath: NodePath<JSXElement>,
-  currentContext: FileContext
+  currentContext: FileContext,
 ): Promise<ComponentJSXElement | undefined> {
-  let elementName: string | undefined = undefined;
+  let elementName: string | undefined
 
   jsxElementWithNodePath.traverse({
     JSXIdentifier(path) {
-      if (path.parentPath.type === "JSXOpeningElement" && path.key === "name") {
-        elementName = path.node.name;
+      if (path.parentPath.type === 'JSXOpeningElement' && path.key === 'name') {
+        elementName = path.node.name
       }
     },
     // // 当前仅能解析<AAA attr="123" />
@@ -377,25 +378,25 @@ export async function collectComponentJSXElement(
     //     });
     //   }
     // },
-  });
+  })
 
   if (!elementName) {
     console.warn(
-      `在解析JSXElement语句时，未找到elementName ${jsxElementWithNodePath.node.openingElement.name} ${currentContext.path}`
-    );
-    return undefined;
+      `在解析JSXElement语句时，未找到elementName ${jsxElementWithNodePath.node.openingElement.name} ${currentContext.path}`,
+    )
+    return undefined
   }
 
   const elementDeclaration = await getDeclarationInContext(
     elementName,
-    currentContext
-  );
+    currentContext,
+  )
 
   if (!elementDeclaration) {
     console.warn(
-      `在解析JSXElement语句时，未找到elementDeclaration ${elementName} ${currentContext.path}`
-    );
-    return undefined;
+      `在解析JSXElement语句时，未找到elementDeclaration ${elementName} ${currentContext.path}`,
+    )
+    return undefined
   }
 
   return {
@@ -403,5 +404,5 @@ export async function collectComponentJSXElement(
     componentName: elementDeclaration.id.name,
     componentFilePath: elementDeclaration.filePath,
     componentKey: `${elementDeclaration.id.name}-${elementDeclaration.filePath}`,
-  };
+  }
 }

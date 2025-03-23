@@ -1,24 +1,25 @@
-"use client";
+'use client'
 
+import type { Node, NodeProps } from '@xyflow/react'
+import type { Component, Module } from 'module-toolbox-library'
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { useNodeContextStore } from "@/store/node-context-store";
-import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import { Component, Module } from "module-toolbox-library";
-import { Fragment, memo, useCallback } from "react";
+} from '@/components/ui/card'
+import { useNodeContextStore } from '@/store/node-context-store'
+import { Handle, Position } from '@xyflow/react'
+import { Fragment, memo, useCallback } from 'react'
 
 // 图表 模块节点
 function GraphModuleNode({
   data,
   selected,
 }: NodeProps<Node> & {
-  data: { module: Module };
+  data: { module: Module }
 }) {
-  const { module } = data;
+  const { module } = data
 
   return (
     <Fragment>
@@ -26,34 +27,34 @@ function GraphModuleNode({
       <Card
         className={`cursor-pointer transition-all duration-200 ${
           selected
-            ? "ring-2 ring-primary shadow-lg scale-105"
-            : "hover:shadow-md"
+            ? 'ring-2 ring-primary shadow-lg scale-105'
+            : 'hover:shadow-md'
         }`}
       >
         <CardHeader>
           <CardTitle>{module.componentName}</CardTitle>
           <CardDescription>
-            {module.componentFilePath.split("/").slice(-3).join("/")}
+            {module.componentFilePath.split('/').slice(-3).join('/')}
           </CardDescription>
         </CardHeader>
       </Card>
       <Handle type="source" position={Position.Right} />
     </Fragment>
-  );
+  )
 }
 
 // 图表 组件节点
 function GraphComponentNode({
   data,
 }: NodeProps<Node> & {
-  data: { component: Component };
+  data: { component: Component }
 }) {
-  const { component } = data;
-  const setCurrentNode = useNodeContextStore((state) => state.setCurrentNode);
+  const { component } = data
+  const setCurrentNode = useNodeContextStore(state => state.setCurrentNode)
 
   const handleClick = useCallback(() => {
-    setCurrentNode(component);
-  }, [component, setCurrentNode]);
+    setCurrentNode(component)
+  }, [component, setCurrentNode])
 
   return (
     <Fragment>
@@ -66,10 +67,10 @@ function GraphComponentNode({
       </button>
       <Handle type="source" position={Position.Right} />
     </Fragment>
-  );
+  )
 }
 
 export const CustomNodeType = {
   module: memo(GraphModuleNode),
   component: memo(GraphComponentNode),
-};
+}

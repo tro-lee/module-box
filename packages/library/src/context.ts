@@ -1,8 +1,8 @@
-import path from "path";
-import { Declaration, FileContext } from "./types";
-import { scanAstByFileWithAutoExtension } from "./scan";
-import { ImportDeclaration, Identifier, ExportSpecifier } from "@babel/types";
-import { NodePath } from "@babel/traverse";
+import type { NodePath } from '@babel/traverse'
+import type { ExportSpecifier, Identifier, ImportDeclaration } from '@babel/types'
+import type { Declaration, FileContext } from './types'
+import path from 'node:path'
+import { scanAstByFileWithAutoExtension } from './scan'
 
 // 解析当前文件，若要解析的标识符 是从import导入的，则从import声明里开始解析。
 // 根据import 拿到目标文件，从目标文件的export开始解析。
@@ -12,36 +12,36 @@ import { NodePath } from "@babel/traverse";
 async function getDeclarationInImportDeclarationHelper(
   currentImportDeclaration: ImportDeclaration,
   currentContext: FileContext,
-  itemName: string
+  itemName: string,
 ): Promise<Declaration | null> {
   // 若查到为外部引用
   // TODO 暂时判定开头带@ 为全部索引
-  if (currentImportDeclaration.source.value.startsWith("@")) {
+  if (currentImportDeclaration.source.value.startsWith('@')) {
     return {
-      type: "NodeModuleImportDeclaration",
+      type: 'NodeModuleImportDeclaration',
       id: {
-        type: "Identifier",
+        type: 'Identifier',
         name: itemName,
       },
       filePath: currentImportDeclaration.source.value,
-    };
+    }
   }
 
   // 若查到为项目内部引用
   // 获取目标上下文，然后传入getDeclarationInContext继续处理
-  if (currentImportDeclaration.source.value.startsWith(".")) {
+  if (currentImportDeclaration.source.value.startsWith('.')) {
     // 获取目标上下文
     const absoluteTargetImportPath = path.resolve(
       path.dirname(currentContext.path),
-      currentImportDeclaration.source.value
-    );
+      currentImportDeclaration.source.value,
+    )
 
     const targetContext = await scanAstByFileWithAutoExtension(
-      absoluteTargetImportPath
-    );
+      absoluteTargetImportPath,
+    )
     if (!targetContext) {
-      console.warn(`[${absoluteTargetImportPath}] 不存在`);
-      return null;
+      console.warn(`[${absoluteTargetImportPath}] 不存在`)
+      return null
     }
 
     // ============================================
@@ -51,52 +51,55 @@ async function getDeclarationInImportDeclarationHelper(
     // ============================================
     if (
       currentImportDeclaration.specifiers.some(
-        (specifier) =>
-          specifier.type === "ImportDefaultSpecifier" &&
-          specifier.local.name === itemName
+        specifier =>
+          specifier.type === 'ImportDefaultSpecifier'
+          && specifier.local.name === itemName,
       )
     ) {
       if (!targetContext.exportDefaultDeclarationWithNodePath) {
-        console.warn(`存在异常导出问题`);
-        return null;
+        console.warn(`存在异常导出问题`)
+        return null
       }
 
-      let targetIdentifier: Identifier | null = null;
-      let targetDeclaration: Declaration | null = null;
+      let targetIdentifier: Identifier | null = null
+      let targetDeclaration: Declaration | null = null
       targetContext.exportDefaultDeclarationWithNodePath.traverse({
         // 解析第一个函数参数
         Identifier(path) {
-          if (path.listKey === "arguments" && path.key === 0) {
+          if (path.listKey === 'arguments' && path.key === 0) {
             // 解决export default B(A)
-            targetIdentifier = path.node;
-          } else if (path.key === "declaration") {
+            targetIdentifier = path.node
+          }
+          else if (path.key === 'declaration') {
             // 解决export default A;
-            targetIdentifier = path.node;
-          } else if (path.parentPath.type === "FunctionDeclaration") {
+            targetIdentifier = path.node
+          }
+          else if (path.parentPath.type === 'FunctionDeclaration') {
             // 解决export default A() {}
-            targetIdentifier = path.node;
-          } else if (path.parentPath.type === "ClassDeclaration") {
+            targetIdentifier = path.node
+          }
+          else if (path.parentPath.type === 'ClassDeclaration') {
             // 解决export default class A {}
             targetDeclaration = {
-              type: "TodoDeclaration",
+              type: 'TodoDeclaration',
               id: path.node,
               nodePath: path.parentPath,
               filePath: targetContext.path,
               context: targetContext,
-            };
+            }
           }
         },
-      });
+      })
 
       if (targetDeclaration) {
-        return targetDeclaration;
+        return targetDeclaration
       }
 
       if (!targetDeclaration && targetIdentifier) {
         return await getDeclarationInContext(
           (targetIdentifier as Identifier).name,
-          targetContext
-        );
+          targetContext,
+        )
       }
     }
 
@@ -104,81 +107,81 @@ async function getDeclarationInImportDeclarationHelper(
     // 处理类似export { a } 的声明
     // 判断下当前导出声明中 是否提及itemName即可
     // ============================================
-    let targetExportSpecifier: ExportSpecifier | null = null;
+    let targetExportSpecifier: ExportSpecifier | null = null
     targetContext.exportNamedDeclarationsWithNodePath.forEach((item) => {
       item.traverse({
         ExportSpecifier(path) {
           if (
-            path.node.local.name === itemName ||
-            (path.node.exported.type === "Identifier" &&
-              path.node.exported.name === itemName)
+            path.node.local.name === itemName
+            || (path.node.exported.type === 'Identifier'
+              && path.node.exported.name === itemName)
           ) {
-            targetExportSpecifier = path.node;
+            targetExportSpecifier = path.node
           }
         },
         // 将export function a() {} 转换为 export { a }
         FunctionDeclaration(path) {
           if (path.node.id?.name === itemName) {
             targetExportSpecifier = {
-              type: "ExportSpecifier",
+              type: 'ExportSpecifier',
               local: path.node.id,
               exported: path.node.id,
-            };
+            }
           }
         },
         // 将export interface a {} 转换为 export { a }
         TSInterfaceDeclaration(path) {
           if (path.node.id?.name === itemName) {
             targetExportSpecifier = {
-              type: "ExportSpecifier",
+              type: 'ExportSpecifier',
               local: path.node.id,
               exported: path.node.id,
-            };
+            }
           }
         },
         // 将export const a = b 转化为 export { b as a }
         VariableDeclaration(path) {
-          let variableDeclaratorId: Identifier | null = null;
-          let variableDeclaratorInit: Identifier | null = null;
+          let variableDeclaratorId: Identifier | null = null
+          let variableDeclaratorInit: Identifier | null = null
           path.traverse({
             Identifier(path) {
               if (
-                path.parentPath.type === "VariableDeclarator" &&
-                path.key === "id" &&
-                path.node.name === itemName
+                path.parentPath.type === 'VariableDeclarator'
+                && path.key === 'id'
+                && path.node.name === itemName
               ) {
-                variableDeclaratorId = path.node;
+                variableDeclaratorId = path.node
               }
 
               if (
-                path.parentPath.type === "VariableDeclarator" &&
-                path.key === "init"
+                path.parentPath.type === 'VariableDeclarator'
+                && path.key === 'init'
               ) {
-                variableDeclaratorInit = path.node;
+                variableDeclaratorInit = path.node
               }
             },
-          });
+          })
 
           if (variableDeclaratorId && variableDeclaratorInit) {
             targetExportSpecifier = {
-              type: "ExportSpecifier",
+              type: 'ExportSpecifier',
               local: variableDeclaratorId,
               exported: variableDeclaratorInit,
-            };
+            }
           }
         },
-      });
-    });
+      })
+    })
 
     if (targetExportSpecifier) {
-      const exportedName = (targetExportSpecifier as ExportSpecifier).exported;
-      const actualExportName =
-        exportedName.type === "Identifier" ? exportedName.name : itemName;
+      const exportedName = (targetExportSpecifier as ExportSpecifier).exported
+      const actualExportName
+        = exportedName.type === 'Identifier' ? exportedName.name : itemName
       const declaration = await getDeclarationInContext(
         actualExportName,
-        targetContext
-      );
-      return declaration || null;
+        targetContext,
+      )
+      return declaration || null
     }
 
     // ============================================
@@ -186,42 +189,42 @@ async function getDeclarationInImportDeclarationHelper(
     // 遍历所有export * from '...' 的声明，直到找到目标上下文为止
     // ============================================
     for (const exportAllDeclaration of targetContext.exportAllDeclarationsWithNodePath) {
-      const sourceValue = exportAllDeclaration.node.source.value;
+      const sourceValue = exportAllDeclaration.node.source.value
       const resolvedPath = path.resolve(
         path.dirname(targetContext.path),
-        sourceValue
-      );
+        sourceValue,
+      )
 
-      const newContext = await scanAstByFileWithAutoExtension(resolvedPath);
+      const newContext = await scanAstByFileWithAutoExtension(resolvedPath)
       if (newContext) {
-        const result = await getDeclarationInContext(itemName, newContext);
+        const result = await getDeclarationInContext(itemName, newContext)
         if (result) {
-          return result;
+          return result
         }
       }
     }
 
     console.warn(
-      `[${currentContext.path}] 的 ${targetContext.path} 无法解析导入声明 ${itemName}`
-    );
+      `[${currentContext.path}] 的 ${targetContext.path} 无法解析导入声明 ${itemName}`,
+    )
   }
 
-  return null;
+  return null
 }
 
 // 缓存已查询过的声明，避免重复查询
-const declarationCache = new Map<string, Declaration | null>();
+const declarationCache = new Map<string, Declaration | null>()
 
 // 获取声明在一个上下文中
 // 如果没有，则直接报错
 export async function getDeclarationInContext(
   itemName: string,
-  currentContext: FileContext
+  currentContext: FileContext,
 ): Promise<Declaration | null> {
-  const cacheKey = `${currentContext.path}-${itemName}`;
-  const cachedDeclaration = declarationCache.get(cacheKey);
+  const cacheKey = `${currentContext.path}-${itemName}`
+  const cachedDeclaration = declarationCache.get(cacheKey)
   if (cachedDeclaration) {
-    return cachedDeclaration;
+    return cachedDeclaration
   }
 
   // 从当前文件的变量声明 函数声明/接口声明中查找目标声明
@@ -229,36 +232,36 @@ export async function getDeclarationInContext(
     ...currentContext.variablesWithBaseInfo,
     ...currentContext.interfacesWithBaseInfo,
     ...currentContext.functionsWithBaseInfo,
-  ];
-  const item = declarations.find((item) => item.id.name === itemName);
+  ]
+  const item = declarations.find(item => item.id.name === itemName)
   if (item) {
-    declarationCache.set(cacheKey, item);
-    return item;
+    declarationCache.set(cacheKey, item)
+    return item
   }
 
   // 从当前文件的导入声明中查找目标声明
-  let targetImportDeclaration: ImportDeclaration | null = null;
+  let targetImportDeclaration: ImportDeclaration | null = null
   currentContext.importDeclarationsWithNodePath.forEach((importDeclaration) => {
     importDeclaration.traverse({
       Identifier(path: NodePath<Identifier>) {
         if (path.node.name === itemName) {
-          targetImportDeclaration = importDeclaration.node;
+          targetImportDeclaration = importDeclaration.node
         }
       },
-    });
-  });
+    })
+  })
 
   // 递归获取
   const declaration = targetImportDeclaration
     ? await getDeclarationInImportDeclarationHelper(
-        targetImportDeclaration,
-        currentContext,
-        itemName
-      )
-    : null;
+      targetImportDeclaration,
+      currentContext,
+      itemName,
+    )
+    : null
 
   if (declaration) {
-    declarationCache.set(cacheKey, declaration);
+    declarationCache.set(cacheKey, declaration)
   }
-  return declaration;
+  return declaration
 }

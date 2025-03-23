@@ -1,15 +1,15 @@
-import { generateModuleDoc } from "./src/doc";
-import { getEntryFilePathsByDir } from "./src/entry";
+import { generateModuleDoc } from './src/doc'
+import { getEntryFilePathsByDir } from './src/entry'
 import {
   transformFilePathsToModuleAndComponent,
   transformFilePathToModuleAndComponent,
-} from "./src/transform";
+} from './src/transform'
 
 export {
-  getEntryFilePathsByDir,
-  transformFilePathToModuleAndComponent,
-  transformFilePathsToModuleAndComponent,
   generateModuleDoc,
-};
+  getEntryFilePathsByDir,
+  transformFilePathsToModuleAndComponent,
+  transformFilePathToModuleAndComponent,
+}
 
-export * from "./src/types";
+export * from './src/types'

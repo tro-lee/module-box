@@ -1,13 +1,13 @@
-import { Component, Module } from "module-toolbox-library";
-import { create } from "zustand";
+import type { Component, Module } from 'module-toolbox-library'
+import { create } from 'zustand'
 
 interface NodeContext {
-  selectedNodes: Array<Module | Component>;
-  setSelectedNodes: (nodes: Array<Module | Component>) => void;
+  selectedNodes: Array<Module | Component>
+  setSelectedNodes: (nodes: Array<Module | Component>) => void
 }
 
-export const useNodeContextStore = create<NodeContext>((set) => ({
+export const useNodeContextStore = create<NodeContext>(set => ({
   selectedNodes: [],
   setSelectedNodes: (nodes: Array<Module | Component>) =>
     set({ selectedNodes: nodes }),
-}));
+}))

@@ -1,14 +1,13 @@
-import { Suspense } from "react";
-import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
-import { SidebarHeader } from "@/components/ui/sidebar";
-import ModuleListComponent, {
-  ModuleListSkeleton,
-} from "@/components/playground/module-list";
 import ModuleGraphComponent, {
   ModuleGraphSkeleton,
-} from "@/components/playground/module-graph";
-import { getModulesAndComponents } from "./action";
-import { NodeInfoCardComponent } from "@/components/playground/node-info-card";
+} from '@/components/playground/module-graph'
+import ModuleListComponent, {
+  ModuleListSkeleton,
+} from '@/components/playground/module-list'
+import { NodeInfoCardComponent } from '@/components/playground/node-info-card'
+import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
+import { Suspense } from 'react'
+import { getModulesAndComponents } from './action'
 
 export default async function DashboardPage() {
   return (
@@ -19,7 +18,7 @@ export default async function DashboardPage() {
       </Suspense>
       <NodeInfoCard />
     </div>
-  );
+  )
 }
 
 function ModuleExplorer() {
@@ -32,26 +31,26 @@ function ModuleExplorer() {
             promise={
               new Promise((resolve) => {
                 setTimeout(() => {
-                  resolve(1);
-                }, 2000);
+                  resolve(1)
+                }, 2000)
               })
             }
           />
         </Suspense>
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }
 
 function ModuleGraph() {
-  const promise = getModulesAndComponents();
+  const promise = getModulesAndComponents()
   return (
     <div className="flex-1">
       <ModuleGraphComponent promise={promise} />
     </div>
-  );
+  )
 }
 
 function NodeInfoCard() {
-  return <NodeInfoCardComponent />;
+  return <NodeInfoCardComponent />
 }
