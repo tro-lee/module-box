@@ -39,8 +39,8 @@ app.get('/modules', async (c) => {
     data: result,
   }, {
     headers: {
-      'Cache-Control': 'max-age=600' // 十分钟强制缓存，后面改为根据文件内容进行ETag协商缓存
-    }
+      'Cache-Control': 'max-age=600', // 十分钟强制缓存，后面改为根据文件内容进行ETag协商缓存
+    },
   })
 })
 
