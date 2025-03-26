@@ -8,9 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { useNodeContextStore } from '@/store/node-context-store'
-import { Handle, Position } from '@xyflow/react'
-import { Fragment, memo, useCallback } from 'react'
+import { Handle, Position, useNodeConnections } from '@xyflow/react'
+import { Fragment, memo } from 'react'
 
 // 图表 模块节点
 function GraphModuleNode({
@@ -20,25 +19,25 @@ function GraphModuleNode({
   data: { module: Module }
 }) {
   const { module } = data
+  const connections = useNodeConnections()
+  const hasTargetConnections = connections.some(c => c.target === module.key)
+  const hasSourceConnections = connections.some(c => c.source === module.key)
 
   return (
     <Fragment>
-      <Handle type="target" position={Position.Left} />
       <Card
-        className={`cursor-pointer transition-all duration-200 ${
+        className={`bg-primary-foreground cursor-pointer transition-all duration-200 ${
           selected
             ? 'ring-2 ring-primary shadow-lg scale-105'
             : 'hover:shadow-md'
         }`}
       >
+        {hasTargetConnections && <Handle type="target" position={Position.Left} />}
         <CardHeader>
-          <CardTitle>{module.componentName}</CardTitle>
-          <CardDescription>
-            {module.componentFilePath.split('/').slice(-3).join('/')}
-          </CardDescription>
+          <CardTitle className="text-primary">{module.componentName}</CardTitle>
         </CardHeader>
+        {hasSourceConnections && <Handle type="source" position={Position.Right} />}
       </Card>
-      <Handle type="source" position={Position.Right} />
     </Fragment>
   )
 }
@@ -46,26 +45,52 @@ function GraphModuleNode({
 // 图表 组件节点
 function GraphComponentNode({
   data,
+  selected,
 }: NodeProps<Node> & {
   data: { component: Component }
 }) {
   const { component } = data
-  const setCurrentNode = useNodeContextStore(state => state.setCurrentNode)
 
-  const handleClick = useCallback(() => {
-    setCurrentNode(component)
-  }, [component, setCurrentNode])
+  const connections = useNodeConnections()
+  const hasTargetConnections = connections.some(c => c.target === component.componentKey)
+  const hasSourceConnections = connections.some(c => c.source === component.componentKey)
+
+  const Content = () => {
+    if (component.type === 'LocalComponent') {
+      return (
+        <CardHeader>
+          <CardTitle>{component.componentName}</CardTitle>
+          <CardDescription>
+            {component.componentFilePath.split('/').slice(-3).join('/')}
+          </CardDescription>
+        </CardHeader>
+      )
+    }
+
+    if (component.type === 'NodeComponent') {
+      return (
+        <CardHeader>
+          <CardTitle>{component.componentName}</CardTitle>
+          <CardDescription>
+            {component.packageName}
+          </CardDescription>
+        </CardHeader>
+      )
+    }
+  }
 
   return (
     <Fragment>
-      <Handle type="target" position={Position.Left} />
-      <button
-        className="flex flex-col bg-white border-2 border-gray-300 rounded-xl p-2 cursor-pointer hover:bg-gray-50"
-        onClick={handleClick}
+      <Card className={`cursor-pointer transition-all duration-200 ${
+        selected
+          ? 'ring-2 ring-primary shadow-lg scale-105'
+          : 'hover:shadow-md'
+      }`}
       >
-        <h3>{component.componentName}</h3>
-      </button>
-      <Handle type="source" position={Position.Right} />
+        {hasTargetConnections && <Handle type="target" position={Position.Left} />}
+        <Content />
+        {hasSourceConnections && <Handle type="source" position={Position.Right} />}
+      </Card>
     </Fragment>
   )
 }

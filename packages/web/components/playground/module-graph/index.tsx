@@ -2,6 +2,7 @@
 'use module'
 
 import type { Component, Module } from 'module-toolbox-library'
+import { useNodeContextStore } from '@/store/node-context-store'
 import {
   Background,
   BackgroundVariant,
@@ -13,8 +14,8 @@ import {
   useOnSelectionChange,
 } from '@xyflow/react'
 import React, { memo } from 'react'
-import { CustomNodeType } from './custom-node'
 
+import { CustomNodeType } from './custom-node'
 import { useFlowLayoutManager, useInitialGraphData } from './hooks'
 import '@xyflow/react/dist/style.css'
 
@@ -37,14 +38,24 @@ function CoreFlow({
 
   useFlowLayoutManager({ nodes, edges, setNodes, setEdges })
 
+  const { setSelectedNodes } = useNodeContextStore()
+
   useOnSelectionChange({
     onChange: (selection) => {
-      console.log(selection)
+      const selectedNodes: Array<Module | Component> = []
+      for (const node of selection.nodes) {
+        if (node.data.node) {
+          selectedNodes.push(node.data.node as Module | Component)
+        }
+      }
+      setSelectedNodes(selectedNodes)
     },
   })
 
   return (
     <ReactFlow
+      nodesConnectable={false}
+      nodesDraggable={false}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}

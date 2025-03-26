@@ -21,7 +21,7 @@ export function useInitialGraphData(
       nodes.push({
         id: module.key,
         position: { x: 0, y: 0 },
-        data: { module },
+        data: { module, node: module, type: 'module' },
         type: 'module',
       })
     })
@@ -29,7 +29,7 @@ export function useInitialGraphData(
       nodes.push({
         id: component.componentKey,
         position: { x: 0, y: 0 },
-        data: { component },
+        data: { component, node: component, type: 'component' },
         type: 'component',
       })
     })

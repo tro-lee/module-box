@@ -52,5 +52,9 @@ function ModuleGraph() {
 }
 
 function NodeInfoCard() {
-  return <NodeInfoCardComponent />
+  return (
+    <div className="w-1/4 h-full absolute right-0">
+      <NodeInfoCardComponent />
+    </div>
+  )
 }

@@ -3,11 +3,11 @@
 import { useNodeContextStore } from '@/store/node-context-store'
 
 export function NodeInfoCardComponent() {
-  const currentNode = useNodeContextStore(state => state.currentNode)
+  const currentNode = useNodeContextStore(state => state.selectedNodes)
 
   if (!currentNode) {
     return null
   }
 
-  return <div>{currentNode.componentName}</div>
+  return <div>{JSON.stringify(currentNode)}</div>
 }
