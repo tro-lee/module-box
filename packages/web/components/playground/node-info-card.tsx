@@ -1,6 +1,8 @@
 'use client'
 
 import { useNodeContextStore } from '@/store/node-context-store'
+import { HighlightCode } from '../common/highlight-code'
+import { Card, CardContent } from '../ui/card'
 
 export function NodeInfoCardComponent() {
   const currentNode = useNodeContextStore(state => state.selectedNodes)
@@ -9,5 +11,15 @@ export function NodeInfoCardComponent() {
     return null
   }
 
-  return <div>{JSON.stringify(currentNode)}</div>
+  return (
+    <Card className="w-full h-full">
+      <CardContent>
+        <HighlightCode
+          code={`
+          `}
+          language="typescript"
+        />
+      </CardContent>
+    </Card>
+  )
 }

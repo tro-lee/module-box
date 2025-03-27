@@ -2,6 +2,7 @@
 
 import type { Node, NodeProps } from '@xyflow/react'
 import type { Component, Module } from 'module-toolbox-library'
+
 import {
   Card,
   CardDescription,
@@ -15,6 +16,9 @@ import { Fragment, memo } from 'react'
 function GraphModuleNode({
   data,
   selected,
+  width,
+  height,
+  id,
 }: NodeProps<Node> & {
   data: { module: Module }
 }) {
@@ -22,6 +26,14 @@ function GraphModuleNode({
   const connections = useNodeConnections()
   const hasTargetConnections = connections.some(c => c.target === module.key)
   const hasSourceConnections = connections.some(c => c.source === module.key)
+
+  const handleDoubleClick = () => {
+    // 构建 VSCode 或 Cursor 的 URL scheme
+    const cursorUrl = `cursor://file/${module.componentFilePath}`
+
+    // 尝试打开 Cursor
+    window.location.href = cursorUrl
+  }
 
   return (
     <Fragment>
@@ -31,12 +43,20 @@ function GraphModuleNode({
             ? 'ring-2 ring-primary shadow-lg scale-105'
             : 'hover:shadow-md'
         }`}
+        onClick={handleDoubleClick}
       >
         {hasTargetConnections && <Handle type="target" position={Position.Left} />}
+        {hasSourceConnections && <Handle type="source" position={Position.Right} />}
         <CardHeader>
           <CardTitle className="text-primary">{module.componentName}</CardTitle>
+          <CardDescription>
+            {height}
+            {' '}
+            |
+            {' '}
+            {width}
+          </CardDescription>
         </CardHeader>
-        {hasSourceConnections && <Handle type="source" position={Position.Right} />}
       </Card>
     </Fragment>
   )

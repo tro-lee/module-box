@@ -6,17 +6,17 @@ import { useNodeContextStore } from '@/store/node-context-store'
 import {
   Background,
   BackgroundVariant,
-  Controls,
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
+  useNodesInitialized,
   useNodesState,
   useOnSelectionChange,
 } from '@xyflow/react'
-import React, { memo } from 'react'
-
+import React, { memo, useEffect } from 'react'
 import { CustomNodeType } from './custom-node'
-import { useFlowLayoutManager, useInitialGraphData } from './hooks'
+import { useFlowLayout, useInitialGraphData } from './hooks'
+
 import '@xyflow/react/dist/style.css'
 
 export function ModuleGraphSkeleton() {
@@ -33,11 +33,20 @@ function CoreFlow({
   }>
 }) {
   const { initialNodes, initialEdges } = useInitialGraphData(promise)
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [nodes, , onNodesChange] = useNodesState(initialNodes)
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges)
 
-  useFlowLayoutManager({ nodes, edges, setNodes, setEdges })
+  // 布局
+  const { setLayout } = useFlowLayout()
+  const isNodesInitialized = useNodesInitialized()
 
+  useEffect(() => {
+    if (isNodesInitialized) {
+      setLayout()
+    }
+  }, [isNodesInitialized])
+
+  // 配置节点选择
   const { setSelectedNodes } = useNodeContextStore()
 
   useOnSelectionChange({
@@ -63,7 +72,6 @@ function CoreFlow({
       fitView
       nodeTypes={CustomNodeType}
     >
-      <Controls />
       <Background variant={BackgroundVariant.Cross} gap={50} />
     </ReactFlow>
   )
@@ -84,5 +92,3 @@ export const ModuleGraphComponent = memo(({
     </ReactFlowProvider>
   )
 })
-
-export default ModuleGraphComponent

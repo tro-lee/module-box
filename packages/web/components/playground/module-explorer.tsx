@@ -61,7 +61,7 @@ const ELEMENTS = [
   },
 ]
 
-export function ModuleListSkeleton() {
+export function ModuleExplorerSkeleton() {
   return (
     <div className="flex flex-col gap-2 p-2">
       {Array.from({ length: 4 }).map((_, index) => (
@@ -100,8 +100,8 @@ export function ModuleListSkeleton() {
   )
 }
 
-// 模块列表 用于展示模块资源信息
-export default function ModuleListComponent({
+// 模块资源管理器：用于展示和管理项目中的模块、组件及其依赖关系
+export function ModuleExplorer({
   promise,
 }: {
   promise: Promise<number>

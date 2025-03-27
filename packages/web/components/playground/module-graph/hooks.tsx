@@ -1,8 +1,8 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { Component, Module } from 'module-toolbox-library'
 import Dagre from '@dagrejs/dagre'
-import { useNodesInitialized, useReactFlow } from '@xyflow/react'
-import { use, useCallback, useEffect, useMemo } from 'react'
+import { useEdges, useNodes, useReactFlow } from '@xyflow/react'
+import { use, useCallback, useMemo } from 'react'
 
 // 获取初始节点和边数据
 export function useInitialGraphData(
@@ -101,38 +101,19 @@ function layoutProcess(
 }
 
 // 节点布局管理
-export function useFlowLayoutManager({
-  nodes,
-  edges,
-  setNodes,
-  setEdges,
-}: {
-  nodes: Node[]
-  edges: Edge[]
-  setNodes: (nodes: Node[]) => void
-  setEdges: (edges: Edge[]) => void
-}) {
-  const { fitView } = useReactFlow()
-  const onLayout = useCallback(() => {
-    const layout = layoutProcess(nodes, edges, { direction: 'LR' })
-    setNodes(layout.nodes)
-    setEdges(layout.edges)
-
-    // 保证节点布局完成后，再进行视角调整
-    window.requestAnimationFrame(() => {
-      fitView({ duration: 1000, maxZoom: 0.8 })
-    })
-  }, [edges, nodes, setEdges, setNodes, fitView])
-
-  // 节点初始化完成后，进行布局
-  const isNodesInitialized = useNodesInitialized()
-  useEffect(() => {
-    if (isNodesInitialized) {
-      onLayout()
-    }
-  }, [isNodesInitialized])
+export function useFlowLayout() {
+  const nodes = useNodes()
+  const edges = useEdges()
+  const { fitView, setNodes, setEdges } = useReactFlow()
 
   return {
-    onLayout,
+    setLayout: useCallback(() => {
+      const layout = layoutProcess(nodes, edges, { direction: 'LR' })
+      setNodes(layout.nodes)
+      setEdges(layout.edges)
+      window.requestAnimationFrame(() => {
+        fitView({ maxZoom: 0.8 })
+      })
+    }, [edges, nodes, setEdges, setNodes, fitView]),
   }
 }

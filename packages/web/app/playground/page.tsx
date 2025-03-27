@@ -1,43 +1,70 @@
-import ModuleGraphComponent, {
+import {
+  ModuleExplorer,
+  ModuleExplorerSkeleton,
+} from '@/components/playground/module-explorer'
+import {
+  ModuleGraphComponent,
   ModuleGraphSkeleton,
 } from '@/components/playground/module-graph'
-import ModuleListComponent, {
-  ModuleListSkeleton,
-} from '@/components/playground/module-list'
-import { NodeInfoCardComponent } from '@/components/playground/node-info-card'
-import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
+import { ProgressDock } from '@/components/playground/progress-dock'
+import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { File } from 'lucide-react'
 import { Suspense } from 'react'
 import { getModulesAndComponents } from './action'
 
 export default async function DashboardPage() {
   return (
     <div className="h-full w-full flex">
-      <ModuleExplorer />
-      <Suspense fallback={<ModuleGraphSkeleton />}>
-        <ModuleGraph />
-      </Suspense>
-      <NodeInfoCard />
+      <LeftSidebar />
+      <SidebarInset>
+        <SidebarTrigger />
+        <Suspense fallback={<ModuleGraphSkeleton />}>
+          <ModuleGraph />
+        </Suspense>
+        <Dock />
+      </SidebarInset>
     </div>
   )
 }
 
-function ModuleExplorer() {
+function LeftSidebar() {
+  // Explorer
+  const Explorer = () =>
+    (
+      <Suspense fallback={<ModuleExplorerSkeleton />}>
+        <ModuleExplorer
+          promise={
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve(1)
+              }, 2000)
+            })
+          }
+        />
+      </Suspense>
+    )
+
   return (
-    <Sidebar>
-      <SidebarHeader>Module-box</SidebarHeader>
-      <SidebarContent>
-        <Suspense fallback={<ModuleListSkeleton />}>
-          <ModuleListComponent
-            promise={
-              new Promise((resolve) => {
-                setTimeout(() => {
-                  resolve(1)
-                }, 2000)
-              })
-            }
-          />
-        </Suspense>
-      </SidebarContent>
+    <Sidebar variant="inset" side="left">
+      <Tabs defaultValue="explorer">
+        <SidebarHeader>
+          <TabsList>
+            <TabsTrigger value="explorer">
+              <File />
+            </TabsTrigger>
+            <TabsTrigger value="graph">
+              <File />
+            </TabsTrigger>
+          </TabsList>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <TabsContent value="explorer">
+            <Explorer />
+          </TabsContent>
+        </SidebarContent>
+      </Tabs>
     </Sidebar>
   )
 }
@@ -51,10 +78,10 @@ function ModuleGraph() {
   )
 }
 
-function NodeInfoCard() {
+function Dock() {
   return (
-    <div className="w-1/4 h-full absolute right-0">
-      <NodeInfoCardComponent />
+    <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+      <ProgressDock />
     </div>
   )
 }
