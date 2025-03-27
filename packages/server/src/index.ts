@@ -11,6 +11,40 @@ app.use('/*', cors({
   origin: 'localhost', // 当前服务仅限本地运行，不做身份验证
 }))
 
+app.get('/entry-file-paths', async (c) => {
+  const filepath = c.req.query('filepath') || ''
+  const exclude = c.req.query('exclude')?.split(',') || ['test', 'node_modules']
+  const include = c.req.query('include')?.split(',') || ['src', 'packages']
+
+  if (!filepath) {
+    return c.json({
+      status: 'error',
+      message: 'filepath is required',
+    }, 400)
+  }
+
+  const absolutePaths = await getEntryFilePathsByDir(
+    filepath,
+    {
+      exclude,
+      include,
+    },
+  )
+
+  // 获取每个文件的相对路径
+  const relativePaths = absolutePaths.map((file) => {
+    return file.replace(filepath, '')
+  })
+
+  return c.json({
+    status: 'success',
+    data: {
+      absolutePaths,
+      relativePaths,
+    },
+  })
+})
+
 app.get('/modules', async (c) => {
   const filepath = c.req.query('filepath') || ''
   const exclude = c.req.query('exclude')?.split(',') || ['test', 'node_modules']

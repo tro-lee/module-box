@@ -11,7 +11,7 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { File } from 'lucide-react'
 import { Suspense } from 'react'
-import { getModulesAndComponents } from './action'
+import { getModuleExplorerElements, getModulesAndComponents } from './action'
 
 export default async function DashboardPage() {
   return (
@@ -29,24 +29,20 @@ export default async function DashboardPage() {
 }
 
 function LeftSidebar() {
+  const elements = getModuleExplorerElements()
+
   // Explorer
   const Explorer = () =>
     (
       <Suspense fallback={<ModuleExplorerSkeleton />}>
         <ModuleExplorer
-          promise={
-            new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(1)
-              }, 2000)
-            })
-          }
+          elementsPromise={elements}
         />
       </Suspense>
     )
 
   return (
-    <Sidebar variant="inset" side="left">
+    <Sidebar variant="inset" side="left" className="overflow-auto">
       <Tabs defaultValue="explorer">
         <SidebarHeader>
           <TabsList>

@@ -5,61 +5,12 @@ import { Fragment, use } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
 import { Skeleton } from '../ui/skeleton'
 
-const ELEMENTS = [
-  {
-    id: '1',
-    isSelectable: true,
-    name: 'src',
-    children: [
-      {
-        id: '2',
-        isSelectable: true,
-        name: 'app',
-        children: [
-          {
-            id: '3',
-            isSelectable: true,
-            name: 'layout.tsx',
-          },
-          {
-            id: '4',
-            isSelectable: true,
-            name: 'page.tsx',
-          },
-        ],
-      },
-      {
-        id: '5',
-        isSelectable: true,
-        name: 'components',
-        children: [
-          {
-            id: '6',
-            isSelectable: true,
-            name: 'header.tsx',
-          },
-          {
-            id: '7',
-            isSelectable: true,
-            name: 'footer.tsx',
-          },
-        ],
-      },
-      {
-        id: '8',
-        isSelectable: true,
-        name: 'lib',
-        children: [
-          {
-            id: '9',
-            isSelectable: true,
-            name: 'utils.ts',
-          },
-        ],
-      },
-    ],
-  },
-]
+interface Element {
+  id: string
+  isSelectable: boolean
+  name: string
+  children?: Element[]
+}
 
 export function ModuleExplorerSkeleton() {
   return (
@@ -100,60 +51,55 @@ export function ModuleExplorerSkeleton() {
   )
 }
 
+// 递归渲染元素组件
+function RenderElement({ element }: { element: Element }) {
+  if (element.children) {
+    return (
+      <Folder value={element.id} element={element.name}>
+        {element.children.map(child => (
+          <RenderElement key={child.id} element={child} />
+        ))}
+      </Folder>
+    )
+  }
+
+  return (
+    <File value={element.id}>
+      <p>{element.name}</p>
+    </File>
+  )
+}
+
+// 递归获取所有文件夹的ID
+function getAllFolderIds(elements: Element[]): string[] {
+  const ids: string[] = []
+  elements.forEach((element) => {
+    ids.push(element.id)
+    if (element.children) {
+      ids.push(...getAllFolderIds(element.children))
+    }
+  })
+  return ids
+}
+
 // 模块资源管理器：用于展示和管理项目中的模块、组件及其依赖关系
 export function ModuleExplorer({
-  promise,
+  elementsPromise,
 }: {
-  promise: Promise<number>
+  elementsPromise: Promise<Element[]>
 }) {
-  use(promise)
+  const elements = use(elementsPromise)
+
   return (
     <Tree
       className="p-2 overflow-hidden rounded-md"
       initialSelectedId="7"
-      initialExpandedItems={[
-        '1',
-        '2',
-        '3',
-        '4',
-        '5',
-        '6',
-        '7',
-        '8',
-        '9',
-        '10',
-        '11',
-      ]}
-      elements={ELEMENTS}
+      initialExpandedItems={getAllFolderIds(elements)}
+      elements={elements}
     >
-      <Folder element="src" value="1">
-        <Folder value="2" element="app">
-          <File value="3">
-            <p>layout.tsx</p>
-          </File>
-          <File value="4">
-            <p>page.tsx</p>
-          </File>
-        </Folder>
-        <Folder value="5" element="components">
-          <Folder value="6" element="ui">
-            <File value="7">
-              <p>button.tsx</p>
-            </File>
-          </Folder>
-          <File value="8">
-            <p>header.tsx</p>
-          </File>
-          <File value="9">
-            <p>footer.tsx</p>
-          </File>
-        </Folder>
-        <Folder value="10" element="lib">
-          <File value="11">
-            <p>utils.ts</p>
-          </File>
-        </Folder>
-      </Folder>
+      {elements.map(element => (
+        <RenderElement key={element.id} element={element} />
+      ))}
     </Tree>
   )
 }
