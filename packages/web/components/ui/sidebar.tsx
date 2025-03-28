@@ -13,7 +13,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { Slot } from '@radix-ui/react-slot'
 import { cva } from 'class-variance-authority'
@@ -68,7 +67,7 @@ const SidebarProvider = React.forwardRef<
         },
         ref,
       ) => {
-        const isMobile = useIsMobile()
+        const isMobile = false // 不考虑移动端
         const [openMobile, setOpenMobile] = React.useState(false)
 
         // This is the internal state of the sidebar.

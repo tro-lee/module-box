@@ -1,36 +1,7 @@
 'use server'
-import type { Component, Module } from 'module-toolbox-library'
-import fs from 'node:fs'
-import path from 'node:path'
+import { API_URL, ROOT_PATH } from '../lib/constants'
 
-const API_URL = process.env.API_URL || 'http://localhost:3000'
-
-export async function getModulesAndComponents(): Promise<{
-  modules: Record<string, Module>
-  components: Record<string, Component>
-}> {
-  return new Promise((resolve) => {
-    fs.readFile(
-      path.join(process.cwd(), './temp/test.json'),
-      'utf-8',
-      (err, json) => {
-        if (err) {
-          console.error('读取文件失败', err)
-          resolve({
-            modules: {},
-            components: {},
-          })
-        }
-
-        const data = JSON.parse(json)
-        resolve({
-          modules: data.modules || {},
-          components: data.components || {},
-        })
-      },
-    )
-  })
-}
+// 模块资源管理器提供数据
 
 interface Element {
   id: string
@@ -40,10 +11,10 @@ interface Element {
 }
 
 async function getEntryFilePaths(): Promise<{
-  absolutePaths: string[]
+  rootPath: string
   relativePaths: string[]
 }> {
-  const response = await fetch(`${API_URL}/entry-file-paths?filepath=/Users/trolee/Documents/module-box`)
+  const response = await fetch(`${API_URL}/entry-file-paths?filepath=${ROOT_PATH}`)
   const data = await response.json()
   if (data.status === 'success') {
     return data.data
@@ -51,7 +22,7 @@ async function getEntryFilePaths(): Promise<{
   else {
     console.error(data.message)
     return {
-      absolutePaths: [],
+      rootPath: '',
       relativePaths: [],
     }
   }
@@ -99,7 +70,13 @@ function pathsToTree(paths: string[]): Element[] {
   return tree
 }
 
-export async function getModuleExplorerElements(): Promise<Element[]> {
-  const { relativePaths } = await getEntryFilePaths()
-  return pathsToTree(relativePaths)
+export async function getModuleExplorerData(): Promise<{
+  rootPath: string
+  elements: Element[]
+}> {
+  const { relativePaths, rootPath } = await getEntryFilePaths()
+  return {
+    rootPath,
+    elements: pathsToTree(relativePaths),
+  }
 }

@@ -207,30 +207,6 @@ async function transformFileContextToModuleAndComponent(
 // 外部提供文件路径后，即可拿到组件和模块信息
 // ============================================
 
-// 将单一文件路径转换为模块和组件
-export async function transformFilePathToModuleAndComponent(filePath: string) {
-  const fileContext = await scanAstByFileWithAutoExtension(filePath)
-  if (!fileContext)
-    return
-
-  const resultModules: Record<string, Module> = {}
-  const resultComponentContext: Record<string, Component> = {}
-
-  const modules = await transformFileContextToModuleAndComponent(
-    fileContext,
-    resultComponentContext,
-  )
-
-  for (const module of modules) {
-    resultModules[module.componentName] = module
-  }
-
-  return {
-    modules: resultModules,
-    components: resultComponentContext,
-  }
-}
-
 // 将文件路径列表转换为模块和组件
 export async function transformFilePathsToModuleAndComponent(
   filePaths: string[],

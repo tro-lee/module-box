@@ -12,10 +12,10 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { File } from 'lucide-react'
 import { Suspense } from 'react'
-import { getModuleExplorerElements, getModulesAndComponents } from './action'
+import { getModuleExplorerData } from '../../actions/module-explorer-data'
 
 function LeftSidebar() {
-  const elements = getModuleExplorerElements()
+  const explorerPromise = getModuleExplorerData()
 
   return (
     <Sidebar variant="inset" side="left" className="overflow-auto">
@@ -35,7 +35,7 @@ function LeftSidebar() {
           <TabsContent value="explorer">
             <Suspense fallback={<ModuleExplorerSkeleton />}>
               <ModuleExplorerComponent
-                elementsPromise={elements}
+                dataPromise={explorerPromise}
               />
             </Suspense>
           </TabsContent>

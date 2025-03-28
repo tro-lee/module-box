@@ -1,6 +1,7 @@
 'use client'
 'use module'
 
+import type { GraphStore } from '@/store/graph-store'
 import type { Component, Module } from 'module-toolbox-library'
 import { useGraphStore } from '@/store/graph-store'
 import {
@@ -23,19 +24,18 @@ export function ModuleGraphSkeleton() {
   return <div>Loading...</div>
 }
 
-// 核心流程图部分
-function CoreFlow({
-  promise,
-}: {
-  promise: Promise<{
-    modules: Record<string, Module>
-    components: Record<string, Component>
-  }>
-}) {
-  const { initialNodes, initialEdges } = useInitialGraphData(promise)
-  const [nodes, , onNodesChange] = useNodesState(initialNodes)
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges)
+function selector(state: GraphStore) {
+  return {
+    nodes: state.nodes,
+    edges: state.edges,
+    onNodesChange: state.onNodesChange,
+    onEdgesChange: state.onEdgesChange,
+    onConnect: state.onConnect,
+  }
+}
 
+// 核心流程图部分
+function CoreFlow() {
   // 布局
   const { setLayout } = useFlowLayout()
   const isNodesInitialized = useNodesInitialized()
@@ -47,7 +47,7 @@ function CoreFlow({
   }, [isNodesInitialized])
 
   // 配置节点选择
-  const { setSelectedNodes } = useGraphStore()
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodes } = useGraphStore()
 
   useOnSelectionChange({
     onChange: (selection) => {
@@ -78,17 +78,10 @@ function CoreFlow({
 }
 
 // 包裹下，提供 ReactFlowProvider 上下文
-export const ModuleGraphComponent = memo(({
-  promise,
-}: {
-  promise: Promise<{
-    modules: Record<string, Module>
-    components: Record<string, Component>
-  }>
-}) => {
+export const ModuleGraphComponent = memo(() => {
   return (
     <ReactFlowProvider>
-      <CoreFlow promise={promise} />
+      <CoreFlow />
     </ReactFlowProvider>
   )
 })

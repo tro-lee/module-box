@@ -2,7 +2,7 @@
 'use module'
 
 import { useExplorerStore } from '@/store/explorer-store'
-import { Fragment, use, useCallback } from 'react'
+import { Fragment, use, useCallback, useEffect } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
 import { Skeleton } from '../ui/skeleton'
 
@@ -46,16 +46,23 @@ function getAllFolderIds(elements: Element[]): string[] {
 
 // 模块资源管理器：用于展示和管理项目中的模块、组件及其依赖关系
 export function ModuleExplorerComponent({
-  elementsPromise,
+  dataPromise,
 }: {
-  elementsPromise: Promise<Element[]>
+  dataPromise: Promise<{
+    rootPath: string
+    elements: Element[]
+  }>
 }) {
-  const elements = use(elementsPromise)
-  const { setSelectedFile } = useExplorerStore()
+  const { rootPath, elements } = use(dataPromise)
+  const { setSelectedRelativeFilePath, setRootPath } = useExplorerStore()
+
+  useEffect(() => {
+    setRootPath(rootPath)
+  }, [rootPath, setRootPath])
 
   const handleSelect = useCallback((id: string) => {
-    setSelectedFile(id)
-  }, [setSelectedFile])
+    setSelectedRelativeFilePath(id)
+  }, [setSelectedRelativeFilePath])
 
   return (
     <Tree

@@ -12,14 +12,14 @@ import { useExplorerStore } from '@/store/explorer-store'
 import { Fragment } from 'react'
 
 export function BreadcrumbComponent() {
-  const { selectedFile } = useExplorerStore()
+  const { selectedRelativeFilePath } = useExplorerStore()
 
-  if (!selectedFile) {
+  if (!selectedRelativeFilePath) {
     return null
   }
 
   // 将文件路径分割成数组
-  const pathParts = selectedFile.split('/')
+  const pathParts = selectedRelativeFilePath.split('/')
 
   // 构建面包屑项
   const breadcrumbItems = pathParts.map((part, index) => {

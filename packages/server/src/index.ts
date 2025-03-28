@@ -39,8 +39,32 @@ app.get('/entry-file-paths', async (c) => {
   return c.json({
     status: 'success',
     data: {
-      absolutePaths,
+      rootPath: filepath,
       relativePaths,
+    },
+  })
+})
+
+app.get('/modules-by-path', async (c) => {
+  const filepath = c.req.query('filepath') || ''
+
+  if (!filepath) {
+    return c.json({
+      status: 'error',
+      message: 'filepath is required',
+    }, 400)
+  }
+
+  const result = await transformFilePathsToModuleAndComponent(
+    [filepath],
+  )
+
+  return c.json({
+    status: 'success',
+    data: result,
+  }, {
+    headers: {
+      'Cache-Control': 'max-age=600',
     },
   })
 })
