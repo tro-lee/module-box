@@ -2,7 +2,7 @@
 'use module'
 
 import type { Component, Module } from 'module-toolbox-library'
-import { useNodeContextStore } from '@/store/node-context-store'
+import { useGraphStore } from '@/store/graph-store'
 import {
   Background,
   BackgroundVariant,
@@ -47,7 +47,7 @@ function CoreFlow({
   }, [isNodesInitialized])
 
   // 配置节点选择
-  const { setSelectedNodes } = useNodeContextStore()
+  const { setSelectedNodes } = useGraphStore()
 
   useOnSelectionChange({
     onChange: (selection) => {

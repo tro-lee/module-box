@@ -39,10 +39,6 @@ interface Element {
   children?: Element[]
 }
 
-function generateId(): string {
-  return Math.random().toString(36).substr(2, 9)
-}
-
 async function getEntryFilePaths(): Promise<{
   absolutePaths: string[]
   relativePaths: string[]
@@ -76,7 +72,7 @@ function pathsToTree(paths: string[]): Element[] {
 
       if (!pathMap.has(currentPath)) {
         const element: Element = {
-          id: generateId(),
+          id: currentPath,
           isSelectable: true,
           name: part,
           children: isLastPart ? undefined : [],

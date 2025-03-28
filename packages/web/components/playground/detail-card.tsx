@@ -1,11 +1,11 @@
 'use client'
 
-import { useNodeContextStore } from '@/store/node-context-store'
+import { useGraphStore } from '@/store/graph-store'
 import { HighlightCode } from '../common/highlight-code'
 import { Card, CardContent } from '../ui/card'
 
-export function NodeInfoCardComponent() {
-  const currentNode = useNodeContextStore(state => state.selectedNodes)
+export function DetailCardComponent() {
+  const currentNode = useGraphStore(state => state.selectedNodes)
 
   if (!currentNode) {
     return null

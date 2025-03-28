@@ -2,7 +2,6 @@
 
 import type { Node, NodeProps } from '@xyflow/react'
 import type { Component, Module } from 'module-toolbox-library'
-
 import {
   Card,
   CardDescription,
@@ -13,7 +12,7 @@ import { Handle, Position, useNodeConnections } from '@xyflow/react'
 import { Fragment, memo } from 'react'
 
 // 图表 模块节点
-function GraphModuleNode({
+function ModuleNode({
   data,
   selected,
   width,
@@ -63,7 +62,7 @@ function GraphModuleNode({
 }
 
 // 图表 组件节点
-function GraphComponentNode({
+function ComponentNode({
   data,
   selected,
 }: NodeProps<Node> & {
@@ -116,6 +115,6 @@ function GraphComponentNode({
 }
 
 export const CustomNodeType = {
-  module: memo(GraphModuleNode),
-  component: memo(GraphComponentNode),
+  module: memo(ModuleNode),
+  component: memo(ComponentNode),
 }

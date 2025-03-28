@@ -1,45 +1,21 @@
+import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
+import { DockComponent } from '@/components/playground/dock'
 import {
-  ModuleExplorer,
+  ModuleExplorerComponent,
   ModuleExplorerSkeleton,
 } from '@/components/playground/module-explorer'
 import {
   ModuleGraphComponent,
   ModuleGraphSkeleton,
 } from '@/components/playground/module-graph'
-import { ProgressDock } from '@/components/playground/progress-dock'
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { File } from 'lucide-react'
 import { Suspense } from 'react'
 import { getModuleExplorerElements, getModulesAndComponents } from './action'
 
-export default async function DashboardPage() {
-  return (
-    <div className="h-full w-full flex">
-      <LeftSidebar />
-      <SidebarInset>
-        <SidebarTrigger />
-        <Suspense fallback={<ModuleGraphSkeleton />}>
-          <ModuleGraph />
-        </Suspense>
-        <Dock />
-      </SidebarInset>
-    </div>
-  )
-}
-
 function LeftSidebar() {
   const elements = getModuleExplorerElements()
-
-  // Explorer
-  const Explorer = () =>
-    (
-      <Suspense fallback={<ModuleExplorerSkeleton />}>
-        <ModuleExplorer
-          elementsPromise={elements}
-        />
-      </Suspense>
-    )
 
   return (
     <Sidebar variant="inset" side="left" className="overflow-auto">
@@ -57,7 +33,11 @@ function LeftSidebar() {
 
         <SidebarContent>
           <TabsContent value="explorer">
-            <Explorer />
+            <Suspense fallback={<ModuleExplorerSkeleton />}>
+              <ModuleExplorerComponent
+                elementsPromise={elements}
+              />
+            </Suspense>
           </TabsContent>
         </SidebarContent>
       </Tabs>
@@ -77,7 +57,30 @@ function ModuleGraph() {
 function Dock() {
   return (
     <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-      <ProgressDock />
+      <DockComponent />
+    </div>
+  )
+}
+
+function TopBar() {
+  return (
+    <div className="flex flex-row items-center justify-start space-x-4 absolute z-10">
+      <SidebarTrigger />
+      <BreadcrumbComponent />
+    </div>
+  )
+}
+
+export default async function DashboardPage() {
+  return (
+    <div className="h-full w-full flex">
+      <LeftSidebar />
+      <SidebarInset>
+        <TopBar />
+        <Suspense fallback={<ModuleGraphSkeleton />}>
+          <ModuleGraph />
+        </Suspense>
+      </SidebarInset>
     </div>
   )
 }

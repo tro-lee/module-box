@@ -55,6 +55,7 @@ type TreeViewProps = {
   initialExpandedItems?: string[]
   openIcon?: React.ReactNode
   closeIcon?: React.ReactNode
+  handleSelect?: (id: string) => void
 } & TreeViewComponentProps
 
 const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
@@ -68,6 +69,7 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
       indicator = true,
       openIcon,
       closeIcon,
+      handleSelect,
       dir,
       ...props
     },
@@ -82,6 +84,7 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
 
     const selectItem = useCallback((id: string) => {
       setSelectedId(id)
+      handleSelect?.(id)
     }, [])
 
     const handleExpand = useCallback((id: string) => {
@@ -320,7 +323,7 @@ const File = forwardRef<
               className={cn(
                 'flex items-center gap-1 cursor-pointer text-sm pr-1 rtl:pl-1 rtl:pr-0 rounded-md  duration-200 ease-in-out',
                 {
-                  'bg-muted': isSelected && isSelectable,
+                  'bg-sidebar-accent w-full text-sidebar-accent-foreground': isSelected && isSelectable,
                 },
                 isSelectable ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed',
                 className,

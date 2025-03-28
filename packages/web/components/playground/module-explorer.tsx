@@ -1,7 +1,8 @@
 'use client'
 'use module'
 
-import { Fragment, use } from 'react'
+import { useExplorerStore } from '@/store/explorer-store'
+import { Fragment, use, useCallback } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
 import { Skeleton } from '../ui/skeleton'
 
@@ -10,6 +11,65 @@ interface Element {
   isSelectable: boolean
   name: string
   children?: Element[]
+}
+
+// 递归渲染元素组件
+function RenderElement({ element }: { element: Element }) {
+  if (element.children) {
+    return (
+      <Folder value={element.id} element={element.name}>
+        {element.children.map(child => (
+          <RenderElement key={child.id} element={child} />
+        ))}
+      </Folder>
+    )
+  }
+
+  return (
+    <File value={element.id}>
+      <p>{element.name}</p>
+    </File>
+  )
+}
+
+// 递归获取所有文件夹的ID
+function getAllFolderIds(elements: Element[]): string[] {
+  const ids: string[] = []
+  elements.forEach((element) => {
+    ids.push(element.id)
+    if (element.children) {
+      ids.push(...getAllFolderIds(element.children))
+    }
+  })
+  return ids
+}
+
+// 模块资源管理器：用于展示和管理项目中的模块、组件及其依赖关系
+export function ModuleExplorerComponent({
+  elementsPromise,
+}: {
+  elementsPromise: Promise<Element[]>
+}) {
+  const elements = use(elementsPromise)
+  const { setSelectedFile } = useExplorerStore()
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedFile(id)
+  }, [setSelectedFile])
+
+  return (
+    <Tree
+      className="p-2 overflow-hidden rounded-md"
+      initialSelectedId="7"
+      initialExpandedItems={getAllFolderIds(elements)}
+      elements={elements}
+      handleSelect={handleSelect}
+    >
+      {elements.map(element => (
+        <RenderElement key={element.id} element={element} />
+      ))}
+    </Tree>
+  )
 }
 
 export function ModuleExplorerSkeleton() {
@@ -48,58 +108,5 @@ export function ModuleExplorerSkeleton() {
         </Fragment>
       ))}
     </div>
-  )
-}
-
-// 递归渲染元素组件
-function RenderElement({ element }: { element: Element }) {
-  if (element.children) {
-    return (
-      <Folder value={element.id} element={element.name}>
-        {element.children.map(child => (
-          <RenderElement key={child.id} element={child} />
-        ))}
-      </Folder>
-    )
-  }
-
-  return (
-    <File value={element.id}>
-      <p>{element.name}</p>
-    </File>
-  )
-}
-
-// 递归获取所有文件夹的ID
-function getAllFolderIds(elements: Element[]): string[] {
-  const ids: string[] = []
-  elements.forEach((element) => {
-    ids.push(element.id)
-    if (element.children) {
-      ids.push(...getAllFolderIds(element.children))
-    }
-  })
-  return ids
-}
-
-// 模块资源管理器：用于展示和管理项目中的模块、组件及其依赖关系
-export function ModuleExplorer({
-  elementsPromise,
-}: {
-  elementsPromise: Promise<Element[]>
-}) {
-  const elements = use(elementsPromise)
-
-  return (
-    <Tree
-      className="p-2 overflow-hidden rounded-md"
-      initialSelectedId="7"
-      initialExpandedItems={getAllFolderIds(elements)}
-      elements={elements}
-    >
-      {elements.map(element => (
-        <RenderElement key={element.id} element={element} />
-      ))}
-    </Tree>
   )
 }
