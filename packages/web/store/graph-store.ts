@@ -1,8 +1,9 @@
-import type { Edge, Node, OnConnect, OnEdgesChange, OnNodesChange } from '@xyflow/react'
+import type { Edge, Node, OnEdgesChange, OnNodesChange } from '@xyflow/react'
 import type { Component, Module } from 'module-toolbox-library'
-import { addEdge, applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
-import { create } from 'zustand'
+import { getNodesByPath } from '@/actions/module-graph-data'
 
+import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
+import { create } from 'zustand'
 import { useExplorerStore } from './explorer-store'
 
 type AppNode = Node
@@ -12,7 +13,6 @@ interface AppState {
   edges: Edge[]
   onNodesChange: OnNodesChange<AppNode>
   onEdgesChange: OnEdgesChange
-  onConnect: OnConnect
   setNodes: (nodes: AppNode[]) => void
   setEdges: (edges: Edge[]) => void
 }
@@ -29,11 +29,11 @@ export type GraphStore = GraphState & GraphActions & AppState
 
 export const useGraphStore = create<GraphStore>((set, get) => {
   // 订阅 explorer-store 的变化
-  useExplorerStore.subscribe((state) => {
+  useExplorerStore.subscribe(async (state) => {
     if (state.selectedRelativeFilePath) {
-      // 这里可以根据 selectedFile 来更新 selectedNodes
-      // 暂时设置为空数组，您可以根据实际需求来实现具体的逻辑
-      set({ nodes: [], edges: [] })
+      // 使用 getModulesByPath 重新设置节点和边
+      const nodes = await getNodesByPath(state.getSelectedAbsolutePath())
+      set({ nodes, edges: [] })
     }
   })
 
@@ -56,11 +56,6 @@ export const useGraphStore = create<GraphStore>((set, get) => {
     onEdgesChange: (changes) => {
       set({
         edges: applyEdgeChanges(changes, get().edges),
-      })
-    },
-    onConnect: (connection) => {
-      set({
-        edges: addEdge(connection, get().edges),
       })
     },
     setNodes: (nodes) => {

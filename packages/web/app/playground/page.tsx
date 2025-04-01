@@ -46,10 +46,9 @@ function LeftSidebar() {
 }
 
 function ModuleGraph() {
-  const promise = getModulesAndComponents()
   return (
     <div className="flex-1">
-      <ModuleGraphComponent promise={promise} />
+      <ModuleGraphComponent />
     </div>
   )
 }

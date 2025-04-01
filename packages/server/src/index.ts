@@ -7,9 +7,7 @@ import {
 
 const app = new Hono()
 
-app.use('/*', cors({
-  origin: 'localhost', // 当前服务仅限本地运行，不做身份验证
-}))
+app.use('/*', cors())
 
 app.get('/entry-file-paths', async (c) => {
   const filepath = c.req.query('filepath') || ''
@@ -62,10 +60,6 @@ app.get('/modules-by-path', async (c) => {
   return c.json({
     status: 'success',
     data: result,
-  }, {
-    headers: {
-      'Cache-Control': 'max-age=600',
-    },
   })
 })
 

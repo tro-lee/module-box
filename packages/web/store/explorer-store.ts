@@ -23,5 +23,5 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   setSelectedRelativeFilePath: file =>
     set({ selectedRelativeFilePath: file }),
   getSelectedAbsolutePath: () =>
-    get().rootPath + (get().selectedRelativeFilePath || ''),
+    `${get().rootPath}/${get().selectedRelativeFilePath || ''}`,
 }))

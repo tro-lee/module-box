@@ -39,6 +39,16 @@
     {
       "type": "bun",
       "internalConsoleOptions": "neverOpen",
+      "request": "launch",
+      "name": "Server: debug dev",
+      "program": "${workspaceFolder}/packages/server/src/index.ts",
+      "cwd": "${workspaceFolder}/packages/server",
+      "stopOnEntry": false,
+      "watchMode": false
+    },
+    {
+      "type": "bun",
+      "internalConsoleOptions": "neverOpen",
       "request": "attach",
       "name": "Attach Bun",
       "url": "ws://localhost:6499/",
