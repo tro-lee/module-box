@@ -1,3 +1,5 @@
+import type { NodePath } from '@babel/core'
+import type { JSXElement } from '@babel/types'
 import type {
   Component,
   ComponentJSXElement,
@@ -6,12 +8,12 @@ import type {
   Module,
 } from './types'
 import { parse as parseComment } from 'comment-parser'
-import {
-  collectComponentJSXElement,
-  collectCustomBinding,
-  collectCustomTypeAnnotation,
-} from './collect'
 import { getDeclarationInContext } from './context'
+import {
+  parseComponentJSXElement,
+  parseCustomBinding,
+  parseCustomTypeAnnotation,
+} from './parse'
 import { scanAstByFileWithAutoExtension } from './scan'
 
 // 将组件转换为声明语句
@@ -87,35 +89,43 @@ export async function transformDeclarationToComponent(
           functionDeclaration.params
             .filter(param => param.type === 'Identifier')
             .map(param =>
-              collectCustomTypeAnnotation(param.typeAnnotation, context),
+              parseCustomTypeAnnotation(param.typeAnnotation, context),
             ),
         )
       ).filter(item => item !== undefined)
 
       // 收集组件的函数体
-      const componentFunctionBody = await collectCustomBinding(
+      // 待开发，先挂在这里
+      const componentFunctionBody = await parseCustomBinding(
         blockStateWithNodePath,
         context,
       )
 
-      // 收集组件的JSX元素
-      let componentJSXElements: ComponentJSXElement[] = (
+      // 收集并解析组件中的JSX元素
+      const recordedJSXElements = jsxElementsWithNodePath.reduce<Record<string, NodePath<JSXElement>>>((acc, jsxElement) => {
+        jsxElement.traverse({
+          JSXIdentifier(path) {
+            // 只有是组件名，并且是首字母大写，并且不是当前组件名，才记录
+            if (
+              path.parent.type === 'JSXOpeningElement'
+              && path.node.name
+              && /^[A-Z]/.test(path.node.name)
+              && path.node.name !== functionName
+            ) {
+              acc[path.node.name] = jsxElement
+            }
+          },
+        })
+        return acc
+      }, {})
+
+      const componentJSXElements = (
         await Promise.all(
-          jsxElementsWithNodePath.map(jsxElement =>
-            collectComponentJSXElement(jsxElement, context),
+          Object.values(recordedJSXElements).map(jsxElement =>
+            parseComponentJSXElement(jsxElement, context),
           ),
         )
       ).filter((item): item is ComponentJSXElement => item !== undefined)
-
-      // 去重
-      componentJSXElements = Array.from(
-        new Map(
-          componentJSXElements.map(item => [
-            `${item.elementName}-${context.path}`,
-            item,
-          ]),
-        ).values(),
-      )
 
       const component: Component = {
         type: 'LocalComponent',

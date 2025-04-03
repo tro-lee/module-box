@@ -14,17 +14,20 @@ async function getEntryFilePaths(): Promise<{
   rootPath: string
   relativePaths: string[]
 }> {
-  const response = await fetch(`${API_URL}/entry-file-paths?filepath=${ROOT_PATH}`)
-  const data = await response.json()
-  if (data.status === 'success') {
-    return data.data
-  }
-  else {
-    console.error(data.message)
-    return {
-      rootPath: '',
-      relativePaths: [],
+  try {
+    const response = await fetch(`${API_URL}/entry-file-paths?filepath=${ROOT_PATH}`)
+    const data = await response.json()
+    if (data.status === 'success') {
+      return data.data
     }
+  }
+  catch (error) {
+    console.error(error)
+  }
+
+  return {
+    rootPath: '',
+    relativePaths: [],
   }
 }
 
