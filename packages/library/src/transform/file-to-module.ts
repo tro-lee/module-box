@@ -1,5 +1,5 @@
 import type { FileContext, Module } from '../types'
-import { transformDeclarationToComponent } from './declaraion-and-component'
+import { transformDeclarationToComponent } from './declaration-and-component'
 
 // 将文件上下文转换为模块和组件
 export async function transformFileContextToModuleAndComponent(

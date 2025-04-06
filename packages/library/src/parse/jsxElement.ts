@@ -14,32 +14,27 @@ export async function parseComponentJSXElement(
   currentContext: FileContext,
 ): Promise<ComponentJSXElement | undefined> {
   let elementName: string | undefined
+  const openingElement = jsxElementWithNodePath.node.openingElement
 
-  jsxElementWithNodePath.find((path) => {
-    if (path.isJSXElement() && path.node.openingElement.name.type === 'JSXIdentifier' && /^[A-Z]/.test(path.node.openingElement.name.name)) {
-      elementName = path.node.openingElement.name.name
-      return true
-    }
-    return false
-  })
-
-  if (!elementName) {
+  if (openingElement.name.type === 'JSXIdentifier' && /^[A-Z]/.test(openingElement.name.name)) {
+    elementName = openingElement.name.name
+  }
+  else {
     console.warn(
-      `在解析JSXElement语句时，未找到elementName ${jsxElementWithNodePath.node.openingElement.name} ${currentContext.path}`,
+      `在解析JSXElement语句时，未找到elementName ${openingElement.name} ${currentContext.path}`,
     )
-    return undefined
+    return
   }
 
   const elementDeclaration = await scanDeclarationInContext(
     elementName,
     currentContext,
   )
-
   if (!elementDeclaration) {
     console.warn(
       `在解析JSXElement语句时，未找到elementDeclaration ${elementName} ${currentContext.path}`,
     )
-    return undefined
+    return
   }
 
   return {

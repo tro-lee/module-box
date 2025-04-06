@@ -5,7 +5,6 @@ import type {
   ExportAllDeclaration,
   ExportDefaultDeclaration,
   ExportNamedDeclaration,
-  Expression,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
@@ -18,6 +17,7 @@ import type { FileContext } from '../types'
 import fs from 'node:fs'
 import { traverse } from '@babel/core'
 import * as babel from '@babel/parser'
+import { transformFunctionDeclarationToCustomDeclaration } from '../transform/function-declaration-to-custom-declaration'
 
 const astContextCache: Record<string, FileContext> = {}
 
@@ -79,75 +79,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
     ExportNamedDeclaration(path: NodePath<ExportNamedDeclaration>) {
       context.exportNamedDeclarationsWithNodePath.push(path)
     },
-
-    // 解析函数 箭头函数在这里也是函数
-    ArrowFunctionExpression(path: NodePath<ArrowFunctionExpression>) {
-      // 保证解析是 解析的顶级域的初始化箭头函数
-      // 然后伪装成FunctionDeclaration，我们不对箭头函数和函数进行细微区分
-      if (
-        path?.parentPath?.parentPath?.parentPath?.type !== 'Program'
-        || path.key !== 'init'
-        || path.parent.type !== 'VariableDeclarator'
-        || path.parent.id.type !== 'Identifier'
-      ) {
-        return
-      }
-
-      const arrowFunction = path.node
-      const leadingComments = path.parent?.leadingComments
-      const leadingComment = leadingComments?.at(-1)
-
-      // 将箭头函数体转换为块级语句
-      if (arrowFunction.body.type !== 'BlockStatement') {
-        arrowFunction.body = {
-          type: 'BlockStatement',
-          body: [
-            {
-              type: 'ExpressionStatement',
-              expression: arrowFunction.body as Expression,
-            },
-          ],
-          directives: [],
-        }
-      }
-
-      const jsxElementsWithNodePath: NodePath<JSXElement>[] = []
-      let blockStateWithNodePath: NodePath<BlockStatement> | undefined
-
-      path.traverse({
-        JSXElement(path: NodePath<JSXElement>) {
-          jsxElementsWithNodePath.push(path)
-        },
-        BlockStatement(path: NodePath<BlockStatement>) {
-          if (path.container === arrowFunction) {
-            blockStateWithNodePath = path
-          }
-        },
-      })
-
-      context.functionsWithBaseInfo.push({
-        type: 'FunctionDeclarationWithBaseInfo',
-        isArrowFunction: true,
-        nodePath: path,
-        id: {
-          type: 'Identifier',
-          name: path.parent.id.name,
-        },
-        leadingComment,
-        filePath,
-        context,
-        functionDeclaration: {
-          id: {
-            type: 'Identifier',
-            name: path.parent.id.name,
-          },
-          body: arrowFunction.body,
-          params: arrowFunction.params,
-        },
-        jsxElementsWithNodePath,
-        blockStateWithNodePath: blockStateWithNodePath!,
-      })
-    },
+    // 解析函数
     FunctionDeclaration(path: NodePath<FunctionDeclaration>) {
       const id = path.node.id
       if (!id) {
@@ -178,7 +110,6 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 
       context.functionsWithBaseInfo.push({
         type: 'FunctionDeclarationWithBaseInfo',
-        isArrowFunction: false,
         nodePath: path,
         id,
         leadingComment,

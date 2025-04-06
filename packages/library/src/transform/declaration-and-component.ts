@@ -1,5 +1,5 @@
 import type { NodePath } from '@babel/core'
-import type { JSXElement } from '@babel/types'
+import type { ArrowFunctionExpression, JSXElement } from '@babel/types'
 import type {
   Component,
   ComponentJSXElement,
@@ -14,6 +14,7 @@ import {
 } from '../parse/'
 import { scanAstByFileWithAutoExtension } from '../scan/'
 import { scanDeclarationInContext } from '../scan/context'
+import { transformArrowFunctionToFunctionDeclaration } from './function-declaration-to-custom-declaration'
 
 // 将组件转换为声明语句
 // 注意：是直接生成新的声明语句
@@ -76,7 +77,6 @@ export async function transformDeclarationToComponent(
 
     try {
       const functionName = functionDeclaration.id.name
-
       // 收集组件的注释
       let componentDescription = ''
       for (const item of parseComment(`/*${leadingComment?.value}*/`)) {
@@ -173,21 +173,32 @@ export async function transformDeclarationToComponent(
     }
   }
 
-  // 对HOC进行处理
-  // if (declaration.type === 'VariableDeclaratorWithBaseInfo') {
-  //   const init = declaration.variableDeclarator.init
-  //   if (init?.type === 'CallExpression') {
-  //     const calleeName = init.callee.type === 'Identifier' ? init.callee.name : ''
-  //     const hocFunction = HOC_WHITELIST[calleeName]
-  //     if (hocFunction) {
-  //       const componentFunction = init.arguments[hocFunction.paramIndex]
-  //       if (componentFunction?.type === 'ArrowFunctionExpression') {
-  //         return transformDeclarationToComponent({
-  //           ...declaration,
-  //           type: 'FunctionDeclarationWithBaseInfo',
-  //         })
-  //       }
-  //     }
-  //   }
-  // }
+  //  对HOC进行处理
+  let arrowFunctionWithNodePath: NodePath<ArrowFunctionExpression> | undefined
+  if (declaration.type === 'VariableDeclaratorWithBaseInfo') {
+    let isFound = false
+    declaration.nodePath.traverse({
+      ArrowFunctionExpression(path) {
+        if (isFound) {
+          return
+        }
+
+        const isHOC = path.parent.type === 'CallExpression' && path.parent.callee.type === 'Identifier' && path.key === HOC_WHITELIST[path.parent.callee.name].paramIndex
+        const isTopLevel = path.parent.type === 'VariableDeclarator'
+        const isDefault = path.parent.type === 'CallExpression'
+        if (isHOC || isTopLevel || isDefault) {
+          isFound = true
+          arrowFunctionWithNodePath = path
+        }
+      },
+    })
+
+    if (arrowFunctionWithNodePath) {
+      const functionDeclaration = transformArrowFunctionToFunctionDeclaration(arrowFunctionWithNodePath, declaration.filePath, declaration.context)
+      if (functionDeclaration) {
+        Object.assign(functionDeclaration.id, declaration.id)
+        return await transformDeclarationToComponent(functionDeclaration)
+      }
+    }
+  }
 }

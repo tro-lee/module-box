@@ -45,22 +45,18 @@ interface WithBaseInfo<T extends Node> {
   context: FileContext
 }
 
-type FunctionDeclarationWithBaseInfo = (
-  | (WithBaseInfo<FunctionDeclaration> & {
-    isArrowFunction: false
-  })
-  | (WithBaseInfo<ArrowFunctionExpression> & {
-    isArrowFunction: true
-  })
-) & {
-  type: 'FunctionDeclarationWithBaseInfo'
-  functionDeclaration: Pick<FunctionDeclaration, 'body' | 'params'> & {
-    id: Identifier
+type FunctionDeclarationWithBaseInfo =
+  (| (WithBaseInfo<ArrowFunctionExpression> & { isArrowFunction: true })
+    | (WithBaseInfo<FunctionDeclaration> & { isArrowFunction: false }))
+  & {
+    type: 'FunctionDeclarationWithBaseInfo'
+    functionDeclaration: Pick<FunctionDeclaration, 'body' | 'params'> & {
+      id: Identifier
+    }
+    // 函数里面具体内容：
+    jsxElementsWithNodePath: NodePath<JSXElement>[] // 涉及到的所有JSXElement
+    blockStateWithNodePath: NodePath<BlockStatement>
   }
-  // 函数里面具体内容：
-  jsxElementsWithNodePath: NodePath<JSXElement>[] // 涉及到的所有JSXElement
-  blockStateWithNodePath: NodePath<BlockStatement>
-}
 
 type InterfaceDeclarationWithBaseInfo = WithBaseInfo<TSInterfaceDeclaration> & {
   type: 'InterfaceDeclarationWithBaseInfo'
