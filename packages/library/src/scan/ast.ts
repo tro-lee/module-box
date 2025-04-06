@@ -1,6 +1,5 @@
 import type { NodePath, ParseResult } from '@babel/core'
 import type {
-  ArrowFunctionExpression,
   BlockStatement,
   ExportAllDeclaration,
   ExportDefaultDeclaration,
@@ -17,11 +16,10 @@ import type { FileContext } from '../types'
 import fs from 'node:fs'
 import { traverse } from '@babel/core'
 import * as babel from '@babel/parser'
-import { transformFunctionDeclarationToCustomDeclaration } from '../transform/function-declaration-to-custom-declaration'
 
 const astContextCache: Record<string, FileContext> = {}
 
-// 返回文件的上下文
+// 扫描文件，找到顶级作用域声明的接口、函数、变量、导入导出语句
 async function scanAstByFile(filePath: string): Promise<FileContext> {
   // 缓存逻辑
   if (filePath in astContextCache) {
@@ -79,13 +77,14 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
     ExportNamedDeclaration(path: NodePath<ExportNamedDeclaration>) {
       context.exportNamedDeclarationsWithNodePath.push(path)
     },
-    // 解析函数
     FunctionDeclaration(path: NodePath<FunctionDeclaration>) {
+      // 暂时不支持匿名函数声明
       const id = path.node.id
       if (!id) {
         console.warn('FunctionDeclaration has no id', path.node)
         return
       }
+
       const functionDeclaration = path.node as FunctionDeclaration & {
         id: Identifier
       }
@@ -110,6 +109,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 
       context.functionsWithBaseInfo.push({
         type: 'FunctionDeclarationWithBaseInfo',
+        isArrowFunction: false,
         nodePath: path,
         id,
         leadingComment,
@@ -120,7 +120,6 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         blockStateWithNodePath: blockStateWithNodePath!,
       })
     },
-    // 解析接口
     TSInterfaceDeclaration(path: NodePath<TSInterfaceDeclaration>) {
       const id = path.node.id
       if (!id) {
@@ -144,7 +143,6 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
         interfaceDeclaration: path.node,
       })
     },
-    // 解析变量
     VariableDeclaration(path: NodePath<VariableDeclaration>) {
       path.traverse({
         VariableDeclarator(path: NodePath<VariableDeclarator>) {

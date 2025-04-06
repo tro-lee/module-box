@@ -174,8 +174,9 @@ export async function transformDeclarationToComponent(
   }
 
   //  对HOC进行处理
-  let arrowFunctionWithNodePath: NodePath<ArrowFunctionExpression> | undefined
   if (declaration.type === 'VariableDeclaratorWithBaseInfo') {
+    let arrowFunctionWithNodePath: NodePath<ArrowFunctionExpression> | undefined
+
     let isFound = false
     declaration.nodePath.traverse({
       ArrowFunctionExpression(path) {
@@ -183,8 +184,11 @@ export async function transformDeclarationToComponent(
           return
         }
 
+        // 如 const a = memo(function)
         const isHOC = path.parent.type === 'CallExpression' && path.parent.callee.type === 'Identifier' && path.key === HOC_WHITELIST[path.parent.callee.name].paramIndex
+        // 如 const a = () => {}
         const isTopLevel = path.parent.type === 'VariableDeclarator'
+        // 如 const a = memo(function)
         const isDefault = path.parent.type === 'CallExpression'
         if (isHOC || isTopLevel || isDefault) {
           isFound = true
