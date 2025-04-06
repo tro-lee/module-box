@@ -1,12 +1,12 @@
 import path from 'node:path'
 import { test } from 'bun:test'
 import {
-  getEntryFilePathsByDir,
+  scanEntryFilePathsByDir,
   transformFilePathsToModuleAndComponent,
 } from 'module-toolbox-library'
 
 test.skip('ast Test', async () => {
-  const entryFiles = await getEntryFilePathsByDir(
+  const entryFiles = await scanEntryFilePathsByDir(
     '/Users/trolee/Documents/module-box',
     {
       exclude: ['test', 'node_modules'],

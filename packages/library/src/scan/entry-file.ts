@@ -7,7 +7,7 @@ interface Options {
 }
 
 // 获取入口文件
-export async function getEntryFilePathsByDir(
+export async function scanEntryFilePathsByDir(
   dirPath: string,
   options: Options = {},
 ): Promise<string[]> {

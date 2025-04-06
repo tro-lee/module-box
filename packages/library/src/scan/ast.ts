@@ -14,7 +14,7 @@ import type {
   VariableDeclaration,
   VariableDeclarator,
 } from '@babel/types'
-import type { FileContext } from './types'
+import type { FileContext } from '../types'
 import fs from 'node:fs'
 import { traverse } from '@babel/core'
 import * as babel from '@babel/parser'

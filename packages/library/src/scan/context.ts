@@ -1,8 +1,8 @@
 import type { NodePath } from '@babel/traverse'
 import type { ExportSpecifier, Identifier, ImportDeclaration } from '@babel/types'
-import type { Declaration, FileContext } from './types'
+import type { Declaration, FileContext } from '../types'
 import path from 'node:path'
-import { scanAstByFileWithAutoExtension } from './scan'
+import { scanAstByFileWithAutoExtension } from '.'
 
 // 解析当前文件，若要解析的标识符 是从import导入的，则从import声明里开始解析。
 // 根据import 拿到目标文件，从目标文件的export开始解析。
@@ -28,7 +28,7 @@ async function getDeclarationInImportDeclarationHelper(
   }
 
   // 若查到为项目内部引用
-  // 获取目标上下文，然后传入getDeclarationInContext继续处理
+  // 获取目标上下文，然后传入scanDeclarationInContext继续处理
   if (currentImportDeclaration.source.value.startsWith('.')) {
     // 获取目标上下文
     const absoluteTargetImportPath = path.resolve(
@@ -96,7 +96,7 @@ async function getDeclarationInImportDeclarationHelper(
       }
 
       if (!targetDeclaration && targetIdentifier) {
-        return await getDeclarationInContext(
+        return await scanDeclarationInContext(
           (targetIdentifier as Identifier).name,
           targetContext,
         )
@@ -177,7 +177,7 @@ async function getDeclarationInImportDeclarationHelper(
       const exportedName = (targetExportSpecifier as ExportSpecifier).exported
       const actualExportName
         = exportedName.type === 'Identifier' ? exportedName.name : itemName
-      const declaration = await getDeclarationInContext(
+      const declaration = await scanDeclarationInContext(
         actualExportName,
         targetContext,
       )
@@ -197,7 +197,7 @@ async function getDeclarationInImportDeclarationHelper(
 
       const newContext = await scanAstByFileWithAutoExtension(resolvedPath)
       if (newContext) {
-        const result = await getDeclarationInContext(itemName, newContext)
+        const result = await scanDeclarationInContext(itemName, newContext)
         if (result) {
           return result
         }
@@ -217,7 +217,7 @@ const declarationCache = new Map<string, Declaration | null>()
 
 // 获取声明在一个上下文中
 // 如果没有，则直接报错
-export async function getDeclarationInContext(
+export async function scanDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
 ): Promise<Declaration | null> {

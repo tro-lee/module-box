@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import {
-  getEntryFilePathsByDir,
+  scanEntryFilePathsByDir,
   transformFilePathsToModuleAndComponent,
 } from 'module-toolbox-library'
 
@@ -21,7 +21,7 @@ app.get('/entry-file-paths', async (c) => {
     }, 400)
   }
 
-  const absolutePaths = await getEntryFilePathsByDir(
+  const absolutePaths = await scanEntryFilePathsByDir(
     filepath,
     {
       exclude,
@@ -75,7 +75,7 @@ app.get('/modules', async (c) => {
     }, 400)
   }
 
-  const entryFiles = await getEntryFilePathsByDir(
+  const entryFiles = await scanEntryFilePathsByDir(
     filepath,
     {
       exclude,
