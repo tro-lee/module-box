@@ -10,7 +10,7 @@ interface Element {
   children?: Element[]
 }
 
-async function getEntryFilePaths(): Promise<{
+async function fetchEntryFilePaths(): Promise<{
   rootPath: string
   relativePaths: string[]
 }> {
@@ -73,11 +73,11 @@ function pathsToTree(paths: string[]): Element[] {
   return tree
 }
 
-export async function getModuleExplorerData(): Promise<{
+export default async function getModuleExplorerData(): Promise<{
   rootPath: string
   elements: Element[]
 }> {
-  const { relativePaths, rootPath } = await getEntryFilePaths()
+  const { relativePaths, rootPath } = await fetchEntryFilePaths()
   return {
     rootPath,
     elements: pathsToTree(relativePaths),

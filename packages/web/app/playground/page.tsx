@@ -12,7 +12,7 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { File } from 'lucide-react'
 import { Suspense } from 'react'
-import { getModuleExplorerData } from '../../actions/module-explorer-data'
+import getModuleExplorerData from '../../actions/module-explorer-data'
 
 function LeftSidebar() {
   const explorerPromise = getModuleExplorerData()

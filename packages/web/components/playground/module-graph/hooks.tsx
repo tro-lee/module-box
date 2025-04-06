@@ -1,70 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { Component, Module } from 'module-toolbox-library'
 import Dagre from '@dagrejs/dagre'
 import { useEdges, useNodes, useReactFlow } from '@xyflow/react'
-import { use, useCallback, useMemo } from 'react'
-
-// 获取初始节点和边数据
-export function useInitialGraphData(
-  promise: Promise<{
-    modules: Record<string, Module>
-    components: Record<string, Component>
-  }>,
-) {
-  const { modules, components } = use(promise)
-
-  const { nodes, edges } = useMemo(() => {
-    // 处理节点部分
-    const nodes: Node[] = []
-
-    Object.values(modules).forEach((module) => {
-      nodes.push({
-        id: module.key,
-        position: { x: 0, y: 0 },
-        data: { module, node: module, type: 'module' },
-        type: 'module',
-      })
-    })
-    Object.values(components).forEach((component) => {
-      nodes.push({
-        id: component.componentKey,
-        position: { x: 0, y: 0 },
-        data: { component, node: component, type: 'component' },
-        type: 'component',
-      })
-    })
-
-    // 处理边部分
-    const edges: Edge[] = []
-
-    Object.values(modules).forEach((module) => {
-      edges.push({
-        id: `edge-${module.key}-${module.componentKey}`,
-        source: module.key,
-        target: module.componentKey,
-        animated: true,
-      })
-    })
-    Object.values(components).forEach((component) => {
-      if (component.type === 'LocalComponent') {
-        for (const jsxElement of component.componentJSXElements) {
-          edges.push({
-            id: `edge-${component.componentKey}-${jsxElement.componentKey}`,
-            source: component.componentKey,
-            target: jsxElement.componentKey,
-          })
-        }
-      }
-    })
-
-    return { nodes, edges }
-  }, [modules, components])
-
-  return {
-    initialNodes: nodes,
-    initialEdges: edges,
-  }
-}
+import { useCallback } from 'react'
 
 // 布局处理
 function layoutProcess(

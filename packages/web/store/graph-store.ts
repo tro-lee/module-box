@@ -1,6 +1,6 @@
 import type { Edge, Node, OnEdgesChange, OnNodesChange } from '@xyflow/react'
 import type { Component, Module } from 'module-toolbox-library'
-import { getNodesByPath } from '@/actions/module-graph-data'
+import getModuleGraphData from '@/actions/module-graph-data'
 
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
 import { create } from 'zustand'
@@ -31,9 +31,8 @@ export const useGraphStore = create<GraphStore>((set, get) => {
   // 订阅 explorer-store 的变化
   useExplorerStore.subscribe(async (state) => {
     if (state.selectedRelativeFilePath) {
-      // 使用 getModulesByPath 重新设置节点和边
-      const nodes = await getNodesByPath(state.getSelectedAbsolutePath())
-      set({ nodes, edges: [] })
+      const { nodes, edges } = await getModuleGraphData(state.getSelectedAbsolutePath())
+      set({ nodes, edges })
     }
   })
 
