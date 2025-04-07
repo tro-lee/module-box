@@ -11,11 +11,7 @@ bun run lint --fix
 echo "Modified files after lint --fix:"
 git status --porcelain | grep "^ M" | cut -c4-
 
-# 只添加之前已经暂存的文件
-while IFS= read -r file; do
-    if [ -f "$file" ]; then
-        git add "$file"
-    fi
-done < /tmp/staged_files
+# 添加修改的文件
+git add .
 
 echo "Lint check passed."
