@@ -1,18 +1,18 @@
 #!/bin/sh
-echo "Running pre-commit checks..."
+echo "正在运行提交前检查..."
 
-echo "Running lint..."
+echo "正在运行代码检查..."
 git diff --name-only --cached > /tmp/staged_files
 
 # 运行 lint --fix 并显示修改
-echo "Running lint --fix..."
+echo "正在运行代码自动修复..."
 bun run lint --fix
 
 # 显示修改的文件
-echo "Modified files after lint --fix:"
+echo "代码自动修复后修改的文件："
 git status --porcelain | grep "^ M" | cut -c4-
 
 # 添加修改的文件
 git add .
 
-echo "Lint check passed."
+echo "代码检查通过。"
