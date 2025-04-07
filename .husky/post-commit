@@ -1,0 +1,17 @@
+#!/bin/sh
+echo "已顺利commit, 现在进行lint检查和推送"
+echo "Running post-commit lint check..."
+
+# 运行 lint
+bun run lint
+
+# 如果有修改，自动提交
+if [ -n "$(git status --porcelain)" ]; then
+    echo "Found lint issues, fixing and committing..."
+    bun run lint --fix
+    git add .
+    git commit --amend --no-edit
+    echo "Fixed lint issues and updated commit."
+else
+    echo "No lint issues found, skipping fix and commit."
+fi 
