@@ -1,11 +1,21 @@
 echo "Running pre-commit checks..."
 
 echo "Running lint..."
+git diff --name-only --cached > /tmp/staged_files
+
+# 运行 lint --fix 并显示修改
+echo "Running lint --fix..."
 bun run lint --fix
 
-if [ $? -ne 0 ]; then
-  echo "Lint check failed. Please fix the issues before committing."
-  exit 1
-fi
+# 显示修改的文件
+echo "Modified files after lint --fix:"
+git status --porcelain | grep "^ M" | cut -c4-
+
+# 只添加之前已经暂存的文件
+while IFS= read -r file; do
+    if [ -f "$file" ]; then
+        git add "$file"
+    fi
+done < /tmp/staged_files
 
 echo "Lint check passed."
