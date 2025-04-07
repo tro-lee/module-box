@@ -10,8 +10,8 @@ if [ -n "$(git status --porcelain)" ]; then
     echo "Found lint issues, fixing and committing..."
     bun run lint --fix
     git add .
-    git commit --amend --no-edit
-    echo "Fixed lint issues and updated commit."
+    git commit -m "style: fix lint issues"
+    echo "Fixed lint issues and created new commit."
 else
     echo "No lint issues found, skipping fix and commit."
 fi 

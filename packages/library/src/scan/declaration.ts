@@ -3,6 +3,7 @@ import type { ExportSpecifier, Identifier, ImportDeclaration } from '@babel/type
 import type { Declaration, FileContext } from '../types'
 import path from 'node:path'
 import { findNearestProjectRoot } from '../utils'
+
 import { scanFileContextByAutoFile } from './file-context'
 
 // 从导入声明中获取目标声明
