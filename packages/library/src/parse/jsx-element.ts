@@ -6,7 +6,7 @@ import type {
 } from '@babel/types'
 import type { ComponentJSXElement, FileContext } from '../types'
 
-import { scanDeclarationInContext } from '../scan/context'
+import { scanDeclarationInContext } from '../scan/declaration'
 
 // 只解析组件函数
 export async function parseComponentJSXElement(

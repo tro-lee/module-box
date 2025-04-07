@@ -7,7 +7,7 @@ import {
 
 test.skip('ast Test', async () => {
   const entryFiles = await scanEntryFilePathsByDir(
-    '/Users/trolee/Documents/module-box',
+    '/Users/trolee/Documents/Code/module-box',
     {
       exclude: ['test', 'node_modules'],
       include: ['src', 'packages'],

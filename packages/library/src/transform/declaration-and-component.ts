@@ -6,51 +6,14 @@ import type {
   Declaration,
 } from '../types'
 import { parse as parseComment } from 'comment-parser'
-import { globalComponentContext } from '.'
+import { GlobalComponentContext, HOC_WHITELIST } from '../constanst'
 import {
   parseComponentJSXElement,
   parseCustomBinding,
   parseCustomTypeAnnotation,
 } from '../parse/'
-import { scanAstByFileWithAutoExtension } from '../scan/'
-import { scanDeclarationInContext } from '../scan/context'
-import { transformArrowFunctionToFunctionDeclaration } from './function-declaration-to-custom-declaration'
-
-// 将组件转换为声明语句
-// 注意：是直接生成新的声明语句
-export async function transformComponentToDeclaration(
-  component: Component,
-): Promise<Declaration | undefined> {
-  if (component.type === 'LocalComponent') {
-    const fileContext = await scanAstByFileWithAutoExtension(
-      component.componentFilePath,
-    )
-
-    const functionDeclaration = fileContext?.functionsWithBaseInfo.find(
-      item => item.functionDeclaration.id.name === component.componentName,
-    )
-
-    return functionDeclaration
-  }
-
-  if (component.type === 'NodeComponent') {
-    return {
-      type: 'NodeModuleImportDeclaration',
-      id: {
-        name: component.componentName,
-        type: 'Identifier',
-      },
-      filePath: component.packageName,
-    }
-  }
-}
-
-// HOC白名单配置
-const HOC_WHITELIST: Record<string, { paramIndex: number }> = {
-  forwardRef: {
-    paramIndex: 0, // 取第0个参数作为组件函数
-  },
-}
+import { scanDeclarationInContext } from '../scan/declaration'
+import { transformArrowFunctionToFunctionDeclaration } from './arrow-function-to-declaration'
 
 // 重要函数
 // 将声明语句转换为组件
@@ -136,7 +99,7 @@ export async function transformDeclarationToComponent(
         componentJSXElements,
         componentParams,
       }
-      globalComponentContext[component.componentKey] = component
+      GlobalComponentContext[component.componentKey] = component
 
       // 副作用
       // 将jsx元素中的组件声明也转换为组件
@@ -149,7 +112,7 @@ export async function transformDeclarationToComponent(
         if (declaration) {
           const component = await transformDeclarationToComponent(declaration)
           if (component) {
-            globalComponentContext[component.componentKey] = component
+            GlobalComponentContext[component.componentKey] = component
           }
         }
       }
@@ -165,7 +128,7 @@ export async function transformDeclarationToComponent(
   if (declaration.type === 'NodeModuleImportDeclaration') {
     const componentKey = `${declaration.id.name}-${declaration.filePath}`
 
-    globalComponentContext[componentKey] = {
+    GlobalComponentContext[componentKey] = {
       type: 'NodeComponent',
       componentName: declaration.id.name,
       packageName: declaration.filePath,

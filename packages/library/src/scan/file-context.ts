@@ -20,7 +20,7 @@ import * as babel from '@babel/parser'
 const astContextCache: Record<string, FileContext> = {}
 
 // 扫描文件，找到顶级作用域声明的接口、函数、变量、导入导出语句
-async function scanAstByFile(filePath: string): Promise<FileContext> {
+async function scanFileContextByFile(filePath: string): Promise<FileContext> {
   // 缓存逻辑
   if (filePath in astContextCache) {
     return astContextCache[filePath]
@@ -175,7 +175,7 @@ async function scanAstByFile(filePath: string): Promise<FileContext> {
 // 自动处理文件的扩展名
 // 比如扫描 /XXX/X 视为 /XXX/X/index.ts
 // 比如扫描 /XXX/X/hi 视为 /XXX/X/hi.ts
-export async function scanAstByFileWithAutoExtension(
+export async function scanFileContextByAutoFile(
   filePath: string,
 ): Promise<FileContext | null> {
   for (const ext of [
@@ -198,7 +198,7 @@ export async function scanAstByFileWithAutoExtension(
     }
 
     try {
-      return scanAstByFile(_absoluteTargetImportPath)
+      return scanFileContextByFile(_absoluteTargetImportPath)
     }
     catch (error) {
       console.warn(error)

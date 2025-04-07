@@ -10,7 +10,7 @@ import type {
   FileContext,
 } from '../types'
 import generate from '@babel/generator'
-import { scanDeclarationInContext } from '../scan/context'
+import { scanDeclarationInContext } from '../scan/declaration'
 
 interface CustomBinding {
   name: string

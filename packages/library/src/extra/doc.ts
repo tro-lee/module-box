@@ -1,6 +1,6 @@
-import type { Component, Module } from './types'
+import type { Component, Module } from '../types'
 import generate from '@babel/generator'
-import { transformComponentToDeclaration } from './transform'
+import { transformComponentToDeclaration } from '../transform/'
 
 // 文档生成相关的常量
 const DOC_CONSTANTS = {

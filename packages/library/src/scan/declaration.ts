@@ -2,41 +2,41 @@ import type { NodePath } from '@babel/traverse'
 import type { ExportSpecifier, Identifier, ImportDeclaration } from '@babel/types'
 import type { Declaration, FileContext } from '../types'
 import path from 'node:path'
-import { scanAstByFileWithAutoExtension } from '.'
-
-// 解析当前文件，若要解析的标识符 是从import导入的，则从import声明里开始解析。
-// 根据import 拿到目标文件，从目标文件的export开始解析。
+import { findNearestProjectRoot } from '../utils'
+import { scanFileContextByAutoFile } from './file-context'
 
 // 从导入声明中获取目标声明
 // 用于解决导入导出问题
-async function getDeclarationInImportDeclarationHelper(
+async function getDeclarationByImportDeclaration(
   currentImportDeclaration: ImportDeclaration,
   currentContext: FileContext,
   itemName: string,
 ): Promise<Declaration | null> {
-  // 若查到为外部引用
-  // TODO 暂时判定开头带@ 为全部索引
-  if (currentImportDeclaration.source.value.startsWith('@')) {
-    return {
-      type: 'NodeModuleImportDeclaration',
-      id: {
-        type: 'Identifier',
-        name: itemName,
-      },
-      filePath: currentImportDeclaration.source.value,
+  let absoluteTargetImportPath = ''
+
+  // 判断是否使用@/，进行变量转换
+  if (currentImportDeclaration.source.value.startsWith('@/')) {
+    const projectRoot = findNearestProjectRoot(currentContext.path)
+    if (projectRoot) {
+      absoluteTargetImportPath = path.resolve(
+        path.dirname(currentContext.path),
+        currentImportDeclaration.source.value.replace('@/', `${projectRoot}/`),
+      )
     }
   }
 
-  // 若查到为项目内部引用
-  // 获取目标上下文，然后传入scanDeclarationInContext继续处理
+  // 判断是否要进行相对路径的转换
   if (currentImportDeclaration.source.value.startsWith('.')) {
-    // 获取目标上下文
-    const absoluteTargetImportPath = path.resolve(
+    absoluteTargetImportPath = path.resolve(
       path.dirname(currentContext.path),
       currentImportDeclaration.source.value,
     )
+  }
 
-    const targetContext = await scanAstByFileWithAutoExtension(
+  // 若有目标文件路径，则进行扫描
+  // 针对不同情况的export写法，进行处理
+  if (absoluteTargetImportPath) {
+    const targetContext = await scanFileContextByAutoFile(
       absoluteTargetImportPath,
     )
     if (!targetContext) {
@@ -195,7 +195,7 @@ async function getDeclarationInImportDeclarationHelper(
         sourceValue,
       )
 
-      const newContext = await scanAstByFileWithAutoExtension(resolvedPath)
+      const newContext = await scanFileContextByAutoFile(resolvedPath)
       if (newContext) {
         const result = await scanDeclarationInContext(itemName, newContext)
         if (result) {
@@ -209,7 +209,15 @@ async function getDeclarationInImportDeclarationHelper(
     )
   }
 
-  return null
+  // 若不是导入本地文件，则说明是导入node_modules
+  return {
+    type: 'NodeModuleImportDeclaration',
+    id: {
+      type: 'Identifier',
+      name: itemName,
+    },
+    filePath: currentImportDeclaration.source.value,
+  }
 }
 
 // 缓存已查询过的声明，避免重复查询
@@ -253,7 +261,7 @@ export async function scanDeclarationInContext(
 
   // 递归获取
   const declaration = targetImportDeclaration
-    ? await getDeclarationInImportDeclarationHelper(
+    ? await getDeclarationByImportDeclaration(
       targetImportDeclaration,
       currentContext,
       itemName,

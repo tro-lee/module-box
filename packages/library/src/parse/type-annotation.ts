@@ -6,7 +6,7 @@ import type {
 import type { CustomTypeAnnotation, FileContext, InterfaceTypeAnnotation, Prop } from '../types'
 import { parse as parseComment } from 'comment-parser'
 
-import { scanDeclarationInContext } from '../scan/context'
+import { scanDeclarationInContext } from '../scan/declaration'
 
 // 解析类型注解
 export async function parseCustomTypeAnnotation(

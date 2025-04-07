@@ -2,6 +2,7 @@ import type { NodePath } from '@babel/core'
 import type { ArrowFunctionExpression, BlockStatement, Expression, Identifier, JSXElement } from '@babel/types'
 import type { FileContext } from '../types'
 
+// 将箭头函数转换为函数声明
 export function transformArrowFunctionToFunctionDeclaration(
   path: NodePath<ArrowFunctionExpression>,
   filePath: string,

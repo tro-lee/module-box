@@ -21,11 +21,11 @@ import type {
 // ============================================
 
 export interface FileContext {
-  path: string
-  ast: ParseResult
-  interfacesWithBaseInfo: InterfaceDeclarationWithBaseInfo[]
-  functionsWithBaseInfo: FunctionDeclarationWithBaseInfo[]
-  variablesWithBaseInfo: VariableDeclaratorWithBaseInfo[]
+  path: string // 文件路径
+  ast: ParseResult // 文件AST
+  interfacesWithBaseInfo: InterfaceDeclarationWithBaseInfo[] // 接口声明
+  functionsWithBaseInfo: FunctionDeclarationWithBaseInfo[] // 函数声明
+  variablesWithBaseInfo: VariableDeclaratorWithBaseInfo[] // 变量声明
 
   importDeclarationsWithNodePath: NodePath<ImportDeclaration>[]
   exportDefaultDeclarationWithNodePath?: NodePath<ExportDefaultDeclaration>
