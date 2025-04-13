@@ -2,14 +2,20 @@ import type {
   FileContext,
   Module,
 } from '../types'
-import { GlobalComponentContext } from '../constanst'
+import { GlobalComponentContext, GlobalHookContext } from '../constanst'
 import { scanFileContextByAutoFile } from '../scan/'
-import { transformFileContextToModuleAndComponent } from './file-to-module'
+import { transformFileContextToModule } from './file-to-module'
 
 // 最核心的入口函数
 export async function transformFilePathsToModuleAndComponent(
   filePaths: string[],
 ) {
+  // 清空全局组件上下文
+  for (const key of Object.keys(GlobalComponentContext)) {
+    delete GlobalComponentContext[key]
+  }
+
+  // 存入文件上下文
   const fileContexts: Record<string, FileContext> = {}
   for (const filePath of filePaths) {
     const fileContext = await scanFileContextByAutoFile(filePath)
@@ -18,13 +24,10 @@ export async function transformFilePathsToModuleAndComponent(
     fileContexts[filePath] = fileContext
   }
 
+  // 转换为模块
   const resultModules: Record<string, Module> = {}
-  for (const key of Object.keys(GlobalComponentContext)) {
-    delete GlobalComponentContext[key]
-  }
-
   for (const fileContext of Object.values(fileContexts)) {
-    const modules = await transformFileContextToModuleAndComponent(
+    const modules = await transformFileContextToModule(
       fileContext,
     )
     for (const module of modules) {
@@ -35,6 +38,7 @@ export async function transformFilePathsToModuleAndComponent(
   return {
     modules: resultModules,
     components: GlobalComponentContext,
+    hooks: GlobalHookContext,
   }
 }
 

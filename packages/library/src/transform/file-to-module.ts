@@ -1,14 +1,14 @@
 import type { FileContext, Module } from '../types'
-import { transformDeclarationToComponent } from './declaration-and-component'
+import { transformDeclarationToComponent } from './declaration-to-component'
 
-// 将文件上下文转换为模块和组件
-export async function transformFileContextToModuleAndComponent(
+// 将文件上下文转换为模块
+// 实际就是直接转换成组件
+export async function transformFileContextToModule(
   context: FileContext,
 ) {
-  // 载入全局组件上下文
-
   const modules: Module[] = []
   for (const functionWithBaseInfo of context.functionsWithBaseInfo) {
+    // 将导出声明都转换为模块，其他则忽略
     if (
       functionWithBaseInfo.nodePath.parent.type !== 'ExportSpecifier'
       && functionWithBaseInfo.nodePath.parent.type !== 'ExportAllDeclaration'

@@ -154,11 +154,22 @@ async function getDeclarationByImportDeclaration(
                 variableDeclaratorId = path.node
               }
 
+              // export const a = b情况
               if (
                 path.parentPath.type === 'VariableDeclarator'
                 && path.key === 'init'
               ) {
                 variableDeclaratorInit = path.node
+              }
+
+              // export const a = call(b)情况
+              // 这种情况init和id是同一个，直接使用scan查找
+              if (
+                path.parentPath.type === 'CallExpression'
+                && path.parentPath.key === 'init'
+                && path.key === 'callee'
+              ) {
+                variableDeclaratorInit = variableDeclaratorId
               }
             },
           })

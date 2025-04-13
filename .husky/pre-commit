@@ -1,7 +1,6 @@
 #!/bin/sh
 echo "正在运行提交前检查..."
 
-echo "正在运行代码检查..."
 git diff --name-only --cached > /tmp/staged_files
 
 # 运行 lint --fix 并显示修改

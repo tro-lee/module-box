@@ -20,7 +20,7 @@ import * as babel from '@babel/parser'
 const astContextCache: Record<string, FileContext> = {}
 
 // 扫描文件，找到顶级作用域声明的接口、函数、变量、导入导出语句
-async function scanFileContextByFile(filePath: string): Promise<FileContext> {
+async function scanFileContextByFile(filePath: string): Promise<FileContext | null> {
   // 缓存逻辑
   if (filePath in astContextCache) {
     return astContextCache[filePath]
@@ -41,11 +41,13 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext> {
     })
   }
   catch (e) {
-    throw new Error(`解析失败: ${filePath}\n${e}`)
+    console.error(`解析失败: ${filePath}\n${e}`)
+    return null
   }
 
   if (!ast) {
-    throw new Error('AST parsing failed')
+    console.error('AST parsing failed')
+    return null
   }
 
   // ==============================
@@ -100,9 +102,9 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext> {
         JSXElement(path: NodePath<JSXElement>) {
           jsxElementsWithNodePath.push(path)
         },
-        BlockStatement(path: NodePath<BlockStatement>) {
-          if (path.key === 'body') {
-            blockStateWithNodePath = path
+        BlockStatement(_path: NodePath<BlockStatement>) {
+          if (_path.parentPath === path) {
+            blockStateWithNodePath = _path
           }
         },
       })
@@ -196,13 +198,7 @@ export async function scanFileContextByAutoFile(
     ) {
       continue
     }
-
-    try {
-      return scanFileContextByFile(_absoluteTargetImportPath)
-    }
-    catch (error) {
-      console.warn(error)
-    }
+    return scanFileContextByFile(_absoluteTargetImportPath)
   }
 
   return null

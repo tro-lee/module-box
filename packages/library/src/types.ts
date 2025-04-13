@@ -102,6 +102,20 @@ export interface Module {
   componentKey: string // 组件唯一标识Name-FilePath
 }
 
+export type Hook = {
+  type: 'LocalHook'
+  hookName: string
+  hookFilePath: string
+  hookKey: string
+  hookDescription: string
+  hookParams: CustomTypeAnnotation[]
+} | {
+  type: 'NodeHook'
+  hookName: string
+  packageName: string
+  hookKey: string
+}
+
 export type Component =
   | {
     type: 'LocalComponent'
@@ -111,6 +125,7 @@ export type Component =
     componentDescription: string
     componentJSXElements: ComponentJSXElement[]
     componentParams: CustomTypeAnnotation[]
+    componentBindings: CustomBinding[]
   }
   | {
     type: 'NodeComponent'
@@ -124,6 +139,14 @@ export interface ComponentJSXElement {
   componentName: string // 故意冗余 方便使用
   componentFilePath: string // 故意冗余 方便使用
   componentKey: string // 组件唯一标识Name-FilePath
+}
+
+export interface CustomBinding {
+  name: string
+  usedProperties: string[]
+  referenceStatements: string[]
+  referencePaths: NodePath<Node>[]
+  initCalleeDeclaration: Declaration | null
 }
 
 // ============================================

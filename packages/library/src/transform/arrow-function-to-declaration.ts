@@ -3,7 +3,7 @@ import type { ArrowFunctionExpression, BlockStatement, Expression, Identifier, J
 import type { FileContext } from '../types'
 
 // 将箭头函数转换为函数声明
-export function transformArrowFunctionToFunctionDeclaration(
+export function transformArrowFunctionToDeclaration(
   path: NodePath<ArrowFunctionExpression>,
   filePath: string,
   context: FileContext,
