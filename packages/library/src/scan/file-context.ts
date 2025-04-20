@@ -80,6 +80,12 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
       context.exportNamedDeclarationsWithNodePath.push(path)
     },
     FunctionDeclaration(path: NodePath<FunctionDeclaration>) {
+      // 确定是顶级作用域函数声明
+      const ancestry = path.getFunctionParent()
+      if (ancestry !== null) {
+        return
+      }
+
       // 暂时不支持匿名函数声明
       const id = path.node.id
       if (!id) {
@@ -123,6 +129,12 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
       })
     },
     TSInterfaceDeclaration(path: NodePath<TSInterfaceDeclaration>) {
+      // 确定是顶级作用域函数声明
+      const ancestry = path.getFunctionParent()
+      if (ancestry !== null) {
+        return
+      }
+
       const id = path.node.id
       if (!id) {
         console.warn('FunctionDeclaration has no id', path.node)
@@ -146,6 +158,12 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
       })
     },
     VariableDeclaration(path: NodePath<VariableDeclaration>) {
+      // 确定是顶级作用域函数声明
+      const ancestry = path.getFunctionParent()
+      if (ancestry !== null) {
+        return
+      }
+
       path.traverse({
         VariableDeclarator(path: NodePath<VariableDeclarator>) {
           // 跳过变量为箭头函数的情况

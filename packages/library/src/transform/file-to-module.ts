@@ -7,19 +7,25 @@ export async function transformFileContextToModule(
   context: FileContext,
 ) {
   const modules: Module[] = []
-  for (const functionWithBaseInfo of context.functionsWithBaseInfo) {
+  const declarations = [
+    ...context.functionsWithBaseInfo,
+    ...context.variablesWithBaseInfo,
+  ]
+  for (const declaration of declarations) {
     // 将导出声明都转换为模块，其他则忽略
     if (
-      functionWithBaseInfo.nodePath.parent.type !== 'ExportSpecifier'
-      && functionWithBaseInfo.nodePath.parent.type !== 'ExportAllDeclaration'
-      && functionWithBaseInfo.nodePath.parent.type !== 'ExportNamedDeclaration'
-      && functionWithBaseInfo.nodePath.parent.type !== 'ExportDefaultDeclaration'
+      ![
+        'ExportSpecifier',
+        'ExportAllDeclaration',
+        'ExportNamedDeclaration',
+        'ExportDefaultDeclaration',
+      ].includes(declaration.nodePath.getStatementParent()?.type ?? '')
     ) {
       continue
     }
 
     const component = await transformDeclarationToComponent(
-      functionWithBaseInfo,
+      declaration,
     )
     if (!component || component.type !== 'LocalComponent') {
       continue

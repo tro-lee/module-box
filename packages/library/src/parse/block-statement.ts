@@ -14,6 +14,7 @@ import { transformDeclarationToHook } from '../transform/declaration-to-hook'
 export async function parseBlockStatement(
   blockStatementWithNodePath: NodePath<BlockStatement>,
   context: FileContext,
+  componentKey: string,
 ): Promise<CustomBinding[]> {
   const totalBindings: CustomBinding[] = []
 

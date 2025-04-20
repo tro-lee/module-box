@@ -42,12 +42,14 @@ export async function transformDeclarationToComponent(
       functionDescription,
       functionParams,
     } = await getFunctionBaseInfo(declaration)
+    const componentKey = `${functionName}-${context.path}`
 
     // 收集组件的函数体
     // 待开发，先挂在这里
     const bindings = await parseBlockStatement(
       blockStateWithNodePath,
       context,
+      componentKey,
     )
 
     // 收集并解析组件中的JSX元素
@@ -75,7 +77,7 @@ export async function transformDeclarationToComponent(
       type: 'LocalComponent',
       componentName: functionName,
       componentFilePath: context.path,
-      componentKey: `${functionName}-${context.path}`,
+      componentKey,
       componentDescription: functionDescription,
       componentJSXElements,
       componentParams: functionParams,

@@ -6,6 +6,9 @@ export const HOC_WHITELIST: Record<string, { paramIndex: number }> = {
   forwardRef: {
     paramIndex: 0, // 取第0个参数作为组件函数
   },
+  memo: {
+    paramIndex: 0,
+  },
 }
 
 // Hook黑名单配置
