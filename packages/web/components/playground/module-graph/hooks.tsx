@@ -18,12 +18,23 @@ function layoutProcess(
   })
 
   edges.forEach(edge => g.setEdge(edge.source, edge.target))
-  nodes.forEach(node =>
-    g.setNode(node.id, {
-      ...node,
-      width: node.measured?.width ?? 0,
-      height: node.measured?.height ?? 0,
-    }),
+  nodes.forEach((node) => {
+    if (node.type === 'hook') {
+      g.setNode(node.id, {
+        ...node,
+        width: node.measured?.width ?? 0,
+        height: node.measured?.height ?? 0,
+        y: 500,
+      })
+    }
+    else {
+      g.setNode(node.id, {
+        ...node,
+        width: node.measured?.width ?? 0,
+        height: node.measured?.height ?? 0,
+      })
+    }
+  },
   )
 
   Dagre.layout(g)

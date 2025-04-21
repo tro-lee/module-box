@@ -2,9 +2,9 @@ import type { NodePath } from '@babel/core'
 import type { ArrowFunctionExpression, JSXElement } from '@babel/types'
 import type {
   Component,
-  ComponentJSXElement,
   Declaration,
 } from '../types'
+import { compact, uniq } from 'lodash'
 import { GlobalComponentContext, HOC_WHITELIST } from '../constanst'
 import {
   parseBlockStatement,
@@ -45,11 +45,11 @@ export async function transformDeclarationToComponent(
     const componentKey = `${functionName}-${context.path}`
 
     // 收集组件的函数体
-    // 待开发，先挂在这里
-    const bindings = await parseBlockStatement(
+    const {
+      hooks,
+    } = await parseBlockStatement(
       blockStateWithNodePath,
       context,
-      componentKey,
     )
 
     // 收集并解析组件中的JSX元素
@@ -64,13 +64,16 @@ export async function transformDeclarationToComponent(
       })
       return acc
     }, {})
-    const componentJSXElements = (
+    const componentJSXElements = compact(
       await Promise.all(
         Object.values(recordedJSXElements).map(jsxElement =>
           parseComponentJSXElement(jsxElement, context),
         ),
-      )
-    ).filter((item): item is ComponentJSXElement => item !== undefined)
+      ),
+    )
+
+    const referencedHookKeys = uniq(hooks.map(hook => hook.hookKey))
+    const referencedComponentKeys = uniq(componentJSXElements.map(jsxElement => jsxElement.componentKey))
 
     // 组装信息为组件
     const component: Component = {
@@ -81,7 +84,8 @@ export async function transformDeclarationToComponent(
       componentDescription: functionDescription,
       componentJSXElements,
       componentParams: functionParams,
-      componentBindings: bindings,
+      referencedHookKeys,
+      referencedComponentKeys,
     }
     GlobalComponentContext[component.componentKey] = component
 

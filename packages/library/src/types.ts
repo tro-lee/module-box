@@ -125,7 +125,8 @@ export type Component =
     componentDescription: string
     componentJSXElements: ComponentJSXElement[]
     componentParams: CustomTypeAnnotation[]
-    componentBindings: CustomBinding[]
+    referencedHookKeys: string[]
+    referencedComponentKeys: string[]
   }
   | {
     type: 'NodeComponent'
@@ -136,8 +137,6 @@ export type Component =
 
 export interface ComponentJSXElement {
   elementName: string
-  componentName: string // 故意冗余 方便使用
-  componentFilePath: string // 故意冗余 方便使用
   componentKey: string // 组件唯一标识Name-FilePath
 }
 

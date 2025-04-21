@@ -10,9 +10,12 @@ import { transformFileContextToModule } from './file-to-module'
 export async function transformFilePathsToModuleAndComponent(
   filePaths: string[],
 ) {
-  // 清空全局组件上下文
+  // 清空全局上下文
   for (const key of Object.keys(GlobalComponentContext)) {
     delete GlobalComponentContext[key]
+  }
+  for (const key of Object.keys(GlobalHookContext)) {
+    delete GlobalHookContext[key]
   }
 
   // 存入文件上下文

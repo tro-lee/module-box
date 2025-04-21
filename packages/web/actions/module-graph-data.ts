@@ -1,70 +1,83 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { Component, Module } from 'module-toolbox-library'
+import type { Component, Hook, Module } from 'module-toolbox-library'
 import { API_URL } from '@/lib/constants'
+import { compact } from 'lodash'
 
 // 查询某文件目录下的模块
 
-async function fetchNodesByPath(path: string): Promise<{ modules: Record<string, Module>, components: Record<string, Component> }> {
+interface FetchNodesByPathResult {
+  modules: Record<string, Module>
+  components: Record<string, Component>
+  hooks: Record<string, Hook>
+}
+async function fetchNodesByPath(path: string): Promise<FetchNodesByPathResult> {
   try {
     const response = await fetch(`${API_URL}/modules-by-path?filepath=${path}`)
     const data = await response.json()
     if (data.status === 'success') {
-      const { modules, components } = data.data as { modules: Record<string, Module>, components: Record<string, Component> }
-      return { modules, components }
+      const { modules, components, hooks } = data.data as FetchNodesByPathResult
+      return { modules, components, hooks }
     }
   }
   catch (error) {
     console.error(error)
   }
 
-  return { modules: {}, components: {} }
+  return { modules: {}, components: {}, hooks: {} }
 }
 
 export default async function getModuleGraphData(path: string): Promise<{ nodes: Node[], edges: Edge[] }> {
-  const { modules, components } = await fetchNodesByPath(path)
+  const { modules, components, hooks } = await fetchNodesByPath(path)
 
   // 处理节点部分
-  const nodes: Node[] = []
+  const createNode = (id: string, data: any, type: string) => ({
+    id,
+    position: { x: 0, y: 0 },
+    data,
+    type,
+  })
 
-  Object.values(modules).forEach((module) => {
-    nodes.push({
-      id: module.key,
-      position: { x: 0, y: 0 },
-      data: { module, node: module, type: 'module' },
-      type: 'module',
-    })
-  })
-  Object.values(components).forEach((component) => {
-    nodes.push({
-      id: component.componentKey,
-      position: { x: 0, y: 0 },
-      data: { component, node: component, type: 'component' },
-      type: 'component',
-    })
-  })
+  const nodes: Node[] = compact([
+    // 模块节点
+    ...Object.values(modules).map(module => createNode(module.key, { module, type: 'module' }, 'module')),
+    // 组件和Hook节点
+    ...Object.values(components).flatMap((component) => {
+      const componentNode = createNode(component.componentKey, { component, type: 'component' }, 'component')
+      const hookNodes = component.type === 'LocalComponent'
+        ? component.referencedHookKeys.map((hookKey) => {
+            const hook = hooks[hookKey]
+            return hook ? createNode(`${component.componentKey}-${hook.hookKey}`, { hook, type: 'hook' }, 'hook') : null
+          }).filter(Boolean)
+        : []
+      return [componentNode, ...hookNodes]
+    }),
+  ])
 
   // 处理边部分
-  const edges: Edge[] = []
-
-  Object.values(modules).forEach((module) => {
-    edges.push({
+  const edges: Edge[] = [
+    ...Object.values(modules).map(module => ({
       id: `edge-${module.key}-${module.componentKey}`,
       source: module.key,
       target: module.componentKey,
       animated: true,
-    })
-  })
-  Object.values(components).forEach((component) => {
-    if (component.type === 'LocalComponent') {
-      for (const jsxElement of component.componentJSXElements) {
-        edges.push({
-          id: `edge-${component.componentKey}-${jsxElement.componentKey}`,
+    })),
+    ...Object.values(components).flatMap((component) => {
+      if (component.type === 'LocalComponent') {
+        const componentEdges = component.referencedComponentKeys.map(refKey => ({
+          id: `edge-${component.componentKey}-${refKey}`,
           source: component.componentKey,
-          target: jsxElement.componentKey,
-        })
+          target: refKey,
+        }))
+        const hookEdges = component.referencedHookKeys.map(hookKey => ({
+          id: `edge-${component.componentKey}-${hookKey}`,
+          source: component.componentKey,
+          target: `${component.componentKey}-${hookKey}`,
+        }))
+        return [...componentEdges, ...hookEdges]
       }
-    }
-  })
+      return []
+    }),
+  ]
 
   return { nodes, edges }
 }

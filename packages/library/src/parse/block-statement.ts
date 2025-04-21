@@ -6,6 +6,7 @@ import type {
   CustomBinding,
   Declaration,
   FileContext,
+  Hook,
 } from '../types'
 import { scanDeclarationInContext } from '../scan/declaration'
 import { transformDeclarationToHook } from '../transform/declaration-to-hook'
@@ -14,9 +15,9 @@ import { transformDeclarationToHook } from '../transform/declaration-to-hook'
 export async function parseBlockStatement(
   blockStatementWithNodePath: NodePath<BlockStatement>,
   context: FileContext,
-  componentKey: string,
-): Promise<CustomBinding[]> {
+): Promise<{ totalBindings: CustomBinding[], hooks: Hook[] }> {
   const totalBindings: CustomBinding[] = []
+  const hooks: Hook[] = []
 
   for (const [key, binding] of Object.entries(
     blockStatementWithNodePath.scope.bindings,
@@ -34,7 +35,8 @@ export async function parseBlockStatement(
     let initCalleeDeclaration: Declaration | null = null
     if (initCalleeName) {
       initCalleeDeclaration = await scanDeclarationInContext(initCalleeName, context)
-      initCalleeDeclaration && await transformDeclarationToHook(initCalleeDeclaration)
+      const hook = initCalleeDeclaration ? await transformDeclarationToHook(initCalleeDeclaration) : null
+      hook && hooks.push(hook)
     }
 
     // // 获取所有引用语句
@@ -109,5 +111,8 @@ export async function parseBlockStatement(
     // })
   }
 
-  return totalBindings
+  return {
+    totalBindings,
+    hooks,
+  }
 }

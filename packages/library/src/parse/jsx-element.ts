@@ -39,8 +39,6 @@ export async function parseComponentJSXElement(
 
   return {
     elementName,
-    componentName: elementDeclaration.id.name,
-    componentFilePath: elementDeclaration.filePath,
     componentKey: `${elementDeclaration.id.name}-${elementDeclaration.filePath}`,
   }
 }

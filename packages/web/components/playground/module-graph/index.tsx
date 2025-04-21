@@ -1,7 +1,6 @@
 'use client'
 'use module'
 
-import type { GraphStore } from '@/store/graph-store'
 import type { Component, Module } from 'module-toolbox-library'
 import { useGraphStore } from '@/store/graph-store'
 import {
@@ -21,16 +20,6 @@ import '@xyflow/react/dist/style.css'
 
 export function ModuleGraphSkeleton() {
   return <div>Loading...</div>
-}
-
-function selector(state: GraphStore) {
-  return {
-    nodes: state.nodes,
-    edges: state.edges,
-    onNodesChange: state.onNodesChange,
-    onEdgesChange: state.onEdgesChange,
-    setSelectedNodes: state.setSelectedNodes,
-  }
 }
 
 // 核心流程图部分

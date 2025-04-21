@@ -1,7 +1,7 @@
 'use client'
 
 import type { Node, NodeProps } from '@xyflow/react'
-import type { Component, Module } from 'module-toolbox-library'
+import type { Component, Hook, Module } from 'module-toolbox-library'
 import {
   Card,
   CardDescription,
@@ -114,7 +114,46 @@ function ComponentNode({
   )
 }
 
+// 图标 hook节点
+function HookNode({
+  data,
+  selected,
+}: NodeProps<Node> & {
+  data: { hook: Hook }
+}) {
+  const { hook } = data
+
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    return (
+      <Card>
+        <Handle type="target" position={Position.Left} />
+        {children}
+      </Card>
+    )
+  }
+
+  if (hook.type === 'LocalHook') {
+    return (
+      <Wrapper>
+        <CardHeader>
+          <CardTitle>{hook.hookName}</CardTitle>
+        </CardHeader>
+      </Wrapper>
+    )
+  }
+  else if (hook.type === 'NodeHook') {
+    return (
+      <Wrapper>
+        <CardHeader>
+          <CardTitle>{hook.hookName}</CardTitle>
+        </CardHeader>
+      </Wrapper>
+    )
+  }
+}
+
 export const CustomNodeType = {
   module: memo(ModuleNode),
   component: memo(ComponentNode),
+  hook: memo(HookNode),
 }
