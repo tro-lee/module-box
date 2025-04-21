@@ -13,12 +13,6 @@ interface Element {
   children?: Element[]
 }
 
-class A {
-  hihi() {
-    console.log('hihi')
-  }
-}
-
 // 递归渲染元素组件
 function RenderElement({ element }: { element: Element }) {
   function Test() {
@@ -67,7 +61,7 @@ export function ModuleExplorerComponent({
   }>
 }) {
   const { rootPath, elements } = use(dataPromise)
-  const { setSelectedRelativeFilePath, setRootPath } = useExplorerStore()
+  const { setSelectedRelativeFilePath, setRootPath, selectedRelativeFilePath } = useExplorerStore()
 
   useEffect(() => {
     setRootPath(rootPath)
@@ -80,7 +74,7 @@ export function ModuleExplorerComponent({
   return (
     <Tree
       className="p-2 overflow-hidden rounded-md"
-      initialSelectedId="7"
+      initialSelectedId={selectedRelativeFilePath || undefined}
       initialExpandedItems={getAllFolderIds(elements)}
       elements={elements}
       handleSelect={handleSelect}

@@ -19,7 +19,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   selectedRelativeFilePath: null,
 
   // Actions
-  setRootPath: path => set({ rootPath: path }),
+  setRootPath: path => set(state => state.rootPath !== path ? { rootPath: path } : {}),
   setSelectedRelativeFilePath: file =>
     set({ selectedRelativeFilePath: file }),
   getSelectedAbsolutePath: () =>

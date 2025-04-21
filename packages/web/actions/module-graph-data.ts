@@ -43,13 +43,13 @@ export default async function getModuleGraphData(path: string): Promise<{ nodes:
     // 组件和Hook节点
     ...Object.values(components).flatMap((component) => {
       const componentNode = createNode(component.componentKey, { component, type: 'component' }, 'component')
-      const hookNodes = component.type === 'LocalComponent'
-        ? component.referencedHookKeys.map((hookKey) => {
-            const hook = hooks[hookKey]
-            return hook ? createNode(`${component.componentKey}-${hook.hookKey}`, { hook, type: 'hook' }, 'hook') : null
-          }).filter(Boolean)
-        : []
-      return [componentNode, ...hookNodes]
+      // const hookNodes = component.type === 'LocalComponent'
+      //   ? component.referencedHookKeys.map((hookKey) => {
+      //       const hook = hooks[hookKey]
+      //       return hook ? createNode(`${component.componentKey}-${hook.hookKey}`, { hook, type: 'hook' }, 'hook') : null
+      //     }).filter(Boolean)
+      //   : []
+      return [componentNode]
     }),
   ])
 

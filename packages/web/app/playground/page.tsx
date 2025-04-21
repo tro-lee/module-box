@@ -1,5 +1,4 @@
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
-import { DockComponent } from '@/components/playground/dock'
 import {
   ModuleExplorerComponent,
   ModuleExplorerSkeleton,
@@ -45,39 +44,20 @@ function LeftSidebar() {
   )
 }
 
-function ModuleGraph() {
-  return (
-    <div className="flex-1">
-      <ModuleGraphComponent />
-    </div>
-  )
-}
-
-function Dock() {
-  return (
-    <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-      <DockComponent />
-    </div>
-  )
-}
-
-function TopBar() {
-  return (
-    <div className="flex flex-row items-center justify-start space-x-4 absolute z-10">
-      <SidebarTrigger />
-      <BreadcrumbComponent />
-    </div>
-  )
-}
-
 export default async function DashboardPage() {
   return (
     <div className="h-full w-full flex">
       <LeftSidebar />
       <SidebarInset>
-        <TopBar />
+        <div className="flex flex-row items-center justify-start space-x-4 absolute z-10">
+          <SidebarTrigger />
+          <BreadcrumbComponent />
+        </div>
+
         <Suspense fallback={<ModuleGraphSkeleton />}>
-          <ModuleGraph />
+          <div className="flex-1">
+            <ModuleGraphComponent />
+          </div>
         </Suspense>
       </SidebarInset>
     </div>

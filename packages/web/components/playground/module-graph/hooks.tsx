@@ -7,11 +7,10 @@ import { useCallback } from 'react'
 function layoutProcess(
   nodes: Node[],
   edges: Edge[],
-  options: { direction: 'TB' | 'LR' },
 ) {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
   g.setGraph({
-    rankdir: options.direction,
+    rankdir: 'LR',
     nodesep: 10,
     edgesep: 100,
     ranksep: 100,
@@ -56,7 +55,7 @@ export function useFlowLayout() {
 
   return {
     setLayout: useCallback(() => {
-      const layout = layoutProcess(nodes, edges, { direction: 'LR' })
+      const layout = layoutProcess(nodes, edges)
       setNodes(layout.nodes)
       setEdges(layout.edges)
       window.requestAnimationFrame(() => {

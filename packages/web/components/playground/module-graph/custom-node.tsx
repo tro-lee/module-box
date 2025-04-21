@@ -37,7 +37,7 @@ function ModuleNode({
   return (
     <Fragment>
       <Card
-        className={`bg-primary-foreground cursor-pointer transition-all duration-200 ${
+        className={`bg-muted text-muted-foreground cursor-pointer transition-all duration-200 ${
           selected
             ? 'ring-2 ring-primary shadow-lg scale-105'
             : 'hover:shadow-md'
@@ -47,14 +47,7 @@ function ModuleNode({
         {hasTargetConnections && <Handle type="target" position={Position.Left} />}
         {hasSourceConnections && <Handle type="source" position={Position.Right} />}
         <CardHeader>
-          <CardTitle className="text-primary">{module.componentName}</CardTitle>
-          <CardDescription>
-            {height}
-            {' '}
-            |
-            {' '}
-            {width}
-          </CardDescription>
+          <CardTitle>{module.componentName}</CardTitle>
         </CardHeader>
       </Card>
     </Fragment>
@@ -125,7 +118,7 @@ function HookNode({
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => {
     return (
-      <Card>
+      <Card className="bg-muted text-muted-foreground">
         <Handle type="target" position={Position.Left} />
         {children}
       </Card>
