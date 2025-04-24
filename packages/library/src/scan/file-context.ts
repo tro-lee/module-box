@@ -184,8 +184,8 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
               context,
               variableDeclarator: path.node,
               nodePath: path,
-              locStart: path.node.start ?? 0,
-              locEnd: path.node.end ?? 0,
+              locStart: path.parent.start ?? 0,
+              locEnd: path.parent.end ?? 0,
             })
           }
         },

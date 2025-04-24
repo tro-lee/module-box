@@ -1,3 +1,4 @@
+import * as fs from 'node:fs'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import {
@@ -63,41 +64,28 @@ app.get('/modules-by-path', async (c) => {
   })
 })
 
-app.get('/modules', async (c) => {
+app.get('/code-by-location', async (c) => {
   const filepath = c.req.query('filepath') || ''
-  const exclude = c.req.query('exclude')?.split(',') || ['test', 'node_modules']
-  const include = c.req.query('include')?.split(',') || ['src', 'packages']
+  const locStart = Number(c.req.query('locStart') || '')
+  const locEnd = Number(c.req.query('locEnd') || '')
 
-  if (!filepath) {
+  if (!filepath || Number.isNaN(locStart) || Number.isNaN(locEnd)) {
     return c.json({
       status: 'error',
-      message: 'filepath is required',
+      message: 'filepath, locStart and locEnd are required',
     }, 400)
   }
 
-  const entryFiles = await scanEntryFilePathsByDir(
-    filepath,
-    {
-      exclude,
-      include,
-    },
-  )
-  const result = await transformFilePathsToModuleAndComponent(
-    entryFiles,
-  )
+  const code = fs.readFileSync(filepath, 'utf-8')
+  const content = code.slice(locStart, locEnd)
 
   return c.json({
     status: 'success',
-    data: result,
-  }, {
-    headers: {
-      'Cache-Control': 'max-age=600', // 十分钟强制缓存，后面改为根据文件内容进行ETag协商缓存
-    },
+    data: content,
   })
 })
 
 const port = Number.parseInt(process.env.PORT || '3000')
-console.log(`Server is running on port ${port}`)
 
 export default {
   port,

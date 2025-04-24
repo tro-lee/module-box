@@ -61,7 +61,7 @@ export default async function DashboardPage() {
           </div>
         </Suspense>
 
-        <aside className="w-1/3 h-full absolute right-0 p-4">
+        <aside className="w-2/5 h-full absolute right-0 p-4">
           <DetailCardComponent />
         </aside>
       </SidebarInset>
