@@ -1,4 +1,5 @@
-import type { Edge, Node, OnEdgesChange, OnNodesChange } from '@xyflow/react'
+import type { CustomGraphNode } from '@/actions/module-graph-data'
+import type { Edge, OnEdgesChange, OnNodesChange, OnSelectionChangeParams } from '@xyflow/react'
 import type { Component, Module } from 'module-toolbox-library'
 import getModuleGraphData from '@/actions/module-graph-data'
 
@@ -6,7 +7,7 @@ import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
 import { create } from 'zustand'
 import { useExplorerStore } from './explorer-store'
 
-type AppNode = Node
+type AppNode = CustomGraphNode
 
 interface AppState {
   nodes: AppNode[]
@@ -15,19 +16,15 @@ interface AppState {
   onEdgesChange: OnEdgesChange
   setNodes: (nodes: AppNode[]) => void
   setEdges: (edges: Edge[]) => void
+  onSelectionChange: (params: OnSelectionChangeParams<AppNode, Edge>) => void
 }
 
 interface GraphState {
-  selectedNodes: Array<Module | Component>
+  selectedComponents: Array<Component>
+  selectedModules: Array<Module>
 }
 
-interface GraphActions {
-  setSelectedNodes: (nodes: Array<Module | Component>) => void
-}
-
-export type GraphStore = GraphState & GraphActions & AppState
-
-export const useGraphStore = create<GraphStore>((set, get) => {
+export const useGraphStore = create<GraphState & AppState>((set, get) => {
   // 订阅 explorer-store 的变化
   useExplorerStore.subscribe(async (state) => {
     if (state.selectedRelativeFilePath) {
@@ -38,11 +35,8 @@ export const useGraphStore = create<GraphStore>((set, get) => {
 
   return {
     // State
-    selectedNodes: [],
-
-    // Actions
-    setSelectedNodes: (nodes: Array<Module | Component>) =>
-      set({ selectedNodes: nodes }),
+    selectedComponents: [],
+    selectedModules: [],
 
     // React Flow 基础相关
     nodes: [],
@@ -55,6 +49,26 @@ export const useGraphStore = create<GraphStore>((set, get) => {
     onEdgesChange: (changes) => {
       set({
         edges: applyEdgeChanges(changes, get().edges),
+      })
+    },
+    onSelectionChange: ({ nodes, edges }) => {
+      const selectedComponents = [] as Component[]
+      const selectedModules = [] as Module[]
+
+      nodes.forEach((node) => {
+        const { data } = node
+        if (data?.component) {
+          selectedComponents.push(data.component)
+        }
+
+        if (data?.module) {
+          selectedModules.push(data.module)
+        }
+      })
+
+      set({
+        selectedComponents,
+        selectedModules,
       })
     },
     setNodes: (nodes) => {

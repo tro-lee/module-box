@@ -26,6 +26,8 @@ export async function transformDeclarationToComponent(
       jsxElementsWithNodePath,
       context,
       blockStateWithNodePath,
+      locStart,
+      locEnd,
     } = declaration
 
     // 判断是否是jsx组件
@@ -86,6 +88,8 @@ export async function transformDeclarationToComponent(
       componentParams: functionParams,
       referencedHookKeys,
       referencedComponentKeys,
+      locStart,
+      locEnd,
     }
     GlobalComponentContext[component.componentKey] = component
 
@@ -145,7 +149,13 @@ export async function transformDeclarationToComponent(
     })
 
     if (arrowFunctionWithNodePath) {
-      const functionDeclaration = transformArrowFunctionToDeclaration(arrowFunctionWithNodePath, declaration.filePath, declaration.context)
+      const functionDeclaration = transformArrowFunctionToDeclaration(
+        arrowFunctionWithNodePath,
+        declaration.filePath,
+        declaration.context,
+        declaration.locStart,
+        declaration.locEnd,
+      )
       if (functionDeclaration) {
         Object.assign(functionDeclaration.id, declaration.id)
         return await transformDeclarationToComponent(functionDeclaration)

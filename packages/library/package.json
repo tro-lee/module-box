@@ -13,10 +13,8 @@
   "dependencies": {
     "@babel/core": "^7.26.9",
     "@babel/preset-typescript": "^7.26.0",
-    "@types/lodash": "^4.17.15",
     "comment-parser": "^1.4.1",
-    "fast-xml-parser": "^4.5.1",
-    "lodash": "^4.17.21"
+    "fast-xml-parser": "^4.5.1"
   },
   "devDependencies": {
     "@types/babel__core": "^7.20.5",

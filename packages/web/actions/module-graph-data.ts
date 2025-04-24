@@ -26,18 +26,27 @@ async function fetchNodesByPath(path: string): Promise<FetchNodesByPathResult> {
   return { modules: {}, components: {}, hooks: {} }
 }
 
-export default async function getModuleGraphData(path: string): Promise<{ nodes: Node[], edges: Edge[] }> {
+export type CustomGraphNode = Node & {
+  type: 'module' | 'component' | 'hook'
+  data: {
+    module?: Module
+    component?: Component
+    hook?: Hook
+  }
+}
+
+export default async function getModuleGraphData(path: string): Promise<{ nodes: CustomGraphNode[], edges: Edge[] }> {
   const { modules, components, hooks } = await fetchNodesByPath(path)
 
   // 处理节点部分
-  const createNode = (id: string, data: any, type: string) => ({
+  const createNode = (id: string, data: (CustomGraphNode)['data'], type: CustomGraphNode['type']): CustomGraphNode => ({
     id,
     position: { x: 0, y: 0 },
     data,
     type,
   })
 
-  const nodes: Node[] = compact([
+  const nodes: CustomGraphNode[] = compact([
     // 模块节点
     ...Object.values(modules).map(module => createNode(module.key, { module, type: 'module' }, 'module')),
     // 组件和Hook节点

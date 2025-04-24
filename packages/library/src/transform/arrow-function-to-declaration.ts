@@ -7,6 +7,8 @@ export function transformArrowFunctionToDeclaration(
   path: NodePath<ArrowFunctionExpression>,
   filePath: string,
   context: FileContext,
+  locStart: number,
+  locEnd: number,
 ): FileContext['functionsWithBaseInfo'][number] | undefined {
   // 保证解析是 解析的顶级域的初始化箭头函数
   // 然后伪装成FunctionDeclaration，我们不对箭头函数和函数进行细微区分
@@ -49,6 +51,8 @@ export function transformArrowFunctionToDeclaration(
 
   return {
     type: 'FunctionDeclarationWithBaseInfo',
+    locStart,
+    locEnd,
     isArrowFunction: true,
     nodePath: path,
     id,

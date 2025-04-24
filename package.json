@@ -1,8 +1,5 @@
 {
   "name": "module-toolbox",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "library:build": "cd packages/library && bun run build",
     "server:dev": "cd packages/server && bun run --hot src/index.ts",
@@ -16,6 +13,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.10.2",
@@ -26,9 +24,13 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/bun": "latest",
+    "@types/lodash": "^4.17.16",
     "eslint": "^9.23.0",
     "fast-xml-parser": "^4.5.1",
     "husky": "^9.1.7",
     "module-toolbox-library": "workspace:*"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

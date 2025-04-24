@@ -40,6 +40,8 @@ export interface FileContext {
 interface WithBaseInfo<T extends Node> {
   id: Identifier
   filePath: string
+  locStart: number
+  locEnd: number
   nodePath: NodePath<T>
   leadingComment?: Comment
   context: FileContext
@@ -70,9 +72,9 @@ type VariableDeclaratorWithBaseInfo = WithBaseInfo<VariableDeclarator> & {
   variableDeclarator: VariableDeclarator
 }
 
-type NodeModuleImportDeclaration = Omit<
-  Omit<WithBaseInfo<ImportDeclaration>, 'context'>,
-  'nodePath'
+type NodeModuleImportDeclaration = Pick<
+  WithBaseInfo<ImportDeclaration>,
+  'id' | 'filePath'
 > & {
   type: 'NodeModuleImportDeclaration'
 }
@@ -106,6 +108,8 @@ export type Hook = {
   type: 'LocalHook'
   hookName: string
   hookFilePath: string
+  locStart: number
+  locEnd: number
   hookKey: string
   hookDescription: string
   hookParams: CustomTypeAnnotation[]
@@ -115,15 +119,21 @@ export type Hook = {
   packageName: string
   hookKey: string
 }
+export type LocalHook = Extract<Hook, { type: 'LocalHook' }>
 
 export type Component =
   | {
     type: 'LocalComponent'
     componentName: string
     componentFilePath: string
+    locStart: number
+    locEnd: number
     componentKey: string // 组件唯一标识Name-FilePath
     componentDescription: string
-    componentJSXElements: ComponentJSXElement[]
+    componentJSXElements: {
+      elementName: string
+      componentKey: string // 组件唯一标识Name-FilePath
+    }[]
     componentParams: CustomTypeAnnotation[]
     referencedHookKeys: string[]
     referencedComponentKeys: string[]
@@ -135,10 +145,7 @@ export type Component =
     componentKey: string // 组件唯一标识Name-PackageName
   }
 
-export interface ComponentJSXElement {
-  elementName: string
-  componentKey: string // 组件唯一标识Name-FilePath
-}
+export type LocalComponent = Extract<Component, { type: 'LocalComponent' }>
 
 export interface CustomBinding {
   name: string

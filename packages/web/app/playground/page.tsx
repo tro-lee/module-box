@@ -1,4 +1,5 @@
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
+import { DetailCardComponent } from '@/components/playground/detail-card'
 import {
   ModuleExplorerComponent,
   ModuleExplorerSkeleton,
@@ -59,6 +60,10 @@ export default async function DashboardPage() {
             <ModuleGraphComponent />
           </div>
         </Suspense>
+
+        <aside className="w-1/3 h-full absolute right-0 p-4">
+          <DetailCardComponent />
+        </aside>
       </SidebarInset>
     </div>
   )

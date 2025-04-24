@@ -15,9 +15,6 @@ import { Fragment, memo } from 'react'
 function ModuleNode({
   data,
   selected,
-  width,
-  height,
-  id,
 }: NodeProps<Node> & {
   data: { module: Module }
 }) {
@@ -29,7 +26,6 @@ function ModuleNode({
   const handleDoubleClick = () => {
     // 构建 VSCode 或 Cursor 的 URL scheme
     const cursorUrl = `cursor://file/${module.componentFilePath}`
-
     // 尝试打开 Cursor
     window.location.href = cursorUrl
   }
@@ -37,11 +33,7 @@ function ModuleNode({
   return (
     <Fragment>
       <Card
-        className={`bg-muted text-muted-foreground cursor-pointer transition-all duration-200 ${
-          selected
-            ? 'ring-2 ring-primary shadow-lg scale-105'
-            : 'hover:shadow-md'
-        }`}
+        className="bg-muted text-muted-foreground"
         onClick={handleDoubleClick}
       >
         {hasTargetConnections && <Handle type="target" position={Position.Left} />}
@@ -110,7 +102,6 @@ function ComponentNode({
 // 图标 hook节点
 function HookNode({
   data,
-  selected,
 }: NodeProps<Node> & {
   data: { hook: Hook }
 }) {

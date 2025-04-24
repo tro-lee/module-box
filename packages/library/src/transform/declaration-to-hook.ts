@@ -41,6 +41,8 @@ export async function transformDeclarationToHook(
       hookKey: `${functionName}-${context.path}`,
       hookDescription: functionDescription,
       hookParams: functionParams,
+      locStart: declaration.locStart,
+      locEnd: declaration.locEnd,
     }
 
     GlobalHookContext[hook.hookKey] = hook
@@ -79,7 +81,13 @@ export async function transformDeclarationToHook(
     })
 
     if (arrowFunctionWithNodePath) {
-      const functionDeclaration = transformArrowFunctionToDeclaration(arrowFunctionWithNodePath, declaration.filePath, declaration.context)
+      const functionDeclaration = transformArrowFunctionToDeclaration(
+        arrowFunctionWithNodePath,
+        declaration.filePath,
+        declaration.context,
+        declaration.locStart,
+        declaration.locEnd,
+      )
       if (functionDeclaration) {
         Object.assign(functionDeclaration.id, declaration.id)
         return await transformDeclarationToHook(functionDeclaration)

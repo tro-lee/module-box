@@ -126,6 +126,8 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
         functionDeclaration,
         jsxElementsWithNodePath,
         blockStateWithNodePath: blockStateWithNodePath!,
+        locStart: path.node.start ?? 0,
+        locEnd: path.node.end ?? 0,
       })
     },
     TSInterfaceDeclaration(path: NodePath<TSInterfaceDeclaration>) {
@@ -155,6 +157,8 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
         tsTypeElements: path.node.body.body,
         extendsExpression: path.node.extends ?? [],
         interfaceDeclaration: path.node,
+        locStart: path.node.start ?? 0,
+        locEnd: path.node.end ?? 0,
       })
     },
     VariableDeclaration(path: NodePath<VariableDeclaration>) {
@@ -180,6 +184,8 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
               context,
               variableDeclarator: path.node,
               nodePath: path,
+              locStart: path.node.start ?? 0,
+              locEnd: path.node.end ?? 0,
             })
           }
         },

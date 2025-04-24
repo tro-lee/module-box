@@ -1,7 +1,6 @@
 'use client'
 'use module'
 
-import type { Component, Module } from 'module-toolbox-library'
 import { useGraphStore } from '@/store/graph-store'
 import {
   Background,
@@ -9,13 +8,10 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useNodesInitialized,
-  useOnSelectionChange,
 } from '@xyflow/react'
 import React, { memo, useEffect } from 'react'
 import { CustomNodeType } from './custom-node'
-
 import { useFlowLayout } from './hooks'
-
 import '@xyflow/react/dist/style.css'
 
 export function ModuleGraphSkeleton() {
@@ -29,29 +25,16 @@ function CoreFlow() {
   const edges = useGraphStore(state => state.edges)
   const onNodesChange = useGraphStore(state => state.onNodesChange)
   const onEdgesChange = useGraphStore(state => state.onEdgesChange)
-  const setSelectedNodes = useGraphStore(state => state.setSelectedNodes)
+  const onSelectionChange = useGraphStore(state => state.onSelectionChange)
 
   // 布局
   const { setLayout } = useFlowLayout()
   const isNodesInitialized = useNodesInitialized()
-
   useEffect(() => {
     if (isNodesInitialized) {
       setLayout()
     }
   }, [isNodesInitialized])
-
-  useOnSelectionChange({
-    onChange: (selection) => {
-      const selectedNodes: Array<Module | Component> = []
-      for (const node of selection.nodes) {
-        if (node.data.node) {
-          selectedNodes.push(node.data.node as Module | Component)
-        }
-      }
-      setSelectedNodes(selectedNodes)
-    },
-  })
 
   return (
     <ReactFlow
@@ -61,6 +44,7 @@ function CoreFlow() {
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onSelectionChange={onSelectionChange}
       fitView
       nodeTypes={CustomNodeType}
     >
