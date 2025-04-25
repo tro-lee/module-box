@@ -2,7 +2,7 @@ import path from 'node:path'
 import { test } from 'bun:test'
 import {
   scanEntryFilePathsByDir,
-  transformFilePathsToModuleAndComponent,
+  transformFilePathsToCoreData,
 } from 'module-toolbox-library'
 
 test.skip('ast Test', async () => {
@@ -12,9 +12,10 @@ test.skip('ast Test', async () => {
       exclude: ['test', 'node_modules'],
       include: ['src', 'packages'],
     },
+    'use module',
   )
 
-  const result = await transformFilePathsToModuleAndComponent(
+  const result = await transformFilePathsToCoreData(
     entryFiles,
   )
 

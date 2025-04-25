@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import {
   scanEntryFilePathsByDir,
-  transformFilePathsToModuleAndComponent,
+  transformFilePathsToCoreData,
 } from 'module-toolbox-library'
 
 const app = new Hono()
@@ -28,6 +28,7 @@ app.get('/entry-file-paths', async (c) => {
       exclude,
       include,
     },
+    'use module',
   )
 
   // 获取每个文件的相对路径
@@ -54,7 +55,7 @@ app.get('/modules-by-path', async (c) => {
     }, 400)
   }
 
-  const result = await transformFilePathsToModuleAndComponent(
+  const result = await transformFilePathsToCoreData(
     [filepath],
   )
 
