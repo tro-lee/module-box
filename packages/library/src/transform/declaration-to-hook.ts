@@ -14,15 +14,9 @@ export async function transformDeclarationToHook(
   declaration: Declaration,
 ): Promise<Hook | undefined> {
   if (declaration.type === 'FunctionDeclarationWithBaseInfo') {
-    const {
-      functionDeclaration,
-      context,
-    } = declaration
+    const { context } = declaration
 
     if (!isHookFunction(declaration)) {
-      console.error(
-        `${context.path} ${functionDeclaration.id.name} 不是hook函数`,
-      )
       return
     }
 

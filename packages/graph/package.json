@@ -1,0 +1,17 @@
+{
+  "name": "module-toolbox-graph",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "lint:langgraph-json": "node scripts/checkLanggraphPaths.js",
+    "dev": "bunx @langchain/langgraph-cli dev"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.37",
+    "@langchain/langgraph": "^0.2.43"
+  },
+  "devDependencies": {
+  }
+}

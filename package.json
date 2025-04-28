@@ -1,6 +1,7 @@
 {
   "name": "module-toolbox",
   "scripts": {
+    "graph:dev": "cd packages/graph && bun run dev",
     "library:build": "cd packages/library && bun run build",
     "server:dev": "cd packages/server && bun run --hot src/index.ts",
     "web:dev": "cd packages/web && bun run dev",
@@ -13,13 +14,18 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.49",
+    "@langchain/langgraph": "^0.2.67",
+    "@langchain/ollama": "^0.2.0",
+    "@langchain/openai": "^0.4.3",
+    "@langchain/tavily": "^0.1.1",
+    "langchain": "^0.3.24",
+    "langsmith": "^0.3.21",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.10.2",
     "@happy-dom/global-registrator": "^17.4.4",
-    "@langchain/core": "^0.3.39",
-    "@langchain/openai": "^0.4.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",

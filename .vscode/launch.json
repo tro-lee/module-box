@@ -5,26 +5,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "bun",
-      "internalConsoleOptions": "neverOpen",
-      "request": "launch",
-      "name": "Library: debug core.test.ts",
-      "program": "${workspaceFolder}/test/core.test.ts",
-      "cwd": "${workspaceFolder}",
-      "stopOnEntry": false,
-      "watchMode": false
-    },
-    {
-      "type": "bun",
-      "internalConsoleOptions": "neverOpen",
-      "request": "launch",
-      "name": "Library: debug llm.test.ts",
-      "program": "${workspaceFolder}/test/llm.test.ts",
-      "cwd": "${workspaceFolder}",
-      "stopOnEntry": false,
-      "watchMode": false
-    },
-    {
       "name": "Web: debug server-side",
       "type": "node-terminal",
       "request": "launch",
@@ -53,6 +33,13 @@
       "name": "Attach Bun",
       "url": "ws://localhost:6499/",
       "stopOnEntry": false
+    },
+    {
+      "type": "bun",
+      "internalConsoleOptions": "neverOpen",
+      "request": "launch",
+      "name": "debug test",
+      "program": "${file}"
     }
   ]
 }

@@ -1,2 +1,2 @@
-export * from './path-to-codebase'
 export * from './path-to-coredata'
+export * from './path-to-document'

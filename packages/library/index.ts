@@ -1,3 +1,3 @@
-export { scanEntryFilePathsByDir } from './src/scan/'
-export * from './src/transform/'
+export { scanEntryFilePathsByDir } from './src/scan/index'
+export * from './src/transform/index'
 export * from './src/types'

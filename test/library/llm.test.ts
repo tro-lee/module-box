@@ -1,105 +1,61 @@
-import {
-  StringOutputParser,
-} from '@langchain/core/output_parsers'
-import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts'
-import { RunnableLambda } from '@langchain/core/runnables'
-import { ChatOpenAI } from '@langchain/openai'
-import { test } from 'bun:test'
-import { z } from 'zod'
+import type { AIMessage } from '@langchain/core/messages'
+import { TavilySearchResults } from '@langchain/community/tools/tavily_search'
+import { HumanMessage } from '@langchain/core/messages'
+import { MessagesAnnotation, StateGraph } from '@langchain/langgraph'
+import { ToolNode } from '@langchain/langgraph/prebuilt'
+import { ChatOllama } from '@langchain/ollama'
 
-test.skip(
-  'llm test',
-  async () => {
-    // const model = new ChatDeepSeek({
-    //   apiKey: config.OPENAI_API_KEY,
-    //   modelName: config.MODEL_NAME,
-    //   temperature: 0.7,
-    //   streaming: true,
-    //   configuration: {
-    //     baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-    //   },
-    // });
+// Define the tools for the agent to use
+const tools = [new TavilySearchResults({ maxResults: 3 })]
+const toolNode = new ToolNode(tools)
 
-    const model = new ChatOpenAI({
-      openAIApiKey: process.env.ARK_API_KEY,
-      modelName: process.env.DOUBAO_MODEL_NAME,
-      temperature: 0.7,
-      streaming: true,
-      configuration: {
-        baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
-      },
-    })
+// Create a model and give it access to the tools
+const model = new ChatOllama({
+  model: 'qwen2.5',
+  temperature: 0,
+}).bindTools(tools)
 
-    const prompt = new PromptTemplate({
-      template: '能将 {input} 翻译成中文吗？',
-      inputVariables: ['input'],
-    })
+// Define the function that determines whether to continue or not
+function shouldContinue({ messages }: typeof MessagesAnnotation.State) {
+  const lastMessage = messages[messages.length - 1] as AIMessage
 
-    const stream = await model.stream(text)
+  // If the LLM makes a tool call, then we route to the "tools" node
+  if (lastMessage.tool_calls?.length) {
+    return 'tools'
+  }
+  // Otherwise, we stop (reply to the user) using the special "__end__" node
+  return '__end__'
+}
 
-    let result = ''
-    for await (const chunk of stream) {
-      result += chunk.content
-      console.log(chunk.content)
-    }
+// Define the function that calls the model
+async function callModel(state: typeof MessagesAnnotation.State) {
+  const response = await model.invoke(state.messages)
 
-    console.log(result)
-  },
-  { timeout: 0 },
-) // 设置无限超时时间
+  // We return a list, because this will get added to the existing list
+  return { messages: [response] }
+}
 
-const personSchema = z.object({
-  name: z.optional(z.string()).describe('姓名'),
-  age: z.optional(z.number()).describe('年龄'),
-  email: z.optional(z.string().email()).describe('邮箱'),
-  phone: z.optional(z.string().regex(/^1[3-9]\d{9}$/)).describe('电话'),
-  address: z.optional(z.string()).describe('地址'),
-  gender: z.optional(z.enum(['male', 'female'])).describe('性别'),
+// Define a new graph
+const workflow = new StateGraph(MessagesAnnotation)
+  .addNode('agent', callModel)
+  .addNode('tools', toolNode)
+  .addEdge('__start__', 'agent') // __start__ is a special name for the entrypoint
+  .addEdge('tools', 'agent')
+  .addConditionalEdges('agent', shouldContinue)
+
+// Finally, we compile it into a LangChain Runnable.
+const app = workflow.compile()
+
+// Use the agent
+const finalState = await app.invoke({
+  messages: [new HumanMessage('what is the weather in sf')],
 })
 
-test.skip(
-  'human test message',
-  async () => {
-    const llm = new ChatOpenAI({
-      openAIApiKey: process.env.ARK_API_KEY,
-      modelName: process.env.DOUBAO_MODEL_NAME,
-      configuration: {
-        baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
-      },
-    })
+console.log(finalState.messages[finalState.messages.length - 1].content)
 
-    const prompt = ChatPromptTemplate.fromMessages([
-      [
-        'system',
-        '你是一个专业的数据分析师，请根据用户提供的信息填写个人信息。',
-      ],
-      ['user', '{input}'],
-    ])
-
-    const chain = prompt.pipe(llm).pipe(new StringOutputParser())
-
-    const prompt2 = ChatPromptTemplate.fromMessages([
-      ['system', '请你把下列内容转换成json格式'],
-      ['user', '{content}'],
-    ])
-
-    const composedChain = new RunnableLambda({
-      func: async (input: { input: string }) => {
-        const result = await chain.invoke({
-          input: input.input,
-        })
-        return { content: result }
-      },
-    })
-      .pipe(prompt2)
-      .pipe(llm)
-      .pipe(new StringOutputParser())
-
-    const result = await composedChain.invoke({
-      input: '张三，20岁，男，13800138000，北京市海淀区，zhangsan@example.com',
-    })
-
-    console.log(result)
-  },
-  { timeout: 0 },
-)
+const nextState = await app.invoke({
+  // Including the messages from the previous run gives the LLM context.
+  // This way it knows we're asking about the weather in NY
+  messages: [...finalState.messages, new HumanMessage('what about ny')],
+})
+console.log(nextState.messages[nextState.messages.length - 1].content)

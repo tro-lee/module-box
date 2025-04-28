@@ -41,7 +41,7 @@ export async function scanEntryFilePathsByDir(
     },
   )
 
-  let result = filteredFiles
+  let result = []
   if (headLineFlag) {
     // 获取文件内容，判断是否包含headLineFlag
     const moduleFilesPromise = filteredFiles.map(async (file) => {
@@ -57,9 +57,12 @@ export async function scanEntryFilePathsByDir(
       file => file !== undefined,
     )
   }
+  else {
+    // 直接返回文件路径
+    result = filteredFiles.map(file => path.resolve(dirPath, file))
+  }
 
   const end = performance.now()
   console.log(`拿到符合规则路径: ${end - start}ms`)
-
   return result
 }

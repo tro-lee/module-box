@@ -2,6 +2,7 @@ import type {
   FileContext,
   Module,
 } from '../types'
+import { compact, flatten } from 'lodash'
 import { GlobalComponentContext, GlobalHookContext } from '../constanst'
 import { scanFileContextByAutoFile } from '../scan'
 import { transformFileContextToModule } from './context-to-module'
@@ -18,24 +19,26 @@ export async function transformFilePathsToCoreData(
     delete GlobalHookContext[key]
   }
 
-  // 存入文件上下文
+  // 分析出所有的文件上下文
+  const fileContextsPromises = filePaths.map(filePath =>
+    scanFileContextByAutoFile(filePath).then(fileContext =>
+      fileContext ? { filePath, fileContext } : null,
+    ),
+  )
+  const fileContextResults = compact(await Promise.all(fileContextsPromises))
   const fileContexts: Record<string, FileContext> = {}
-  for (const filePath of filePaths) {
-    const fileContext = await scanFileContextByAutoFile(filePath)
-    if (!fileContext)
-      continue
-    fileContexts[filePath] = fileContext
+  for (const result of fileContextResults) {
+    fileContexts[result.filePath] = result.fileContext
   }
 
-  // 转换为模块
+  // 分析出所有的模块
+  const modulePromises = Object.values(fileContexts).map(fileContext =>
+    transformFileContextToModule(fileContext),
+  )
+  const modules = flatten(await Promise.all(modulePromises))
   const resultModules: Record<string, Module> = {}
-  for (const fileContext of Object.values(fileContexts)) {
-    const modules = await transformFileContextToModule(
-      fileContext,
-    )
-    for (const module of modules) {
-      resultModules[module.componentName] = module
-    }
+  for (const module of modules) {
+    resultModules[module.componentName] = module
   }
 
   return {

@@ -3,7 +3,8 @@ import { test } from 'bun:test'
 import {
   scanEntryFilePathsByDir,
   transformFilePathsToCoreData,
-} from 'module-toolbox-library'
+  transformProjectPathToDocument,
+} from '../../packages/library'
 
 test.skip('ast Test', async () => {
   const entryFiles = await scanEntryFilePathsByDir(
@@ -35,3 +36,12 @@ test.skip('ast Test', async () => {
   //   }
   // }
 })
+
+test('transformProjectPathToDocument', async () => {
+  const result = await transformProjectPathToDocument('/Users/trolee/Documents/Code/module-box/packages/web', {
+    exclude: ['dist', 'node_modules'],
+    include: ['app', 'components', 'store', 'actions'],
+  })
+
+  console.log(result)
+}, { timeout: 0 })

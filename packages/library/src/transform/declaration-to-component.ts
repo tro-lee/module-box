@@ -22,7 +22,6 @@ export async function transformDeclarationToComponent(
   // 核心 对本地组件进行处理
   if (declaration.type === 'FunctionDeclarationWithBaseInfo') {
     const {
-      functionDeclaration,
       jsxElementsWithNodePath,
       context,
       blockStateWithNodePath,
@@ -32,9 +31,6 @@ export async function transformDeclarationToComponent(
 
     // 判断是否是jsx组件
     if (!isJsxComponent(declaration)) {
-      console.error(
-        `[${context.path} ${functionDeclaration.id.name}] 不是jsx组件`,
-      )
       return
     }
 

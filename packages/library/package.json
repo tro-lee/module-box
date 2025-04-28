@@ -1,9 +1,9 @@
 {
   "name": "module-toolbox-library",
   "version": "0.2.0",
-  "main": "./index.js",
-  "module": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc && bun run build.ts"
   },
