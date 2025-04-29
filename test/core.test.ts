@@ -4,7 +4,7 @@ import {
   scanEntryFilePathsByDir,
   transformFilePathsToCoreData,
   transformProjectPathToDocument,
-} from '../../packages/anaylzer'
+} from 'module-toolbox-anaylzer'
 
 test.skip('ast Test', async () => {
   const entryFiles = await scanEntryFilePathsByDir(

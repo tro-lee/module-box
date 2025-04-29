@@ -4,7 +4,7 @@ import { ToolNode } from '@langchain/langgraph/prebuilt'
 import { ChatOllama } from '@langchain/ollama'
 import { TavilySearch } from '@langchain/tavily'
 import last from 'lodash/last'
-import { StateAnnotation } from './state'
+import { StateAnnotation } from '../state'
 
 const llm = new ChatOllama({
   model: 'qwen2.5',

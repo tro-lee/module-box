@@ -22,7 +22,7 @@ export async function transformProjectPathToDocument(projectPath: string, option
     [...fileContext.functionsWithBaseInfo.map(declaration => declaration), ...fileContext.variablesWithBaseInfo.map(declaration => declaration)],
   ).flat()
 
-  return declarations.map((declaration) => {
+  return flatten(declarations.map((declaration) => {
     const { code } = generate(declaration.nodePath.node, {
       retainLines: false,
       comments: true,
@@ -36,18 +36,8 @@ export async function transformProjectPathToDocument(projectPath: string, option
         filePath: declaration.filePath,
       },
     }])
-  })
+  }))
 }
-//   await Promise.all(promises)
-
-//   const memoryVectorStore = new MemoryVectorStore(embeddings)
-
-//   // 搜索
-//   const retriever = memoryVectorStore.asRetriever({
-//     searchType: 'similarity',
-//     k: 10,
-//     tags: ['component', 'frontend'],
-//   })
 
 //   const prompt = ChatPromptTemplate.fromMessages(
 //     [['system', `We have provided context information below. {context}`], ['user', 'Given this information, please answer the question: {question}']],
