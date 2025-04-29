@@ -1,17 +1,6 @@
 import generate from '@babel/generator'
-import { ChatOllama, OllamaEmbeddings } from '@langchain/ollama'
 import { compact, flatten } from 'lodash'
 import { scanEntryFilePathsByDir, scanFileContextByAutoFile } from '../scan'
-
-const embeddings = new OllamaEmbeddings({
-  model: 'nomic-embed-text', // Default value
-  baseUrl: 'http://localhost:11434', // Default value
-})
-
-const llm = new ChatOllama({
-  model: 'qwen2.5',
-  baseUrl: 'http://localhost:11434',
-})
 
 // 重要的入口文件
 // 将项目路径下的所有文件转换为代码库文档

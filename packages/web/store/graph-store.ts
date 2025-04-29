@@ -1,6 +1,6 @@
 import type { CustomGraphNode } from '@/actions/module-graph-data'
 import type { Edge, OnEdgesChange, OnNodesChange, OnSelectionChangeParams } from '@xyflow/react'
-import type { Component, Module } from 'module-toolbox-library'
+import type { Component, Module } from 'module-toolbox-anaylzer'
 import getModuleGraphData from '@/actions/module-graph-data'
 
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'

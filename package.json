@@ -2,7 +2,7 @@
   "name": "module-toolbox",
   "scripts": {
     "graph:dev": "cd packages/graph && bun run dev",
-    "library:build": "cd packages/library && bun run build",
+    "anaylzer:build": "cd packages/anaylzer && bun run build",
     "server:dev": "cd packages/server && bun run --hot src/index.ts",
     "web:dev": "cd packages/web && bun run dev",
     "web:build": "cd packages/web && bun run build",
@@ -14,13 +14,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.49",
-    "@langchain/langgraph": "^0.2.67",
-    "@langchain/ollama": "^0.2.0",
-    "@langchain/openai": "^0.4.3",
-    "@langchain/tavily": "^0.1.1",
-    "langchain": "^0.3.24",
-    "langsmith": "^0.3.21",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
@@ -34,7 +27,7 @@
     "eslint": "^9.23.0",
     "fast-xml-parser": "^4.5.1",
     "husky": "^9.1.7",
-    "module-toolbox-library": "workspace:*"
+    "module-toolbox-anaylzer": "workspace:*"
   },
   "workspaces": [
     "packages/*"

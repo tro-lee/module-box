@@ -1,5 +1,5 @@
 {
-  "name": "module-toolbox-library",
+  "name": "module-toolbox-anaylzer",
   "version": "0.2.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

@@ -4,7 +4,7 @@ import { cors } from 'hono/cors'
 import {
   scanEntryFilePathsByDir,
   transformFilePathsToCoreData,
-} from 'module-toolbox-library'
+} from 'module-toolbox-anaylzer'
 
 const app = new Hono()
 
