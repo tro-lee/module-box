@@ -1,5 +1,5 @@
 {
-  "name": "module-toolbox-graph",
+  "name": "module-toolbox-ai",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -17,6 +17,5 @@
     "langchain": "^0.3.24",
     "langsmith": "^0.3.21"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
