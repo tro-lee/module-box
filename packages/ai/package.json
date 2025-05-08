@@ -2,11 +2,13 @@
   "name": "module-toolbox-ai",
   "type": "module",
   "version": "0.0.1",
+  "main": "./index.ts",
+  "module": "./index.ts",
+  "types": "./index.ts",
   "scripts": {
-    "build": "tsc",
     "clean": "rm -rf dist",
-    "lint:langgraph-json": "node scripts/checkLanggraphPaths.js",
-    "dev": "bunx @langchain/langgraph-cli dev"
+    "dev": "bunx @langchain/langgraph-cli dev",
+    "build": "tsc && bun run build.ts"
   },
   "dependencies": {
     "@langchain/community": "^0.3.42",

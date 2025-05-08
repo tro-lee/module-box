@@ -8,6 +8,7 @@
   "dependencies": {
     "hono": "^4.6.20",
     "module-toolbox-anaylzer": "workspace:*",
+    "module-toolbox-ai": "workspace:*",
     "zod": "^3.22.4"
   },
   "devDependencies": {
