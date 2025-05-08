@@ -26,7 +26,6 @@ export async function transformProjectPathToDocument(projectPath: string, option
     const { code } = generate(declaration.nodePath.node, {
       retainLines: false,
       comments: true,
-      compact: true,
     })
 
     return ([{
@@ -38,26 +37,3 @@ export async function transformProjectPathToDocument(projectPath: string, option
     }])
   }))
 }
-
-//   const prompt = ChatPromptTemplate.fromMessages(
-//     [['system', `We have provided context information below. {context}`], ['user', 'Given this information, please answer the question: {question}']],
-//   )
-
-//   const detailCardUsage = await retriever.invoke('please give me a detailed info of DetailCard component, including usage, props, and examples')
-
-//   const chain = RunnableSequence.from([
-//     {
-//       context: retriever.pipe(formatDocumentsAsString),
-//       question: new RunnablePassthrough(),
-//     },
-//     prompt,
-//     llm,
-//     new StringOutputParser(),
-//   ])
-
-//   const answer = await chain.invoke(
-//     'please give me a detailed info of DetailCard component',
-//   )
-
-//   console.log(answer)
-// }

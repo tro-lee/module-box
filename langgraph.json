@@ -1,0 +1,8 @@
+{
+  "node": "20",
+  "graphs": {
+    "test": "./packages/ai/src/explain-code-graph/app.ts:app"
+  },
+  "env": ".env",
+  "dependencies": ["."]
+}

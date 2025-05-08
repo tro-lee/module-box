@@ -1,47 +1,72 @@
-import path from 'node:path'
+import { HumanMessage } from '@langchain/core/messages'
 import { test } from 'bun:test'
-import {
-  scanEntryFilePathsByDir,
-  transformFilePathsToCoreData,
-  transformProjectPathToDocument,
-} from 'module-toolbox-anaylzer'
+import { app } from './../packages/ai/src/explain-code-graph/app'
 
-test.skip('ast Test', async () => {
-  const entryFiles = await scanEntryFilePathsByDir(
-    '/Users/trolee/Documents/Code/module-box',
-    {
-      exclude: ['test', 'node_modules'],
-      include: ['src', 'packages'],
-    },
-    'use module',
+test('test app', async () => {
+  await app.invoke({
+    messages: [
+      new HumanMessage(
+        `
+export function DetailCardComponent() {
+  const selectedComponents = useGraphStore(state => state.selectedComponents)
+  const [selectedComponentKey, setSelectedComponentKey] = useState('')
+  const [codeContentPromise, setCodeContentPromise] = useState<Promise<string>>(Promise.resolve(''))
+
+  useEffect(() => {
+    setSelectedComponentKey(selectedComponents[0]?.componentKey ?? '')
+  }, [selectedComponents[0]?.componentKey])
+
+  useEffect(() => {
+    const selectedComponent = selectedComponents.find(node => node.componentKey === selectedComponentKey)
+    if (selectedComponent?.type === 'LocalComponent') {
+      const { componentFilePath, locStart, locEnd } = selectedComponent
+      setCodeContentPromise(fetchCodeContentData(componentFilePath, locStart, locEnd))
+    }
+    else {
+      setCodeContentPromise(Promise.resolve(''))
+    }
+  }, [selectedComponentKey, selectedComponents])
+
+  if (selectedComponents.length === 0) {
+    return null
+  }
+
+  return (
+    <Tabs
+      className="w-full h-full flex flex-col gap-2"
+      key={selectedComponents[0].componentKey}
+      value={selectedComponentKey}
+    >
+      <Card className="p-2">
+        <TabsList key="tabsList" className="w-full overflow-auto">
+          {selectedComponents.map((node, index) => (
+            <TabsTrigger
+              key={node.componentKey}
+              value={node.componentKey}
+              onClick={() =>
+                setSelectedComponentKey(node.componentKey)}
+            >
+              {node.componentName}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Card>
+
+      {selectedComponents.map((node, index) => (
+        <TabsContent key={node.componentKey} value={node.componentKey}>
+          <Suspense fallback={<div className="h-[80vh] w-full animate-pulse rounded-lg bg-[#f5f2f0]" />}>
+            <HighlightCode codeContentPromise={codeContentPromise} />
+          </Suspense>
+        </TabsContent>
+      ))}
+
+      <Card className="flex-1">
+      </Card>
+    </Tabs>
   )
-
-  const result = await transformFilePathsToCoreData(
-    entryFiles,
-  )
-
-  const file = Bun.file(path.join(__dirname, './dist/test.json'))
-  await Bun.write(file, JSON.stringify(result, null, 2))
-  // for (const module of Array.from(modules.values())) {
-  //   if (module.type === "LocalModule") {
-  //     const component = components.get(module.componentKey);
-  //     const filePath = Bun.file(
-  //       path.join(__dirname, "./demo/", module.componentName + ".demo.md")
-  //     );
-
-  //     if (component) {
-  //       const doc = await generateModuleDoc(module, components);
-  //       await Bun.write(filePath, doc);
-  //     }
-  //   }
-  // }
-})
-
-test('transformProjectPathToDocument', async () => {
-  const result = await transformProjectPathToDocument('/Users/trolee/Documents/Code/module-box/packages/web', {
-    exclude: ['dist', 'node_modules'],
-    include: ['app', 'components', 'store', 'actions'],
+}
+        `,
+      ),
+    ],
   })
-
-  console.log(result)
 }, { timeout: 0 })

@@ -178,3 +178,5 @@ dist
 /test/demo
 
 temp
+# LangGraph API
+.langgraph_api

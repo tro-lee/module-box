@@ -9,11 +9,11 @@
     "dev": "bunx @langchain/langgraph-cli dev"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.42",
     "@langchain/core": "^0.3.49",
     "@langchain/langgraph": "^0.2.67",
     "@langchain/ollama": "^0.2.0",
-    "@langchain/openai": "^0.4.3",
-    "@langchain/tavily": "^0.1.1",
+    "chromadb": "^2.4.3",
     "langchain": "^0.3.24",
     "langsmith": "^0.3.21"
   },
