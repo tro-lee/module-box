@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "@module-toolbox/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -22,7 +22,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.0.6",
     "lucide-react": "^0.479.0",
-    "module-toolbox-anaylzer": "workspace:*",
+    "@module-toolbox/anaylzer": "workspace:*",
     "next": "15.1.6",
     "prismjs": "^1.30.0",
     "react": "^19.0.0",

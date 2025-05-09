@@ -27,7 +27,7 @@
     "eslint": "^9.23.0",
     "fast-xml-parser": "^4.5.1",
     "husky": "^9.1.7",
-    "module-toolbox-anaylzer": "workspace:*"
+    "@module-toolbox/anaylzer": "workspace:*"
   },
   "workspaces": [
     "packages/*"

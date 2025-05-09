@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "@module-toolbox/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,8 +7,8 @@
   },
   "dependencies": {
     "hono": "^4.6.20",
-    "module-toolbox-anaylzer": "workspace:*",
-    "module-toolbox-ai": "workspace:*",
+    "@module-toolbox/anaylzer": "workspace:*",
+    "@module-toolbox/ai": "workspace:*",
     "zod": "^3.22.4"
   },
   "devDependencies": {

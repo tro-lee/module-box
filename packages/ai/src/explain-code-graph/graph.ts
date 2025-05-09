@@ -2,8 +2,8 @@ import type { BindToolsInput } from '@langchain/core/language_models/chat_models
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
+import { OLLAMA_BASE_URL, OLLAMA_MODEL } from '@module-toolbox/lib'
 import last from 'lodash/last'
-import { OLLAMA_BASE_URL, OLLAMA_MODEL } from 'module-toolbox-constant'
 import { StateAnnotation } from '../common'
 import { explainCodeSystemMessage } from './prompt'
 

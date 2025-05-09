@@ -2,7 +2,7 @@ import type { BaseMessage, BaseMessageLike } from '@langchain/core/messages'
 import { Chroma } from '@langchain/community/vectorstores/chroma'
 import { Annotation, messagesStateReducer } from '@langchain/langgraph'
 import { OllamaEmbeddings } from '@langchain/ollama'
-import { OLLAMA_BASE_URL, OLLAMA_EMBEDDINGS_MODEL } from 'module-toolbox-constant'
+import { OLLAMA_BASE_URL, OLLAMA_EMBEDDINGS_MODEL } from '../../lib'
 
 export const StateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[], BaseMessageLike[]>({

@@ -1,5 +1,5 @@
+import type { Component, Hook, Module } from '@module-toolbox/anaylzer'
 import type { Edge, Node } from '@xyflow/react'
-import type { Component, Hook, Module } from 'module-toolbox-anaylzer'
 import { API_URL } from '@/lib/constants'
 import { compact } from 'lodash'
 

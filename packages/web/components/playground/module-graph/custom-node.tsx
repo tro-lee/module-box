@@ -1,7 +1,7 @@
 'use client'
 
+import type { Component, Hook, Module } from '@module-toolbox/anaylzer'
 import type { Node, NodeProps } from '@xyflow/react'
-import type { Component, Hook, Module } from 'module-toolbox-anaylzer'
 import {
   Card,
   CardDescription,

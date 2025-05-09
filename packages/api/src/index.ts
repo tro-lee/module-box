@@ -1,12 +1,12 @@
 import * as fs from 'node:fs'
-import { Hono } from 'hono'
-import { cors } from 'hono/cors'
-import { streamText } from 'hono/streaming'
-import { getExplainCodeGraph } from 'module-toolbox-ai'
+import { getExplainCodeGraph } from '@module-toolbox/ai'
 import {
   scanEntryFilePathsByDir,
   transformFilePathsToCoreData,
-} from 'module-toolbox-anaylzer'
+} from '@module-toolbox/anaylzer'
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { streamText } from 'hono/streaming'
 
 const app = new Hono()
 

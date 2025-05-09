@@ -1,5 +1,5 @@
 {
-  "name": "module-toolbox-anaylzer",
+  "name": "@module-toolbox/anaylzer",
   "version": "0.2.0",
   "main": "./index.ts",
   "module": "./index.ts",

@@ -1,5 +1,5 @@
 {
-  "name": "module-toolbox-ai",
+  "name": "@module-toolbox/ai",
   "type": "module",
   "version": "0.0.1",
   "main": "./index.ts",
@@ -18,7 +18,7 @@
     "chromadb": "^2.4.3",
     "langchain": "^0.3.24",
     "langsmith": "^0.3.21",
-    "module-toolbox-constant": "workspace:*"
+    "@module-toolbox/lib": "workspace:*"
   },
   "devDependencies": {}
 }
