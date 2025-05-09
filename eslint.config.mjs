@@ -8,5 +8,5 @@ export default antfu({
     'node/prefer-global/process': 'off',
     'ts/no-require-imports': 'off',
   },
-  ignores: ['**/components/ui/*', '**/*.json'],
+  ignores: ['**/components/ui/*', '**/*.json', '**/generated/*'],
 })

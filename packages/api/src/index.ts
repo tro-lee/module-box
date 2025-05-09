@@ -4,6 +4,7 @@ import {
   scanEntryFilePathsByDir,
   transformFilePathsToCoreData,
 } from '@module-toolbox/anaylzer'
+import { prisma } from '@module-toolbox/lib'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { streamText } from 'hono/streaming'
@@ -11,6 +12,23 @@ import { streamText } from 'hono/streaming'
 const app = new Hono()
 
 app.use('/*', cors())
+
+app.get('/test', async (c) => {
+  await prisma.user.create({
+    data: {
+      name: 'John Dough',
+      email: `john-${Math.random()}@example.com`,
+    },
+  })
+
+  // count the number of users
+  const count = await prisma.user.count()
+  console.log(`There are ${count} users in the database.`)
+
+  return c.json({
+    status: 'success',
+  })
+})
 
 app.get('/entry-file-paths', async (c) => {
   const filepath = c.req.query('filepath') || ''

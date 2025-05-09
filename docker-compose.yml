@@ -8,5 +8,5 @@ services:
     restart: always
     environment:
       - POSTGRES_DB=api
-      - POSTGRES_USER=myuser
-      - POSTGRES_PASSWORD=ChangeMe
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password

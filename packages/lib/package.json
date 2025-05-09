@@ -4,13 +4,9 @@
   "main": "./index.ts",
   "module": "./index.ts",
   "types": "./index.ts",
-  "scripts": {
-  },
+  "devDependencies": {},
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "dependencies": {
-  },
-  "devDependencies": {
-  }
+  "scripts": {}
 }
