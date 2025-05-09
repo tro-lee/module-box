@@ -35,6 +35,7 @@
         "chromadb": "^2.4.3",
         "langchain": "^0.3.24",
         "langsmith": "^0.3.21",
+        "module-toolbox-constant": "workspace:*",
       },
     },
     "packages/anaylzer": {
@@ -50,6 +51,13 @@
         "@types/babel__core": "^7.20.5",
         "@types/bun": "latest",
       },
+      "peerDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/constant": {
+      "name": "module-toolbox-constant",
+      "version": "0.1.0",
       "peerDependencies": {
         "typescript": "^5.0.0",
       },
@@ -1389,6 +1397,8 @@
     "module-toolbox-ai": ["module-toolbox-ai@workspace:packages/ai"],
 
     "module-toolbox-anaylzer": ["module-toolbox-anaylzer@workspace:packages/anaylzer"],
+
+    "module-toolbox-constant": ["module-toolbox-constant@workspace:packages/constant"],
 
     "motion-dom": ["motion-dom@12.5.0", "https://registry.npmmirror.com/motion-dom/-/motion-dom-12.5.0.tgz", { "dependencies": { "motion-utils": "^12.5.0" } }, "sha512-uH2PETDh7m+Hjd1UQQ56yHqwn83SAwNjimNPE/kC+Kds0t4Yh7+29rfo5wezVFpPOv57U4IuWved5d1x0kNhbQ=="],
 

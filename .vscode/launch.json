@@ -20,9 +20,9 @@
       "type": "bun",
       "internalConsoleOptions": "neverOpen",
       "request": "launch",
-      "name": "Server: debug dev",
-      "program": "${workspaceFolder}/packages/server/src/index.ts",
-      "cwd": "${workspaceFolder}/packages/server",
+      "name": "Api: debug dev",
+      "program": "${workspaceFolder}/packages/api/src/index.ts",
+      "cwd": "${workspaceFolder}/packages/api",
       "stopOnEntry": false,
       "watchMode": false
     },

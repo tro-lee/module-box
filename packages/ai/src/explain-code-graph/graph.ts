@@ -3,7 +3,8 @@ import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
 import last from 'lodash/last'
-import { OLLAMA_BASE_URL, OLLAMA_MODEL, StateAnnotation } from '../common'
+import { OLLAMA_BASE_URL, OLLAMA_MODEL } from 'module-toolbox-constant'
+import { StateAnnotation } from '../common'
 import { explainCodeSystemMessage } from './prompt'
 
 // 当前工具

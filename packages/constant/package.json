@@ -1,0 +1,16 @@
+{
+  "name": "module-toolbox-constant",
+  "version": "0.1.0",
+  "main": "./index.ts",
+  "module": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
