@@ -10,7 +10,7 @@
       "devDependencies": {
         "@antfu/eslint-config": "^4.10.2",
         "@happy-dom/global-registrator": "^17.4.4",
-        "@module-toolbox/anaylzer": "workspace:*",
+        "@module-toolbox/lib": "workspace:*",
         "@testing-library/dom": "^10.4.0",
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.2.0",
@@ -32,7 +32,6 @@
         "@langchain/core": "^0.3.49",
         "@langchain/langgraph": "^0.2.67",
         "@langchain/ollama": "^0.2.0",
-        "@module-toolbox/lib": "workspace:*",
         "chromadb": "^2.4.3",
         "langchain": "^0.3.24",
         "langsmith": "^0.3.21",
