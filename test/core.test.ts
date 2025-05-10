@@ -20,7 +20,7 @@ export function DetailCardComponent() {
     const selectedComponent = selectedComponents.find(node => node.componentKey === selectedComponentKey)
     if (selectedComponent?.type === 'LocalComponent') {
       const { componentFilePath, locStart, locEnd } = selectedComponent
-      setCodeContentPromise(fetchCodeContentData(componentFilePath, locStart, locEnd))
+      setCodeContentPromise(querySourceCode(componentFilePath, locStart, locEnd))
     }
     else {
       setCodeContentPromise(Promise.resolve(''))

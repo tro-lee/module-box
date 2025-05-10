@@ -10,12 +10,15 @@ interface Element {
   children?: Element[]
 }
 
-async function fetchEntryFilePaths(): Promise<{
+async function scanEntryFilePaths(): Promise<{
   rootPath: string
   relativePaths: string[]
 }> {
   try {
-    const response = await fetch(`${API_URL}/entry-file-paths?filepath=${ROOT_PATH}`)
+    const url = new URL('/raw-project/entry-filepath', API_URL)
+    url.searchParams.append('filepath', ROOT_PATH)
+    const response = await fetch(url)
+
     const data = await response.json()
     if (data.status === 'success') {
       return data.data
@@ -77,7 +80,7 @@ export default async function getModuleExplorerData(): Promise<{
   rootPath: string
   elements: Element[]
 }> {
-  const { relativePaths, rootPath } = await fetchEntryFilePaths()
+  const { relativePaths, rootPath } = await scanEntryFilePaths()
   return {
     rootPath,
     elements: pathsToTree(relativePaths),

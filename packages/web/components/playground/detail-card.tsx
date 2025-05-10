@@ -1,7 +1,7 @@
 'use client'
 
-import { fetchCodeContentData } from '@/actions/code-content-data'
 import { fetchExplainCodeStreamData } from '@/actions/explain-code-data'
+import { querySourceCode } from '@/actions/query-source-code'
 import { useGraphStore } from '@/store/graph-store'
 import { TabsTrigger } from '@radix-ui/react-tabs'
 import Prism from 'prismjs'
@@ -144,7 +144,7 @@ export function DetailCardComponent() {
     const selectedComponent = selectedComponents.find(node => node.componentKey === selectedComponentKey)
     if (selectedComponent?.type === 'LocalComponent') {
       const { componentFilePath, locStart, locEnd } = selectedComponent
-      setCodeContentPromise(fetchCodeContentData(componentFilePath, locStart, locEnd))
+      setCodeContentPromise(querySourceCode(componentFilePath, locStart, locEnd))
     }
     else {
       setCodeContentPromise(Promise.resolve(''))
