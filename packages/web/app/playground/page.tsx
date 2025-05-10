@@ -1,16 +1,17 @@
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
 import { DetailCardComponent } from '@/components/playground/detail-card'
 import {
-  ModuleExplorerComponent,
+  ModuleExplorer,
   ModuleExplorerSkeleton,
 } from '@/components/playground/module-explorer'
 import {
   ModuleGraphComponent,
   ModuleGraphSkeleton,
 } from '@/components/playground/module-graph'
+import { TaskExplorer } from '@/components/playground/task-explorer'
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { File } from 'lucide-react'
+import { File, List } from 'lucide-react'
 import { Suspense } from 'react'
 import getModuleExplorerData from '../../actions/module-explorer-data'
 
@@ -20,13 +21,13 @@ function LeftSidebar() {
   return (
     <Sidebar variant="inset" side="left" className="overflow-auto">
       <Tabs defaultValue="explorer">
-        <SidebarHeader>
-          <TabsList>
+        <SidebarHeader className="p-0 border-b">
+          <TabsList className="flex flex-row justify-start">
             <TabsTrigger value="explorer">
-              <File />
+              <File className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="graph">
-              <File />
+            <TabsTrigger value="tasks">
+              <List className="h-4 w-4" />
             </TabsTrigger>
           </TabsList>
         </SidebarHeader>
@@ -34,10 +35,13 @@ function LeftSidebar() {
         <SidebarContent>
           <TabsContent value="explorer">
             <Suspense fallback={<ModuleExplorerSkeleton />}>
-              <ModuleExplorerComponent
+              <ModuleExplorer
                 dataPromise={explorerPromise}
               />
             </Suspense>
+          </TabsContent>
+          <TabsContent value="tasks">
+            <TaskExplorer />
           </TabsContent>
         </SidebarContent>
       </Tabs>
@@ -50,7 +54,7 @@ export default async function DashboardPage() {
     <div className="h-full w-full flex">
       <LeftSidebar />
       <SidebarInset>
-        <div className="flex flex-row items-center justify-start space-x-4 absolute z-10">
+        <div className="flex flex-row items-center justify-start p-2 space-x-2 absolute z-10 text-muted-foreground">
           <SidebarTrigger />
           <BreadcrumbComponent />
         </div>
@@ -61,7 +65,7 @@ export default async function DashboardPage() {
           </div>
         </Suspense>
 
-        <aside className="w-2/5 h-full absolute right-0 p-4">
+        <aside className="absolute right-0 p-2 pt-8">
           <DetailCardComponent />
         </aside>
       </SidebarInset>

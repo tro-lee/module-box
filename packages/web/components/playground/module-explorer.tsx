@@ -2,7 +2,7 @@
 'use module'
 
 import { useExplorerStore } from '@/store/explorer-store'
-import { Fragment, use, useCallback, useEffect, useState } from 'react'
+import { Fragment, use, useCallback, useEffect } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
 import { Skeleton } from '../ui/skeleton'
 
@@ -15,13 +15,6 @@ interface Element {
 
 // 递归渲染元素组件
 function RenderElement({ element }: { element: Element }) {
-  function Test() {
-    function handleClick() {
-      console.log('handleClick')
-    }
-    const [count, setCount] = useState(0)
-    return <div onClick={handleClick}>{count}</div>
-  }
   if (element.children) {
     return (
       <Folder value={element.id} element={element.name}>
@@ -52,7 +45,7 @@ function getAllFolderIds(elements: Element[]): string[] {
 }
 
 // 模块资源管理器：用于展示和管理项目中的模块、组件及其依赖关系
-export function ModuleExplorerComponent({
+export function ModuleExplorer({
   dataPromise,
 }: {
   dataPromise: Promise<{
@@ -73,7 +66,7 @@ export function ModuleExplorerComponent({
 
   return (
     <Tree
-      className="p-2 overflow-hidden rounded-md"
+      className="text-muted-foreground"
       initialSelectedId={selectedRelativeFilePath || undefined}
       initialExpandedItems={getAllFolderIds(elements)}
       elements={elements}

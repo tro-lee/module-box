@@ -9,7 +9,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Handle, Position, useNodeConnections } from '@xyflow/react'
+import { NetworkIcon } from 'lucide-react'
 import { Fragment, memo } from 'react'
+import { Button } from '../ui/button'
 
 // 图表 模块节点
 function ModuleNode({
@@ -20,7 +22,6 @@ function ModuleNode({
 }) {
   const { module } = data
   const connections = useNodeConnections()
-  const hasTargetConnections = connections.some(c => c.target === module.key)
   const hasSourceConnections = connections.some(c => c.source === module.key)
 
   const handleDoubleClick = () => {
@@ -32,16 +33,10 @@ function ModuleNode({
 
   return (
     <Fragment>
-      <Card
-        className="bg-muted text-muted-foreground"
-        onClick={handleDoubleClick}
-      >
-        {hasTargetConnections && <Handle type="target" position={Position.Left} />}
-        {hasSourceConnections && <Handle type="source" position={Position.Right} />}
-        <CardHeader>
-          <CardTitle>{module.componentName}</CardTitle>
-        </CardHeader>
-      </Card>
+      <Button variant="outline" size="icon" className="bg-muted">
+        <NetworkIcon />
+      </Button>
+      {hasSourceConnections && <Handle type="source" position={Position.Right} />}
     </Fragment>
   )
 }
@@ -85,9 +80,9 @@ function ComponentNode({
 
   return (
     <Fragment>
-      <Card className={`cursor-pointer transition-all duration-200 ${
+      <Card className={`cursor-pointer transition-all duration-200 border-0 bg-muted ${
         selected
-          ? 'ring-2 ring-primary shadow-lg scale-105'
+          ? 'ring-2 ring-muted-foreground shadow-lg'
           : 'hover:shadow-md'
       }`}
       >

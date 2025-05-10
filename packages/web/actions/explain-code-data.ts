@@ -9,7 +9,7 @@ import { API_URL } from '@/lib/constants'
  * @param locEnd - 代码结束位置
  * @returns 返回一个ReadableStream用于流式接收AI生成的代码解释
  */
-export async function fetchExplainCodeStreamData(
+export async function getExplainCodeStream(
   path: string,
   locStart: number,
   locEnd: number,

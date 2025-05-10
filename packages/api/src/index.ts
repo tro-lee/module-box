@@ -50,24 +50,41 @@ app.get('/explain-code-by-location-stream', async (c) => {
 
   // 创建流式响应
   return streamText(c, async (stream) => {
+    const controller = new AbortController()
+    const { signal } = controller
+
     try {
       const graph = await getExplainCodeGraph()
       const responseStream = graph.stream({
         messages: [['user', content]],
       }, {
         streamMode: 'messages',
+        signal,
       })
 
+      // 创建一个写入函数，处理写入错误
+      const writeWithErrorHandling = async (text: string) => {
+        if (stream.closed || stream.aborted) {
+          controller.abort()
+          return
+        }
+        await stream.write(text)
+      }
+
       for await (const responses of await responseStream) {
-        await stream.write(responses[0].content)
+        // 如果已经中断，则不再处理
+        if (signal.aborted) {
+          break
+        }
+
+        await writeWithErrorHandling(responses[0].content)
         process.stdout.write(responses[0].content)
       }
     }
     catch (err) {
       // 处理未知错误类型
       const error = err as Error
-      // 发送错误消息
-      await stream.write(`data: {"status":"error", "message": ${JSON.stringify(error?.message || '未知错误')}}\n\n`)
+      console.log('流中断/结束')
     }
   })
 })
