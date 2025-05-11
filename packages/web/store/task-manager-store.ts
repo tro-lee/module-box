@@ -1,5 +1,6 @@
 import type { LocalComponent } from '@module-toolbox/anaylzer'
 import { getExplainCodeStream } from '@/actions/explain-code-data'
+import { find } from 'lodash'
 import { create } from 'zustand'
 
 export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed'
@@ -18,13 +19,14 @@ export interface ExplainCodeTask {
 }
 
 interface TaskManagerState {
-  explainCodeTasks: ExplainCodeTask[]
+  explainCodeTasks: Record<ExplainCodeTask['id'], ExplainCodeTask>
   currentTask?: ExplainCodeTask
 }
 
 interface TaskManagerActions {
   transformToExplainCodeTask: (component: LocalComponent) => Promise<ExplainCodeTask>
-  updatedTask: (task: ExplainCodeTask) => void
+  updatedTask: (task: Partial<ExplainCodeTask> & Pick<ExplainCodeTask, 'id'>) => void
+  setCurrentTask: (task: ExplainCodeTask['id']) => void
 }
 
 type TaskManagerStore = TaskManagerState & TaskManagerActions
@@ -32,12 +34,13 @@ type TaskManagerStore = TaskManagerState & TaskManagerActions
 export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
   console.log('kkk')
   return {
-    explainCodeTasks: [],
+    explainCodeTasks: {},
     transformToExplainCodeTask: async (component: LocalComponent) => {
       const { componentKey, componentFilePath, locStart, locEnd } = component
-      let task = get().explainCodeTasks.find(task => task.componentKey === componentKey)
+      let task = find(get().explainCodeTasks, { componentKey: component.componentKey })
+
       if (!task) {
-        task = {
+        const newTask = {
           type: 'explainCodeTask',
           id: componentKey,
           componentKey,
@@ -45,82 +48,98 @@ export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
           locStart,
           locEnd,
           status: 'pending',
+          content: `${component.componentName}正在上传中`,
           createdAt: new Date(),
         } as ExplainCodeTask
 
-        set(state => ({
-          explainCodeTasks: [...state.explainCodeTasks, task!],
-          currentTask: task,
+        set(pre => ({
+          explainCodeTasks: {
+            ...pre.explainCodeTasks,
+            [newTask.id]: newTask,
+          },
         }))
+
+        task = newTask
+
+        // 处理流逻辑
+        getExplainCodeStream(task.componentFilePath, task.locStart, task.locEnd)
+          .then((stream) => {
+            newTask.content = ''
+            get().updatedTask({
+              id: newTask.id,
+              status: 'processing',
+              content: '',
+            })
+
+            async function processStream(stream: ReadableStream<Uint8Array>) {
+              const reader = stream.getReader()
+
+              try {
+                while (true) {
+                  const { done, value } = await reader.read()
+
+                  if (done) {
+                    get().updatedTask({
+                      id: newTask.id,
+                      status: 'completed',
+                    })
+                    break
+                  }
+
+                  const decoder = new TextDecoder()
+                  const text = decoder.decode(value, { stream: true })
+                  newTask.content = (newTask.content || '') + text
+                  get().updatedTask({
+                    id: newTask.id,
+                    content: newTask.content,
+                  })
+                }
+              }
+              catch (error) {
+                console.error('处理流时出错:', error)
+
+                // 处理错误
+                newTask.status = 'failed'
+                newTask.error = error instanceof Error ? error.message : String(error)
+                get().updatedTask(newTask)
+              }
+              finally {
+                reader.releaseLock()
+              }
+            }
+
+            processStream(stream)
+            console.log('开始处理任务:', task)
+          })
       }
 
       return task
     },
-    updatedTask(task: ExplainCodeTask) {
-      set((state) => {
-        const index = state.explainCodeTasks.findIndex(t => t.id === task.id)
-        if (index !== -1) {
-          const updatedTasks = [...state.explainCodeTasks]
-          updatedTasks[index] = task
-          return { currentTask: task }
-        }
-        return state
-      })
+    setCurrentTask(id: ExplainCodeTask['id']) {
+      const task = find(get().explainCodeTasks, { id })
+      set(() => ({
+        currentTask: task,
+      }))
     },
-  }
-})
+    updatedTask(task: Partial<ExplainCodeTask> & Pick<ExplainCodeTask, 'id'>) {
+      set(pre => ({
+        explainCodeTasks: {
+          ...pre.explainCodeTasks,
+          [task.id]: {
+            ...pre.explainCodeTasks[task.id],
+            ...task,
+          },
+        },
+      }))
 
-useTaskManagerStore.subscribe((state) => {
-  const pendingTasks = state.explainCodeTasks.filter(task => task.status === 'pending')
-
-  for (const task of pendingTasks) {
-    // 处理流逻辑
-    getExplainCodeStream(task.componentFilePath, task.locStart, task.locEnd)
-      .then((stream) => {
-        state.updatedTask({
-          ...task,
-          status: 'processing',
-        })
-
-        async function processStream(stream: ReadableStream<Uint8Array>) {
-          const reader = stream.getReader()
-
-          try {
-            while (true) {
-              const { done, value } = await reader.read()
-
-              if (done) {
-                state.updatedTask({
-                  ...task,
-                  status: 'completed',
-                })
-                break
-              }
-
-              const decoder = new TextDecoder()
-              const text = decoder.decode(value, { stream: true })
-
-              task.content = (task.content || '') + text
-              state.updatedTask({
-                ...task,
-              })
-            }
-          }
-          catch (error) {
-            console.error('处理流时出错:', error)
-            state.updatedTask({
-              ...task,
-              status: 'failed',
-              error: error instanceof Error ? error.message : String(error),
-            })
-          }
-          finally {
-            reader.releaseLock()
-          }
-        }
-
-        processStream(stream)
-        console.log('开始处理任务:', task)
-      })
+      if (get().currentTask?.id === task.id) {
+        set(() => ({
+          currentTask: {
+            ...get().currentTask!,
+            ...task,
+          },
+        }))
+      }
+    },
   }
 })

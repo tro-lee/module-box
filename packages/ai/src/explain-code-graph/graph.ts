@@ -5,7 +5,7 @@ import { ChatOllama } from '@langchain/ollama'
 import { OLLAMA_BASE_URL, OLLAMA_MODEL } from '@module-toolbox/lib'
 import last from 'lodash/last'
 import { StateAnnotation } from '../common'
-import { explainCodeSystemMessage } from './prompt'
+import { explainCodeDemoMessage, explainCodeSystemMessage } from './prompt'
 
 // 当前工具
 const currentTool: BindToolsInput[] = []
@@ -14,12 +14,14 @@ const currentTool: BindToolsInput[] = []
 async function explainCodeNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
   const prompt = ChatPromptTemplate.fromMessages([
     explainCodeSystemMessage,
+    explainCodeDemoMessage,
     ChatPromptTemplate.fromTemplate('{question}'),
   ])
 
   const agent = new ChatOllama({
     model: OLLAMA_MODEL,
     baseUrl: OLLAMA_BASE_URL,
+    temperature: 0,
   }).bindTools(currentTool)
   const chain = prompt.pipe(agent)
 

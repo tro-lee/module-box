@@ -62,7 +62,7 @@ export function DetailCardComponent() {
       key={selectedComponents[0].componentKey}
       value={selectedComponentKey}
     >
-      <Card className="p-4 w-72 h-full flex flex-col gap-4">
+      <Card className="p-4 flex flex-col gap-4">
         {selectedComponent && (
           // <TabsTrigger
           //   key={selectedComponent.componentKey}

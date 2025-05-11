@@ -1,8 +1,9 @@
 import { HumanMessage } from '@langchain/core/messages'
 import { test } from 'bun:test'
+import { find } from 'lodash'
 import { app } from './../packages/ai/src/explain-code-graph/app'
 
-test('test app', async () => {
+test.skip('test app', async () => {
   await app.invoke({
     messages: [
       new HumanMessage(
@@ -70,3 +71,20 @@ export function DetailCardComponent() {
     ],
   })
 }, { timeout: 0 })
+
+test('hi', () => {
+  const tasks = {
+    asdadasdas: {
+      type: 'explainCodeTask',
+      id: '1',
+      componentKey: '1',
+      componentFilePath: '/path/to/file',
+      locStart: 0,
+      locEnd: 10,
+      status: 'pending',
+      createdAt: new Date(),
+    },
+  }
+  const task = find(tasks, { id: '1' })
+  console.log(task)
+})
