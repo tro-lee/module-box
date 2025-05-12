@@ -42,7 +42,7 @@ export function ComponentCodeExplainer({ component }: { component: Component }) 
     }
 
     return (
-      <ScrollArea className="h-[80vh] relative" type="scroll">
+      <ScrollArea className="h-[90vh] relative" type="scroll">
         <div className="prose prose-sm dark:prose-invert w-72 mx-4 my-0">
           <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
         </div>

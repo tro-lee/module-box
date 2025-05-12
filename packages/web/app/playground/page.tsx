@@ -1,14 +1,14 @@
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
 import { DetailCardComponent } from '@/components/playground/detail-card'
 import {
-  ModuleExplorer,
-  ModuleExplorerSkeleton,
-} from '@/components/playground/module-explorer'
-import {
   ModuleGraphComponent,
   ModuleGraphSkeleton,
 } from '@/components/playground/module-graph'
-import { TaskExplorer } from '@/components/playground/task-explorer'
+import {
+  ModuleExplorer,
+  ModuleExplorerSkeleton,
+} from '@/components/sidebar/module-explorer'
+import { TaskExplorer } from '@/components/sidebar/task-explorer'
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { File, List } from 'lucide-react'
