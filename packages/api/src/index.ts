@@ -62,6 +62,8 @@ app.get('/explain-code-by-location-stream', async (c) => {
         signal,
       })
 
+      console.log(filepath, '流开始')
+
       // 创建一个写入函数，处理写入错误
       const writeWithErrorHandling = async (text: string) => {
         if (stream.closed || stream.aborted) {
@@ -78,13 +80,15 @@ app.get('/explain-code-by-location-stream', async (c) => {
         }
 
         await writeWithErrorHandling(responses[0].content)
-        process.stdout.write(responses[0].content)
       }
     }
     catch (err) {
       // 处理未知错误类型
       const error = err as Error
       console.log('流中断/结束')
+    }
+    finally {
+      console.log(filepath, '流结束')
     }
   })
 })

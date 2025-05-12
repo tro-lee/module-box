@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { Handle, Position, useNodeConnections } from '@xyflow/react'
 import { NetworkIcon } from 'lucide-react'
 import { Fragment, memo } from 'react'
@@ -80,11 +81,9 @@ function ComponentNode({
 
   return (
     <Fragment>
-      <Card className={`cursor-pointer transition-all duration-200 border-0 bg-muted ${
-        selected
-          ? 'ring-2 ring-muted-foreground shadow-lg'
-          : 'hover:shadow-md'
-      }`}
+      <Card className={cn('cursor-pointer transition-all duration-200 border-0 bg-muted', selected
+        ? 'ring-2 ring-muted-foreground shadow-lg'
+        : 'hover:shadow-md')}
       >
         {hasTargetConnections && <Handle type="target" position={Position.Left} />}
         <Content />

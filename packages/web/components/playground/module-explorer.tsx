@@ -54,9 +54,16 @@ export function ModuleExplorer({
   }>
 }) {
   const { rootPath, elements } = use(dataPromise)
-  const { setSelectedRelativeFilePath, setRootPath, selectedRelativeFilePath } = useExplorerStore()
+  const selectedFilePath = useExplorerStore(state => state.selectedRelativeFilePath)
+  const currentRootPath = useExplorerStore(state => state.rootPath)
+  const setSelectedRelativeFilePath = useExplorerStore(state => state.setSelectedRelativeFilePath)
+  const setRootPath = useExplorerStore(state => state.setRootPath)
+  const selectedRelativeFilePath = useExplorerStore(state => state.selectedRelativeFilePath)
 
   useEffect(() => {
+    if (currentRootPath === rootPath) {
+      return
+    }
     setRootPath(rootPath)
   }, [rootPath, setRootPath])
 

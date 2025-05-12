@@ -8,10 +8,7 @@ export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export interface ExplainCodeTask {
   type: 'explainCodeTask'
   id: string
-  componentKey: string
-  componentFilePath: string
-  locStart: number
-  locEnd: number
+  component: LocalComponent
   status: TaskStatus
   content?: string
   error?: string
@@ -32,21 +29,17 @@ interface TaskManagerActions {
 type TaskManagerStore = TaskManagerState & TaskManagerActions
 
 export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
-  console.log('kkk')
   return {
     explainCodeTasks: {},
     transformToExplainCodeTask: async (component: LocalComponent) => {
       const { componentKey, componentFilePath, locStart, locEnd } = component
-      let task = find(get().explainCodeTasks, { componentKey: component.componentKey })
+      let task = find(get().explainCodeTasks, { id: component.componentKey })
 
       if (!task) {
         const newTask = {
           type: 'explainCodeTask',
           id: componentKey,
-          componentKey,
-          componentFilePath,
-          locStart,
-          locEnd,
+          component,
           status: 'pending',
           content: `${component.componentName}正在上传中`,
           createdAt: new Date(),
@@ -62,7 +55,7 @@ export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
         task = newTask
 
         // 处理流逻辑
-        getExplainCodeStream(task.componentFilePath, task.locStart, task.locEnd)
+        getExplainCodeStream(task.component.componentFilePath, task.component.locStart, task.component.locEnd)
           .then((stream) => {
             newTask.content = ''
             get().updatedTask({
