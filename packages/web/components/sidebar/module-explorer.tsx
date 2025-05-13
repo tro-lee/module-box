@@ -2,6 +2,7 @@
 'use module'
 
 import { useExplorerStore } from '@/store/explorer-store'
+import { useRouter } from 'next/navigation'
 import { Fragment, use, useCallback, useEffect } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
 import { Skeleton } from '../ui/skeleton'
@@ -54,7 +55,7 @@ export function ModuleExplorer({
   }>
 }) {
   const { rootPath, elements } = use(dataPromise)
-  const selectedFilePath = useExplorerStore(state => state.selectedRelativeFilePath)
+  const router = useRouter()
   const currentRootPath = useExplorerStore(state => state.rootPath)
   const setSelectedRelativeFilePath = useExplorerStore(state => state.setSelectedRelativeFilePath)
   const setRootPath = useExplorerStore(state => state.setRootPath)
@@ -68,8 +69,17 @@ export function ModuleExplorer({
   }, [rootPath, setRootPath])
 
   const handleSelect = useCallback((id: string) => {
+    // 获取当前路径
+    const currentPath = window.location.pathname
+
+    // 设置选中的相对文件路径
     setSelectedRelativeFilePath(id)
-  }, [setSelectedRelativeFilePath])
+
+    // 如果当前路径不是 playground，则跳转到 playground 页面并带上文件路径
+    if (!currentPath.includes('/playground')) {
+      router.push(`/playground?file=${encodeURIComponent(id)}`)
+    }
+  }, [setSelectedRelativeFilePath, router])
 
   return (
     <Tree

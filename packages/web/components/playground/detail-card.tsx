@@ -1,4 +1,5 @@
 'use client'
+'use module'
 
 import { querySourceCode } from '@/actions/query-source-code'
 import { useGraphStore } from '@/store/graph-store'

@@ -1,4 +1,5 @@
 'use client'
+'use module'
 
 import type { ExplainCodeTask, TaskStatus } from '@/store/task-manager-store'
 import { useTaskManagerStore } from '@/store/task-manager-store'
