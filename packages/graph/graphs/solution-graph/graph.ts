@@ -5,8 +5,15 @@ import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
 import { OLLAMA_BASE_URL, OLLAMA_VISION_MODEL } from '@module-toolbox/lib'
 import { last } from 'lodash'
-import { recognizeImageSystemMessage, summonPromptTemplate, summonSystemMessage } from './prompt'
+import { recognizeImageSystemMessage, summaryPromptTemplate, summarySystemMessage } from './prompt'
 import { StateAnnotation } from './state'
+
+function checkHasRecognizedText(state: typeof StateAnnotation.State): 'recognize' | 'summary' {
+  if (state.recognizedText) {
+    return 'summary'
+  }
+  return 'recognize'
+}
 
 async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
   const llm = new ChatOllama({
@@ -31,10 +38,11 @@ async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<
 
   return {
     messages: [respone],
+    recognizedText: respone.text,
   }
 }
 
-async function summonNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
+async function summaryNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
   const llm = new ChatOllama({
     model: OLLAMA_VISION_MODEL,
     baseUrl: OLLAMA_BASE_URL,
@@ -42,8 +50,8 @@ async function summonNode(state: typeof StateAnnotation.State): Promise<Partial<
   })
 
   const prompt = ChatPromptTemplate.fromMessages([
-    summonSystemMessage,
-    summonPromptTemplate,
+    summarySystemMessage,
+    summaryPromptTemplate,
   ])
 
   const chain = prompt.pipe(llm)
@@ -64,10 +72,10 @@ export async function getInitSolutionGraph(options?: {
 
   const workflow = new StateGraph(StateAnnotation)
     .addNode('recognize', recognizeImageNode)
-    .addNode('summon', summonNode)
-    .addEdge(START, 'recognize')
-    .addEdge('recognize', 'summon')
-    .addEdge('summon', END)
+    .addNode('summary', summaryNode)
+    .addConditionalEdges(START, checkHasRecognizedText)
+    .addEdge('recognize', 'summary')
+    .addEdge('summary', END)
 
   return workflow.compile({ checkpointer })
 }

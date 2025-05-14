@@ -1,29 +1,109 @@
 import type { LocalComponent } from '@module-toolbox/anaylzer'
 import { getExplainCodeStream } from '@/actions/explain-code'
+import { handleStream } from '@/lib/utils'
 import { find } from 'lodash'
 import { create } from 'zustand'
+import { useSolutionManagerStore } from './solution-manager-store'
 
 export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
-export interface ExplainCodeTask {
-  type: 'explainCodeTask'
+interface BaseTask {
+  type: string
   id: string
-  component: LocalComponent
   status: TaskStatus
-  content?: string
   error?: string
+}
+
+export type ExplainCodeTask = BaseTask & {
+  type: 'explainCodeTask'
+  content?: string
+  component: LocalComponent
   createdAt: Date
+}
+
+export type InitSolutionTask = BaseTask & {
+  type: 'initSolutionTask'
+  imageBase64: string
+  recognize: string
+  summary: string
+}
+
+export type Task = ExplainCodeTask | InitSolutionTask
+
+async function startExplainCodeTask(task: ExplainCodeTask, get: () => TaskManagerStore) {
+  const stream = await getExplainCodeStream(task.component.componentFilePath, task.component.locStart, task.component.locEnd)
+
+  // 初始化
+  task.content = ''
+  get().updatedTask({
+    id: task.id,
+    status: 'processing',
+    content: '',
+  })
+
+  handleStream(stream, {
+    onMessage: (message) => {
+      task.content = (task.content || '') + message
+      get().updatedTask({
+        id: task.id,
+        content: task.content,
+      })
+    },
+    onFinish: () => {
+      get().updatedTask({
+        id: task.id,
+        status: 'completed',
+      })
+    },
+  })
+}
+
+async function startInitSolutionTask(task: InitSolutionTask, get: () => TaskManagerStore) {
+  // 初始化
+  const solution = useSolutionManagerStore.getState().addSolution(task.id)
+  solution.initTask = task
+  solution.imageBase64 = task.imageBase64
+  useSolutionManagerStore.getState().setCurrentSolution(task.id)
+  useSolutionManagerStore.getState().updateSolution(solution)
+
+  // // 处理流
+  // const streamSSE = await getInitSolutionStream(task.imageBase64, task.id)
+
+  // get().updatedTask({
+  //   id: task.id,
+  //   status: 'processing',
+  // })
+
+  // handleSSE(streamSSE, {
+  //   onEvent: (type, data) => {
+  //     if (type === 'recognize' || type === 'summary') {
+  //       task[type] += data
+  //       get().updatedTask({
+  //         id: task.id,
+  //         [type]: task[type],
+  //       })
+  //     }
+  //   },
+  //   onFinish: () => {
+  //     get().updatedTask({
+  //       id: task.id,
+  //       status: 'completed',
+  //     })
+  //   },
+  // })
 }
 
 interface TaskManagerState {
   explainCodeTasks: Record<ExplainCodeTask['id'], ExplainCodeTask>
-  currentTask?: ExplainCodeTask
+  initSolutionTasks: Record<InitSolutionTask['id'], InitSolutionTask>
+  currentTask?: Task
 }
 
 interface TaskManagerActions {
-  transformToExplainCodeTask: (component: LocalComponent) => Promise<ExplainCodeTask>
-  updatedTask: (task: Partial<ExplainCodeTask> & Pick<ExplainCodeTask, 'id'>) => void
-  setCurrentTask: (task: ExplainCodeTask['id']) => void
+  addExplainCodeTask: (component: LocalComponent) => Promise<ExplainCodeTask>
+  addInitSolutionTask: (solutionId: string, imageBase64: string) => Promise<InitSolutionTask>
+  updatedTask: <T extends Task>(task: Partial<T> & Pick<T, 'id'>) => void
+  setCurrentTask: (task: Task['id']) => void
 }
 
 type TaskManagerStore = TaskManagerState & TaskManagerActions
@@ -31,8 +111,11 @@ type TaskManagerStore = TaskManagerState & TaskManagerActions
 export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
   return {
     explainCodeTasks: {},
-    transformToExplainCodeTask: async (component: LocalComponent) => {
-      const { componentKey, componentFilePath, locStart, locEnd } = component
+    initSolutionTasks: {},
+    currentTask: undefined,
+
+    addExplainCodeTask: async (component) => {
+      const { componentKey } = component
       let task = find(get().explainCodeTasks, { id: component.componentKey })
 
       if (!task) {
@@ -45,80 +128,51 @@ export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
           createdAt: new Date(),
         } as ExplainCodeTask
 
-        set(pre => ({
+        set(() => ({
           explainCodeTasks: {
-            ...pre.explainCodeTasks,
             [newTask.id]: newTask,
           },
         }))
 
         task = newTask
-
-        // 处理流逻辑
-        getExplainCodeStream(task.component.componentFilePath, task.component.locStart, task.component.locEnd)
-          .then((stream) => {
-            newTask.content = ''
-            get().updatedTask({
-              id: newTask.id,
-              status: 'processing',
-              content: '',
-            })
-
-            async function processStream(stream: ReadableStream<Uint8Array>) {
-              const reader = stream.getReader()
-
-              try {
-                while (true) {
-                  const { done, value } = await reader.read()
-
-                  if (done) {
-                    get().updatedTask({
-                      id: newTask.id,
-                      status: 'completed',
-                    })
-                    break
-                  }
-
-                  const decoder = new TextDecoder()
-                  const text = decoder.decode(value, { stream: true })
-                  // todo 可以优化
-                  newTask.content = (newTask.content || '') + text
-                  get().updatedTask({
-                    id: newTask.id,
-                    content: newTask.content,
-                  })
-                }
-              }
-              catch (error) {
-                console.error('处理流时出错:', error)
-
-                // 处理错误
-                newTask.status = 'failed'
-                newTask.error = error instanceof Error ? error.message : String(error)
-                get().updatedTask(newTask)
-              }
-              finally {
-                reader.releaseLock()
-              }
-            }
-
-            processStream(stream)
-            console.log('开始处理任务:', task)
-          })
+        startExplainCodeTask(task, get)
       }
 
       return task
     },
-    setCurrentTask(id: ExplainCodeTask['id']) {
-      const task = find(get().explainCodeTasks, { id })
+    addInitSolutionTask: async (solutionId, imageBase64) => {
+      let task = find(get().initSolutionTasks, { id: solutionId })
+
+      if (!task) {
+        const newTask = {
+          type: 'initSolutionTask',
+          id: solutionId,
+          imageBase64,
+          recognize: '',
+          summary: '',
+        } as InitSolutionTask
+
+        set(() => ({
+          initSolutionTasks: {
+            [newTask.id]: newTask,
+          },
+        }))
+
+        task = newTask
+        startInitSolutionTask(task, get)
+      }
+
+      return task
+    },
+    setCurrentTask(id) {
+      const currentTask = find(get().explainCodeTasks, { id })
       set(() => ({
-        currentTask: task,
+        currentTask,
       }))
     },
-    updatedTask(task: Partial<ExplainCodeTask> & Pick<ExplainCodeTask, 'id'>) {
+    updatedTask(task) {
       set(pre => ({
         explainCodeTasks: {
-          ...pre.explainCodeTasks,
           [task.id]: {
             ...pre.explainCodeTasks[task.id],
             ...task,

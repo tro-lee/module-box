@@ -2,13 +2,6 @@
 
 import { API_URL } from '@/lib/constants'
 
-/**
- * 获取代码解释的流式数据
- * @param path - 文件路径
- * @param locStart - 代码起始位置
- * @param locEnd - 代码结束位置
- * @returns 返回一个ReadableStream用于流式接收AI生成的代码解释
- */
 export async function getExplainCodeStream(
   path: string,
   locStart: number,

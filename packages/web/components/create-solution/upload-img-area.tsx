@@ -1,27 +1,24 @@
 'use client'
 
-import type { ReactCropperElement } from 'react-cropper'
 import { useImageUpload } from '@/hooks/use-image-upload'
-import { useSolutionManagerStore } from '@/store/solution-store'
+import { useTaskManagerStore } from '@/store/task-manager-store'
 import { ImagePlus } from 'lucide-react'
-import { useEffect, useRef } from 'react'
-import Cropper from 'react-cropper'
-import { Button } from '../ui/button'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { Input } from '../ui/input'
-import 'cropperjs/dist/cropper.css'
 
 export function UploadImgArea() {
-  // 处理图片上传
-  const cropperRef = useRef<ReactCropperElement>(null)
+  const param = useParams<{ id: string }>()
+  const router = useRouter()
   const {
     previewBase64,
     fileInputRef,
     handleThumbnailClick,
     handleFileChange,
   } = useImageUpload()
+  const addInitSolutionTask = useTaskManagerStore(state => state.addInitSolutionTask)
 
-  console.log(previewBase64)
-
+  // 监听粘贴事件
   useEffect(() => {
     window.addEventListener('paste', async (event: ClipboardEvent) => {
       const items = event.clipboardData?.items
@@ -45,25 +42,21 @@ export function UploadImgArea() {
     return () => {
       window.removeEventListener('paste', () => { })
     }
-  }, [])
+  }, [handleFileChange])
 
-  // 添加方案任务相关
-  const setSolution = useSolutionManagerStore(state => state.setSolution)
-  const addSolutionTask = useSolutionManagerStore(state => state.addSolutionTask)
-
-  const handleButtonClick = () => {
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get('id')
-
-    if (typeof cropperRef.current?.cropper !== 'undefined' && id) {
-      const croppedBase64 = cropperRef.current?.cropper.getCroppedCanvas().toDataURL()
-      setSolution({ id: id! })
-      addSolutionTask(id, croppedBase64)
+  // 监听图变化
+  useEffect(() => {
+    if (previewBase64) {
+      addInitSolutionTask(param.id, previewBase64)
+      router.push(`/solution/${param.id}`)
     }
-  }
+  }, [previewBase64, addInitSolutionTask])
 
   return (
-    <section className="relative w-[48vw] h-full overflow-hidden rounded-r-xl rounded-l-none bg-sidebar ">
+    <main
+      onClick={handleThumbnailClick}
+      className="w-full h-full flex justify-center items-center overflow-hidden rounded-xl"
+    >
       <Input
         type="file"
         accept="image/*"
@@ -72,47 +65,17 @@ export function UploadImgArea() {
         onChange={handleFileChange}
       />
 
-      {
-        !previewBase64 && (
-          <div
-            onClick={handleThumbnailClick}
-            className="w-full h-full border-dashed border-2 rounded-r-xl flex flex-col items-center justify-center cursor-pointer gap-2 animate-pulse"
-          >
-            <div className="rounded-full bg-background p-3 shadow-sm">
-              <ImagePlus className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium">点击上传</p>
-              <p className="text-xs text-muted-foreground">
-                或者直接Command + V 粘贴图片
-              </p>
-            </div>
-          </div>
-        )
-      }
-
-      {
-        previewBase64 && (
-          <Cropper
-            ref={cropperRef}
-            src={previewBase64!}
-            className="w-full h-full bg-muted-foreground"
-            dragMode="move"
-            background={false}
-            initialAspectRatio={4}
-            guides={false}
-            checkOrientation={false}
-          />
-        )
-      }
-      {
-        previewBase64 && (
-          <Button onClick={handleButtonClick} className="absolute bottom-4 right-4">
-            上传裁剪
-          </Button>
-        )
-      }
-
-    </section>
+      <section
+        className="-translate-y-1/2 flex flex-col items-center justify-center cursor-pointer gap-2"
+      >
+        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+        <div className="text-center text-muted-foreground">
+          <p>点击上传</p>
+          <p className="text-sm">
+            或者直接Command + V 粘贴图片
+          </p>
+        </div>
+      </section>
+    </main>
   )
 }

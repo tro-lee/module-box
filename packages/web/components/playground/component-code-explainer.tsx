@@ -7,14 +7,17 @@ import { ScrollArea } from '../ui/scroll-area'
 
 export function ComponentCodeExplainer({ component }: { component: Component }) {
   if (component.type === 'LocalComponent') {
-    const transformToExplainCodeTask = useTaskManagerStore(state => state.transformToExplainCodeTask)
+    const addExplainCodeTask = useTaskManagerStore(state => state.addExplainCodeTask)
     const setCurrentTask = useTaskManagerStore(state => state.setCurrentTask)
     const currentTask = useTaskManagerStore(state => state.currentTask)
 
     useEffect(() => {
-      transformToExplainCodeTask(component)
+      addExplainCodeTask(component)
       setCurrentTask(component.componentKey)
     }, [component])
+
+    if (!currentTask || currentTask?.type !== 'explainCodeTask')
+      return
 
     if (currentTask?.status === 'pending') {
       return (

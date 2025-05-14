@@ -1,10 +1,10 @@
 'use client'
 'use module'
 
-import type { Solution } from '@/store/solution-store'
+import type { Solution } from '@/store/solution-manager-store'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useSolutionManagerStore } from '@/store/solution-store'
+import { useSolutionManagerStore } from '@/store/solution-manager-store'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { values } from 'lodash'
@@ -54,7 +54,7 @@ export function SolutionExplorer() {
       <nav className="flex items-center text-muted-foreground">
         <Button
           className="text-muted-foreground"
-          onClick={() => router.push(`/create-solution?id=${uuidv4()}`)}
+          onClick={() => router.push(`/create-solution/${uuidv4()}`)}
           variant="link"
           size="sm"
         >

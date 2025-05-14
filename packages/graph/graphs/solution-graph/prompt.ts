@@ -18,9 +18,10 @@ export const recognizeImageSystemMessage = new SystemMessage(`
 5. 完整性：确保捕获图像中的所有文本元素，包括按钮文字、标签、说明文字等各类文本内容。
 
 请仅关注图像本身，不需要处理图像之外的文档内容。直接输出图像中的文本，无需额外的解释或分析。
+不要陷入循环中！
   `)
 
-export const summonSystemMessage = new SystemMessage(`
+export const summarySystemMessage = new SystemMessage(`
   你现在是一个UX 产品设计师，根据用户提供的文本，编写功能需求描述文档。
 
   ## 核心任务：
@@ -46,7 +47,7 @@ export const summonSystemMessage = new SystemMessage(`
   - 猜测用户想要实现的功能明细
   `)
 
-export const summonPromptTemplate = ChatPromptTemplate.fromTemplate(`
+export const summaryPromptTemplate = ChatPromptTemplate.fromTemplate(`
   待解析文本：
   {input}
     `)
