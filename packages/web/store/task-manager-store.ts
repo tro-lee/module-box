@@ -81,6 +81,7 @@ export const useTaskManagerStore = create<TaskManagerStore>((set, get) => {
 
                   const decoder = new TextDecoder()
                   const text = decoder.decode(value, { stream: true })
+                  // todo 可以优化
                   newTask.content = (newTask.content || '') + text
                   get().updatedTask({
                     id: newTask.id,

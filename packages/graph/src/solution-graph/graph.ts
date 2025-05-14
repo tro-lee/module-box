@@ -4,8 +4,8 @@ import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
 import { OLLAMA_BASE_URL, OLLAMA_VISION_MODEL } from '@module-toolbox/lib'
 import { last } from 'lodash'
-import { StateAnnotation } from '../common'
 import { recognizeImageSystemMessage, summonPromptTemplate, summonSystemMessage } from './prompt'
+import { StateAnnotation } from './state'
 
 async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
   const llm = new ChatOllama({

@@ -1,5 +1,5 @@
 {
-  "name": "@module-toolbox/ai",
+  "name": "@module-toolbox/graph",
   "type": "module",
   "version": "0.0.1",
   "main": "./index.ts",

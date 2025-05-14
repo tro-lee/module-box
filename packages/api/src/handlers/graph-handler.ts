@@ -1,5 +1,5 @@
 import * as fs from 'node:fs'
-import { getExplainCodeGraph } from '@module-toolbox/ai'
+import { getExplainCodeGraph, getInitSolutionGraph } from '@module-toolbox/graph'
 import { Hono } from 'hono'
 import { streamText } from 'hono/streaming'
 
@@ -62,5 +62,22 @@ graphHandler.get('/explain-code-stream', async (c) => {
     finally {
       console.log(filepath, '流结束')
     }
+  })
+})
+
+graphHandler.post('/init-solution', async (c) => {
+  const body = await c.req.parseBody()
+  const img = body.img
+
+  if (!img) {
+    return c.json({
+      status: 'error',
+      message: 'img is required',
+    }, 400)
+  }
+
+  const graph = await getInitSolutionGraph()
+  graph.invoke({
+    messages: [['human', { type: 'image_url', image_url: img }]],
   })
 })

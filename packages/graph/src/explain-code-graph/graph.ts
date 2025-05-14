@@ -4,8 +4,8 @@ import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
 import { OLLAMA_BASE_URL, OLLAMA_MODEL } from '@module-toolbox/lib'
 import last from 'lodash/last'
-import { StateAnnotation } from '../common'
 import { explainCodeDemoMessage, explainCodeSystemMessage } from './prompt'
+import { StateAnnotation } from './state'
 
 // 当前工具
 const currentTool: BindToolsInput[] = []

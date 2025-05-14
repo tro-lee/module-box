@@ -1,5 +1,5 @@
 import { HumanMessage } from '@langchain/core/messages'
-import { getInitSolutionGraph } from '@module-toolbox/ai/src/solution-graph/graph'
+import { getInitSolutionGraph } from '@module-toolbox/graph/src/solution-graph/graph'
 import { checkpointer } from '@module-toolbox/lib'
 import { test } from 'bun:test'
 import { app } from './../packages/ai/src/explain-code-graph/app'
