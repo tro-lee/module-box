@@ -20,6 +20,8 @@ export function UploadImgArea() {
     handleFileChange,
   } = useImageUpload()
 
+  console.log(previewBase64)
+
   useEffect(() => {
     window.addEventListener('paste', async (event: ClipboardEvent) => {
       const items = event.clipboardData?.items
@@ -74,7 +76,7 @@ export function UploadImgArea() {
         !previewBase64 && (
           <div
             onClick={handleThumbnailClick}
-            className="w-full h-full border-dashed border-2 rounded-r-xl flex flex-col items-center justify-center cursor-pointer gap-2 animate-pulse duration-[2000ms]"
+            className="w-full h-full border-dashed border-2 rounded-r-xl flex flex-col items-center justify-center cursor-pointer gap-2 animate-pulse"
           >
             <div className="rounded-full bg-background p-3 shadow-sm">
               <ImagePlus className="h-6 w-6 text-muted-foreground" />

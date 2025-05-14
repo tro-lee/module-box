@@ -1,6 +1,7 @@
 {
   "node": "20",
   "graphs": {
+    "solution": "./packages/ai/src/solution-graph/app.ts:app",
     "test": "./packages/ai/src/explain-code-graph/app.ts:app"
   },
   "env": ".env",

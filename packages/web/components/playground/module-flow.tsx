@@ -2,7 +2,7 @@
 'use module'
 
 import type { Edge, Node } from '@xyflow/react'
-import { useGraphStore } from '@/store/graph-store'
+import { useFlowStore } from '@/store/flow-store'
 import Dagre from '@dagrejs/dagre'
 import {
   Background,
@@ -15,10 +15,10 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import React, { memo, useCallback, useEffect } from 'react'
-import { CustomNodeType } from './module-graph-node'
+import { CustomNodeType } from './module-flow-node'
 import '@xyflow/react/dist/style.css'
 
-export function ModuleGraphSkeleton() {
+export function ModuleFlowSkeleton() {
   return <div>Loading...</div>
 }
 
@@ -87,11 +87,11 @@ function useFlowLayout() {
 // 核心流程图部分
 function CoreFlow() {
   // 配置节点选择
-  const nodes = useGraphStore(state => state.nodes)
-  const edges = useGraphStore(state => state.edges)
-  const onNodesChange = useGraphStore(state => state.onNodesChange)
-  const onEdgesChange = useGraphStore(state => state.onEdgesChange)
-  const onSelectionChange = useGraphStore(state => state.onSelectionChange)
+  const nodes = useFlowStore(state => state.nodes)
+  const edges = useFlowStore(state => state.edges)
+  const onNodesChange = useFlowStore(state => state.onNodesChange)
+  const onEdgesChange = useFlowStore(state => state.onEdgesChange)
+  const onSelectionChange = useFlowStore(state => state.onSelectionChange)
 
   // 布局
   const { setLayout } = useFlowLayout()
@@ -120,7 +120,7 @@ function CoreFlow() {
 }
 
 // 包裹下，提供 ReactFlowProvider 上下文
-export const ModuleGraphComponent = memo(() => {
+export const ModuleFlow = memo(() => {
   return (
     <ReactFlowProvider>
       <CoreFlow />

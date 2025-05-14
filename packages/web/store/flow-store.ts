@@ -1,13 +1,13 @@
-import type { CustomGraphNode } from '@/actions/module-graph-data'
+import type { FlowNode } from '@/actions/module-flow-data'
 import type { Component, Module } from '@module-toolbox/anaylzer'
 import type { Edge, OnEdgesChange, OnNodesChange, OnSelectionChangeParams } from '@xyflow/react'
-import getModuleGraphData from '@/actions/module-graph-data'
+import getModuleFlowData from '@/actions/module-flow-data'
 
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
 import { create } from 'zustand'
 import { useExplorerStore } from './explorer-store'
 
-type AppNode = CustomGraphNode
+type AppNode = FlowNode
 
 interface AppState {
   nodes: AppNode[]
@@ -19,16 +19,16 @@ interface AppState {
   onSelectionChange: (params: OnSelectionChangeParams<AppNode, Edge>) => void
 }
 
-interface GraphState {
+interface FlowState {
   selectedComponents: Array<Component>
   selectedModules: Array<Module>
 }
 
-export const useGraphStore = create<GraphState & AppState>((set, get) => {
+export const useFlowStore = create<FlowState & AppState>((set, get) => {
   // 订阅 explorer-store 的变化
   useExplorerStore.subscribe(async (state) => {
     if (state.selectedRelativeFilePath) {
-      const { nodes, edges } = await getModuleGraphData(state.getSelectedAbsolutePath())
+      const { nodes, edges } = await getModuleFlowData(state.getSelectedAbsolutePath())
       set({ nodes, edges })
     }
   })

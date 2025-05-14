@@ -1,15 +1,17 @@
 import { HumanMessage } from '@langchain/core/messages'
+import { getInitSolutionGraph } from '@module-toolbox/ai/src/solution-graph/graph'
+import { checkpointer } from '@module-toolbox/lib'
 import { test } from 'bun:test'
-import { find } from 'lodash'
 import { app } from './../packages/ai/src/explain-code-graph/app'
+import { data } from './test-data'
 
 test.skip('test app', async () => {
   await app.invoke({
     messages: [
       new HumanMessage(
         `
-export function DetailCardComponent() {
-  const selectedComponents = useGraphStore(state => state.selectedComponents)
+export function DetailCard() {
+  const selectedComponents = useFlowStore(state => state.selectedComponents)
   const [selectedComponentKey, setSelectedComponentKey] = useState('')
   const [codeContentPromise, setCodeContentPromise] = useState<Promise<string>>(Promise.resolve(''))
 
@@ -72,19 +74,50 @@ export function DetailCardComponent() {
   })
 }, { timeout: 0 })
 
-test('hi', () => {
-  const tasks = {
-    asdadasdas: {
-      type: 'explainCodeTask',
-      id: '1',
-      componentKey: '1',
-      componentFilePath: '/path/to/file',
-      locStart: 0,
-      locEnd: 10,
-      status: 'pending',
-      createdAt: new Date(),
-    },
+const config = {
+  configure: {
+    thread_id: '1',
+  },
+}
+
+test.skip('test init solution', async () => {
+  const app = await getInitSolutionGraph()
+
+  const stream = app.stream({
+    messages: [
+      new HumanMessage({
+        content: [
+          {
+            type: 'image_url',
+            image_url: data,
+          },
+        ],
+      }),
+    ],
+  }, { streamMode: 'messages' })
+
+  for await (const messages of await stream) {
+    process.stdout.write(messages[0].content)
   }
-  const task = find(tasks, { id: '1' })
-  console.log(task)
-})
+}, { timeout: 0 })
+
+test.skip('test solution with checkpointer', async () => {
+  const app = await getInitSolutionGraph({ checkpointer })
+
+  const stream = app.stream({
+    messages: [
+      new HumanMessage({
+        content: [
+          {
+            type: 'text',
+            text: '我刚才说了什么？最近的一句',
+          },
+        ],
+      }),
+    ],
+  }, { streamMode: 'messages', configurable: { thread_id: '1' } })
+
+  for await (const messages of await stream) {
+    process.stdout.write(messages[0].content)
+  }
+}, { timeout: 0 })

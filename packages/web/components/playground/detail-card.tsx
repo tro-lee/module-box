@@ -2,7 +2,7 @@
 'use module'
 
 import { querySourceCode } from '@/actions/query-source-code'
-import { useGraphStore } from '@/store/graph-store'
+import { useFlowStore } from '@/store/flow-store'
 import Prism from 'prismjs'
 import { use, useEffect, useState } from 'react'
 
@@ -31,8 +31,8 @@ function HighlightCode({ codeContentPromise }: { codeContentPromise: Promise<str
   )
 }
 
-export function DetailCardComponent() {
-  const selectedComponents = useGraphStore(state => state.selectedComponents)
+export function DetailCard() {
+  const selectedComponents = useFlowStore(state => state.selectedComponents)
   const [selectedComponentKey, setSelectedComponentKey] = useState('')
   const [codeContentPromise, setCodeContentPromise] = useState<Promise<string>>(Promise.resolve(''))
   const [viewMode, setViewMode] = useState<'code' | 'explain'>('code')

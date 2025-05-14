@@ -15,12 +15,12 @@ export async function getExplainCodeStream(
   locEnd: number,
 ): Promise<ReadableStream<Uint8Array>> {
   try {
-    const response = await fetch(
-      `${API_URL}/explain-code-by-location-stream?filepath=${path}&locStart=${locStart}&locEnd=${locEnd}`,
-      {
-        method: 'GET',
-      },
-    )
+    const url = new URL('/graph/explain-code-stream', API_URL)
+    url.searchParams.append('filepath', path)
+    url.searchParams.append('locStart', locStart.toString())
+    url.searchParams.append('locEnd', locEnd.toString())
+
+    const response = await fetch(url)
 
     if (!response.ok) {
       throw new Error(`请求失败: ${response.status}`)

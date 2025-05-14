@@ -1,5 +1,5 @@
 import type { LocalComponent } from '@module-toolbox/anaylzer'
-import { getExplainCodeStream } from '@/actions/explain-code-data'
+import { getExplainCodeStream } from '@/actions/explain-code'
 import { find } from 'lodash'
 import { create } from 'zustand'
 

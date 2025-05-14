@@ -12,7 +12,10 @@ interface FetchNodesByPathResult {
 }
 async function fetchNodesByPath(path: string): Promise<FetchNodesByPathResult> {
   try {
-    const response = await fetch(`${API_URL}/modules-by-path?filepath=${path}`)
+    const url = new URL('/flow/modules', API_URL)
+    url.searchParams.append('filepath', path)
+    const response = await fetch(url)
+
     const data = await response.json()
     if (data.status === 'success') {
       const { modules, components, hooks } = data.data as FetchNodesByPathResult
@@ -26,7 +29,7 @@ async function fetchNodesByPath(path: string): Promise<FetchNodesByPathResult> {
   return { modules: {}, components: {}, hooks: {} }
 }
 
-export type CustomGraphNode = Node & {
+export type FlowNode = Node & {
   type: 'module' | 'component' | 'hook'
   data: {
     module?: Module
@@ -35,18 +38,18 @@ export type CustomGraphNode = Node & {
   }
 }
 
-export default async function getModuleGraphData(path: string): Promise<{ nodes: CustomGraphNode[], edges: Edge[] }> {
-  const { modules, components, hooks } = await fetchNodesByPath(path)
+export default async function getModuleFlowData(path: string): Promise<{ nodes: FlowNode[], edges: Edge[] }> {
+  const { modules, components } = await fetchNodesByPath(path)
 
   // 处理节点部分
-  const createNode = (id: string, data: (CustomGraphNode)['data'], type: CustomGraphNode['type']): CustomGraphNode => ({
+  const createNode = (id: string, data: (FlowNode)['data'], type: FlowNode['type']): FlowNode => ({
     id,
     position: { x: 0, y: 0 },
     data,
     type,
   })
 
-  const nodes: CustomGraphNode[] = compact([
+  const nodes: FlowNode[] = compact([
     // 模块节点
     ...Object.values(modules).map(module => createNode(module.key, { module, type: 'module' }, 'module')),
     // 组件和Hook节点

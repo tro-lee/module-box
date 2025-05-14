@@ -1,9 +1,9 @@
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
-import { DetailCardComponent } from '@/components/playground/detail-card'
+import { DetailCard } from '@/components/playground/detail-card'
 import {
-  ModuleGraphComponent,
-  ModuleGraphSkeleton,
-} from '@/components/playground/module-graph'
+  ModuleFlow,
+  ModuleFlowSkeleton,
+} from '@/components/playground/module-flow'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Suspense } from 'react'
 
@@ -15,14 +15,14 @@ export default async function DashboardPage() {
         <BreadcrumbComponent />
       </div>
 
-      <Suspense fallback={<ModuleGraphSkeleton />}>
+      <Suspense fallback={<ModuleFlowSkeleton />}>
         <div className="flex-1">
-          <ModuleGraphComponent />
+          <ModuleFlow />
         </div>
       </Suspense>
 
       <aside className="absolute right-0 p-2 pt-8">
-        <DetailCardComponent />
+        <DetailCard />
       </aside>
     </main>
   )

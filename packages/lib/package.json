@@ -1,5 +1,6 @@
 {
   "name": "@module-toolbox/lib",
+  "type": "module",
   "version": "0.1.0",
   "main": "./index.ts",
   "module": "./index.ts",
@@ -8,5 +9,10 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "scripts": {}
+  "scripts": {
+    "build": "tsc && bun run build.ts"
+  },
+  "dependencies": {
+    "@langchain/langgraph-checkpoint-postgres": "^0.0.5"
+  }
 }
