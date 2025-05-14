@@ -1,14 +1,12 @@
 'use client'
 import type { Component } from '@module-toolbox/anaylzer'
 import { useTaskManagerStore } from '@/store/task-manager-store'
-import { useEffect, useState } from 'react'
-import { remark } from 'remark'
-import html from 'remark-html'
+import { useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { ScrollArea } from '../ui/scroll-area'
 
 export function ComponentCodeExplainer({ component }: { component: Component }) {
   if (component.type === 'LocalComponent') {
-    const [htmlContent, setHtmlContent] = useState<string>('')
     const transformToExplainCodeTask = useTaskManagerStore(state => state.transformToExplainCodeTask)
     const setCurrentTask = useTaskManagerStore(state => state.setCurrentTask)
     const currentTask = useTaskManagerStore(state => state.currentTask)
@@ -17,18 +15,6 @@ export function ComponentCodeExplainer({ component }: { component: Component }) 
       transformToExplainCodeTask(component)
       setCurrentTask(component.componentKey)
     }, [component])
-
-    useEffect(() => {
-      const content = currentTask?.content
-      if (content) {
-        remark()
-          .use(html)
-          .process(content)
-          .then((html) => {
-            setHtmlContent(html.toString())
-          })
-      }
-    }, [currentTask?.content])
 
     if (currentTask?.status === 'pending') {
       return (
@@ -42,9 +28,9 @@ export function ComponentCodeExplainer({ component }: { component: Component }) 
     }
 
     return (
-      <ScrollArea className="h-[90vh] relative" type="scroll">
-        <div className="prose prose-sm dark:prose-invert w-72 mx-4 my-0">
-          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+      <ScrollArea className="h-[90vh]" type="scroll">
+        <div className="prose prose-sm dark:prose-invert w-72 p-4">
+          <ReactMarkdown children={currentTask?.content} />
         </div>
       </ScrollArea>
     )

@@ -2,7 +2,7 @@
   "name": "module-toolbox",
   "scripts": {
     "anaylzer:build": "cd packages/anaylzer && bun run build",
-    "api:dev": "cd packages/api && bun run --hot src/index.ts",
+    "api:dev": "cd packages/api && bun run dev",
     "web:dev": "cd packages/web && bun run dev",
     "web:build": "cd packages/web && bun run build",
     "web:start": "cd packages/web && bun run start",
