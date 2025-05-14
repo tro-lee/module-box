@@ -1,11 +1,11 @@
 import { HumanMessage } from '@langchain/core/messages'
-import { getInitSolutionGraph } from '@module-toolbox/graph/src/solution-graph/graph'
+import { getExplainCodeGraph, getInitSolutionGraph } from '@module-toolbox/graph'
 import { checkpointer } from '@module-toolbox/lib'
 import { test } from 'bun:test'
-import { app } from './../packages/ai/src/explain-code-graph/app'
 import { data } from './test-data'
 
 test.skip('test app', async () => {
+  const app = await getExplainCodeGraph()
   await app.invoke({
     messages: [
       new HumanMessage(
@@ -84,16 +84,7 @@ test.skip('test init solution', async () => {
   const app = await getInitSolutionGraph()
 
   const stream = app.stream({
-    messages: [
-      new HumanMessage({
-        content: [
-          {
-            type: 'image_url',
-            image_url: data,
-          },
-        ],
-      }),
-    ],
+    image: data,
   }, { streamMode: 'messages' })
 
   for await (const messages of await stream) {

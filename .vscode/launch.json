@@ -21,7 +21,7 @@
       "internalConsoleOptions": "neverOpen",
       "request": "launch",
       "name": "Api: debug dev",
-      "program": "${workspaceFolder}/packages/api/src/index.ts",
+      "program": "${workspaceFolder}/packages/api/index.ts",
       "cwd": "${workspaceFolder}/packages/api",
       "stopOnEntry": false,
       "watchMode": false

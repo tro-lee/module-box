@@ -6,5 +6,5 @@ export const StateAnnotation = Annotation.Root({
     reducer: messagesStateReducer,
     default: () => [],
   }),
-  image: Annotation<string>,
+  imageBase64: Annotation<string>,
 })

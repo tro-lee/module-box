@@ -1,4 +1,5 @@
 import type { BaseCheckpointSaver } from '@langchain/langgraph'
+import { HumanMessage } from '@langchain/core/messages'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
@@ -17,7 +18,14 @@ async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<
   const respone = await llm.invoke(
     [
       recognizeImageSystemMessage,
-      state.messages[0],
+      new HumanMessage({
+        content: [
+          {
+            type: 'image_url',
+            image_url: state.imageBase64,
+          },
+        ],
+      }),
     ],
   )
 

@@ -69,15 +69,42 @@ graphHandler.post('/init-solution', async (c) => {
   const body = await c.req.parseBody()
   const img = body.img
 
-  if (!img) {
+  if (!img || typeof img !== 'string') {
     return c.json({
       status: 'error',
       message: 'img is required',
     }, 400)
   }
 
-  const graph = await getInitSolutionGraph()
-  graph.invoke({
-    messages: [['human', { type: 'image_url', image_url: img }]],
+  return streamText(c, async (stream) => {
+    const controller = new AbortController()
+    const { signal } = controller
+
+    const graph = await getInitSolutionGraph()
+
+    const responseStream = graph.stream({
+      imageBase64: img,
+    }, {
+      streamMode: 'messages',
+      signal,
+    })
+
+    // 创建一个写入函数，处理写入错误
+    const writeWithErrorHandling = async (text: string) => {
+      if (stream.closed || stream.aborted) {
+        controller.abort()
+        return
+      }
+      await stream.write(text)
+    }
+
+    for await (const responses of await responseStream) {
+      // 如果已经中断，则不再处理
+      if (signal.aborted) {
+        break
+      }
+
+      await writeWithErrorHandling(responses[0].content)
+    }
   })
 })
