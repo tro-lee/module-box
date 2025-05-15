@@ -1,17 +1,17 @@
 'use client'
 'use module'
 
-import type { Solution } from '@/stores/page/solution-store'
+import type { Solution } from '../../lib/atoms/solution'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useSolutionStore } from '@/stores/page/solution-store'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { useAtomValue } from 'jotai'
+
 import { values } from 'lodash'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-
 import { v4 as uuidv4 } from 'uuid'
+import { solutionsAtom } from '../../lib/atoms/solution'
 
 function SolutionItem({ solution }: { solution: Solution }) {
   const formatTime = (date: Date) => {
@@ -37,17 +37,8 @@ function SolutionItem({ solution }: { solution: Solution }) {
 }
 
 export function SolutionExplorer() {
-  const [mounted, setMounted] = useState(false)
   const router = useRouter()
-  const solutions = useSolutionStore(state => state.solutions)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return null
-  }
+  const solutions = useAtomValue(solutionsAtom)
 
   return (
     <>

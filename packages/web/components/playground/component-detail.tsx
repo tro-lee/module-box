@@ -2,14 +2,15 @@
 'use module'
 
 import type { LocalComponent } from '@module-toolbox/anaylzer'
-import { usePlaygroundStore } from '@/stores/page/playground-store'
-import { useTaskManagerStore } from '@/stores/task/task-manager-store'
+import { explainCodeTasksAtom } from '@/lib/atoms/task'
+import { useExplainCodeTask } from '@/lib/hooks/use-explain-code-task'
+import { useAtomValue } from 'jotai'
 import Prism from 'prismjs'
 import { use, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { useShallow } from 'zustand/shallow'
-import { Card } from '../ui/card'
+import { selectedComponentAtom } from '../../lib/atoms/playground'
 
+import { Card } from '../ui/card'
 import { ScrollArea } from '../ui/scroll-area'
 import 'prismjs/themes/prism.css'
 import 'prismjs/components/prism-jsx.js'
@@ -34,14 +35,17 @@ function HighlightCode({ codeContentPromise }: { codeContentPromise: Promise<str
 }
 
 function ComponentCodeExplainer({ component }: { component: LocalComponent }) {
+  const explainCodeTasks = useAtomValue(explainCodeTasksAtom)
+  const { addTask, startTask } = useExplainCodeTask()
+
   if (component.type === 'LocalComponent') {
-    const addExplainCodeTask = useTaskManagerStore(state => state.addExplainCodeTask)
-    const currentTask = useTaskManagerStore(
-      useShallow(state => state.explainCodeTasks[component.componentKey]),
-    )
+    const currentTask = explainCodeTasks[component.componentKey]
 
     useEffect(() => {
-      addExplainCodeTask(component)
+      if (!currentTask) {
+        const task = addTask(component)
+        startTask(task)
+      }
     }, [component])
 
     if (!currentTask || currentTask?.type !== 'explainCodeTask')
@@ -74,7 +78,7 @@ function ComponentCodeExplainer({ component }: { component: LocalComponent }) {
 }
 
 export function ComponentDetail() {
-  const selectedComponent = usePlaygroundStore(state => state.currentSelectedComponent)
+  const selectedComponent = useAtomValue(selectedComponentAtom)
 
   if (!selectedComponent || selectedComponent.type !== 'LocalComponent') {
     return <></>

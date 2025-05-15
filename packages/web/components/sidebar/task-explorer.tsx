@@ -1,13 +1,12 @@
 'use client'
 'use module'
 
-import type { ExplainCodeTask, TaskStatus } from '@/stores/task/task-manager-store'
-import { useTaskManagerStore } from '@/stores/task/task-manager-store'
+import type { ExplainCodeTask, TaskStatus } from '@/lib/types'
+import { explainCodeTasksAtom } from '@/lib/atoms/task'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { useAtomValue } from 'jotai'
 import { keys, values } from 'lodash'
-
-import { useEffect, useState } from 'react'
 import { Progress } from '../ui/progress'
 import { ScrollArea } from '../ui/scroll-area'
 
@@ -50,17 +49,7 @@ function TaskItem({ task }: { task: ExplainCodeTask }) {
 }
 
 export function TaskExplorer() {
-  const [mounted, setMounted] = useState(false)
-  const explainCodeTasks = useTaskManagerStore(state => state.explainCodeTasks)
-
-  // 使用 useEffect 确保组件只在客户端渲染
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return null
-  }
+  const explainCodeTasks = useAtomValue(explainCodeTasksAtom)
 
   return (
     <ScrollArea className="p-2">

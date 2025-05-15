@@ -1,11 +1,11 @@
 'use client'
 
-import { useSolutionStore } from '@/stores/page/solution-store'
+import { useAtomValue } from 'jotai'
 import { useParams } from 'next/navigation'
 import React, { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
-import { useShallow } from 'zustand/shallow'
+import { solutionsAtom } from '../../lib/atoms/solution'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
 import { Button } from '../ui/button'
 
@@ -61,9 +61,8 @@ export function TaskList() {
   //   }
   // }
   const params = useParams<{ id: string }>()
-  const currentSolution = useSolutionStore(
-    useShallow(state => state.solutions[params.id]),
-  )
+  const solutions = useAtomValue(solutionsAtom)
+  const currentSolution = solutions?.[params.id]
 
   if (!currentSolution) {
     return (

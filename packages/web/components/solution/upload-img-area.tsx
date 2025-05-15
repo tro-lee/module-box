@@ -1,8 +1,8 @@
 'use client'
 'use module'
 
-import { useImageUpload } from '@/hooks/use-image-upload'
-import { useTaskManagerStore } from '@/stores/task/task-manager-store'
+import { useImageUpload } from '@/lib/hooks/use-image-upload'
+import { useInitSolutionTask } from '@/lib/hooks/use-init-solution-task'
 import { ImagePlus } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -17,7 +17,7 @@ export function UploadImgArea() {
     handleThumbnailClick,
     handleFileChange,
   } = useImageUpload()
-  const addInitSolutionTask = useTaskManagerStore(state => state.addInitSolutionTask)
+  const { createTask, startTask } = useInitSolutionTask()
 
   // 监听粘贴事件
   useEffect(() => {
@@ -48,10 +48,11 @@ export function UploadImgArea() {
   // 监听图变化
   useEffect(() => {
     if (previewBase64) {
-      addInitSolutionTask(param.id, previewBase64)
+      const task = createTask(param.id, previewBase64)
+      startTask(task)
       router.push(`/solution/${param.id}`)
     }
-  }, [previewBase64, addInitSolutionTask])
+  }, [previewBase64, createTask])
 
   return (
     <main

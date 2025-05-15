@@ -9,10 +9,11 @@ import { SolutionExplorer } from '@/components/sidebar/solution-explorer'
 import { TaskExplorer } from '@/components/sidebar/task-explorer'
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import getModuleExplorerData from '@/lib/actions/module-explorer-data'
+import { Provider } from 'jotai'
 import { ChartNoAxesGantt, File, List } from 'lucide-react'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Suspense } from 'react'
-import getModuleExplorerData from '../actions/module-explorer-data'
 import './globals.css'
 
 const geistSans = Geist({
@@ -80,12 +81,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
-          <LeftSidebar />
-          <SidebarInset>
-            {children}
-          </SidebarInset>
-        </SidebarProvider>
+        <Provider>
+          <SidebarProvider>
+            <LeftSidebar />
+            <SidebarInset>
+              {children}
+            </SidebarInset>
+          </SidebarProvider>
+        </Provider>
       </body>
     </html>
   )

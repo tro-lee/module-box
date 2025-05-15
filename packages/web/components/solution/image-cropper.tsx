@@ -1,19 +1,19 @@
 'use client'
 import type { ReactCropperElement } from 'react-cropper'
-import { useSolutionStore } from '@/stores/page/solution-store'
+import { useAtomValue } from 'jotai'
 import { useParams, useRouter } from 'next/navigation'
 import { useRef } from 'react'
 import Cropper from 'react-cropper'
 import { v4 as uuid } from 'uuid'
-import { useShallow } from 'zustand/shallow'
+import { solutionsAtom } from '../../lib/atoms/solution'
 import { Button } from '../ui/button'
 import 'cropperjs/dist/cropper.css'
 
 export function ImageCropper() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const currentSolution = useSolutionStore(useShallow(state => state.solutions[params.id]))
-  const imageBase64 = currentSolution?.imageBase64
+  const solutions = useAtomValue(solutionsAtom)
+  const currentSolution = solutions?.[params.id]
 
   const cropperRef = useRef<ReactCropperElement>(null)
   const handleButtonClick = () => {
@@ -34,7 +34,7 @@ export function ImageCropper() {
     <section>
       <Cropper
         ref={cropperRef}
-        src={imageBase64}
+        src={currentSolution.imageBase64}
         className="w-full h-full bg-muted-foreground"
         dragMode="move"
         background={false}

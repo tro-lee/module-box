@@ -1,9 +1,9 @@
 'use client'
 'use module'
 
+import type { Component } from '@module-toolbox/anaylzer'
 import type { Edge, Node } from '@xyflow/react'
-import getModuleFlowData from '@/actions/module-flow-data'
-import { usePlaygroundStore } from '@/stores/page/playground-store'
+import getModuleFlowData from '@/lib/actions/module-flow-data'
 import Dagre from '@dagrejs/dagre'
 import {
   Background,
@@ -17,8 +17,10 @@ import {
   useNodesState,
   useReactFlow,
 } from '@xyflow/react'
+import { useSetAtom } from 'jotai'
 import { useParams } from 'next/navigation'
 import React, { memo, Suspense, use, useCallback, useEffect } from 'react'
+import { selectedComponentAtom } from '../../lib/atoms/playground'
 import { Spinner } from '../ui/spinner'
 import { CustomNodeType } from './module-flow-node'
 import '@xyflow/react/dist/style.css'
@@ -99,11 +101,7 @@ function CoreFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[]
     }
   }, [isNodesInitialized])
 
-  const onSelectionChange = useCallback(({ nodes }) => {
-    usePlaygroundStore.setState((state) => {
-      state.currentSelectedComponent = nodes[0]?.data?.component
-    })
-  }, [])
+  const setSelectedComponent = useSetAtom(selectedComponentAtom)
 
   return (
     <ReactFlow
@@ -113,7 +111,7 @@ function CoreFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[]
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
-      onSelectionChange={onSelectionChange}
+      onSelectionChange={({ nodes }) => setSelectedComponent(nodes[0]?.data?.component as Component | undefined)}
       fitView
       nodeTypes={CustomNodeType}
     >

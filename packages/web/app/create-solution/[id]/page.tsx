@@ -1,6 +1,6 @@
 'use module'
 
-import { UploadImgArea } from '@/components/create-solution/upload-img-area'
+import { UploadImgArea } from '@/components/solution/upload-img-area'
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern'
 import { cn } from '@/lib/utils'
 

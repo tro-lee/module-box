@@ -1,5 +1,6 @@
 'use server'
-import { API_URL, ROOT_PATH } from '../lib/constants'
+
+import { API_URL, ROOT_PATH } from '../constants'
 
 // 模块资源管理器提供数据
 
