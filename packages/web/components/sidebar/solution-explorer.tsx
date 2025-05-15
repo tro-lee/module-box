@@ -58,7 +58,7 @@ export function SolutionExplorer() {
           variant="link"
           size="sm"
         >
-          <p>添加方案</p>
+          <p>创建新方案</p>
         </Button>
       </nav>
       <ScrollArea className="p-2">

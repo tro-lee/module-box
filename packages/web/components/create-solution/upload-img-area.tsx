@@ -1,4 +1,5 @@
 'use client'
+'use module'
 
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useTaskManagerStore } from '@/stores/data/task-manager-store'

@@ -1,3 +1,5 @@
+'use module'
+
 import type { Metadata } from 'next'
 import {
   ModuleExplorer,

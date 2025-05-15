@@ -1,3 +1,5 @@
+'use module'
+
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
 import { DetailCard } from '@/components/playground/detail-card'
 import { Keeper } from '@/components/playground/keeper'
@@ -8,7 +10,7 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Suspense } from 'react'
 
-export default async function DashboardPage() {
+export default async function Page() {
   return (
     <main className="flex-1 flex">
       <Keeper />
