@@ -1,9 +1,8 @@
 'use client'
 'use module'
 
-import { usePlaygroundStore } from '@/stores/module/playground-store'
-import { useRouter } from 'next/navigation'
-import { Fragment, use, useCallback, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { Fragment, use, useCallback } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
 import { Skeleton } from '../ui/skeleton'
 
@@ -50,23 +49,15 @@ export function ModuleExplorer({
   dataPromise,
 }: {
   dataPromise: Promise<{
-    rootPath: string
     elements: Element[]
   }>
 }) {
-  const { rootPath, elements } = use(dataPromise)
+  const { elements } = use(dataPromise)
+
+  const params = useParams<{ id: string, encodepath: string }>()
+  const path = decodeURIComponent(params.encodepath || '')
+
   const router = useRouter()
-  const currentRootPath = usePlaygroundStore(state => state.rootPath)
-  const setRootPath = usePlaygroundStore(state => state.setRootPath)
-  const selectedRelativePath = usePlaygroundStore(state => state.selectedRelativePath)
-
-  useEffect(() => {
-    if (currentRootPath === rootPath) {
-      return
-    }
-    setRootPath(rootPath)
-  }, [rootPath, setRootPath])
-
   const handleSelect = useCallback((id: string) => {
     router.push(`/playground/${encodeURIComponent(id)}`)
   }, [router])
@@ -74,7 +65,7 @@ export function ModuleExplorer({
   return (
     <Tree
       className="text-muted-foreground"
-      initialSelectedId={selectedRelativePath || undefined}
+      initialSelectedId={path || undefined}
       initialExpandedItems={getAllFolderIds(elements)}
       elements={elements}
       handleSelect={handleSelect}

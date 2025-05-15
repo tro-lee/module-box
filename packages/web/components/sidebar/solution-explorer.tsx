@@ -1,10 +1,10 @@
 'use client'
 'use module'
 
-import type { Solution } from '@/stores/data/solution-manager-store'
+import type { Solution } from '@/stores/page/solution-store'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useSolutionManagerStore } from '@/stores/data/solution-manager-store'
+import { useSolutionStore } from '@/stores/page/solution-store'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { values } from 'lodash'
@@ -39,7 +39,7 @@ function SolutionItem({ solution }: { solution: Solution }) {
 export function SolutionExplorer() {
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
-  const solutions = useSolutionManagerStore(state => state.solutions)
+  const solutions = useSolutionStore(state => state.solutions)
 
   useEffect(() => {
     setMounted(true)

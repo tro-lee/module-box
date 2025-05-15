@@ -2,7 +2,8 @@
 'use module'
 
 import type { Edge, Node } from '@xyflow/react'
-import { useFlowStore } from '@/stores/module/flow-store'
+import getModuleFlowData from '@/actions/module-flow-data'
+import { usePlaygroundStore } from '@/stores/page/playground-store'
 import Dagre from '@dagrejs/dagre'
 import {
   Background,
@@ -10,64 +11,63 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useEdges,
+  useEdgesState,
   useNodes,
   useNodesInitialized,
+  useNodesState,
   useReactFlow,
 } from '@xyflow/react'
-import React, { memo, useCallback, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import React, { memo, Suspense, use, useCallback, useEffect } from 'react'
+import { Spinner } from '../ui/spinner'
 import { CustomNodeType } from './module-flow-node'
 import '@xyflow/react/dist/style.css'
 
-export function ModuleFlowSkeleton() {
-  return <div>Loading...</div>
-}
-
-// 布局处理
-function layoutProcess(
-  nodes: Node[],
-  edges: Edge[],
-) {
-  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
-  g.setGraph({
-    rankdir: 'LR',
-    nodesep: 50,
-    edgesep: 100,
-    ranksep: 100,
-  })
-
-  edges.forEach(edge => g.setEdge(edge.source, edge.target))
-  nodes.forEach((node) => {
-    if (node.type === 'hook') {
-      g.setNode(node.id, {
-        ...node,
-        width: node.measured?.width ?? 0,
-        height: node.measured?.height ?? 0,
-        y: 500,
-      })
-    }
-    else {
-      g.setNode(node.id, {
-        ...node,
-        width: node.measured?.width ?? 0,
-        height: node.measured?.height ?? 0,
-      })
-    }
-  },
-  )
-
-  Dagre.layout(g)
-
-  return {
-    nodes: nodes.map((node) => {
-      const position = g.node(node.id)
-      return { ...node, position: { x: position.x || 0, y: position.y || 0 } }
-    }),
-    edges,
-  }
-}
-
 // 节点布局管理
 function useFlowLayout() {
+  function layoutProcess(
+    nodes: Node[],
+    edges: Edge[],
+  ) {
+    const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
+    g.setGraph({
+      rankdir: 'LR',
+      nodesep: 50,
+      edgesep: 100,
+      ranksep: 100,
+    })
+
+    edges.forEach(edge => g.setEdge(edge.source, edge.target))
+    nodes.forEach((node) => {
+      if (node.type === 'hook') {
+        g.setNode(node.id, {
+          ...node,
+          width: node.measured?.width ?? 0,
+          height: node.measured?.height ?? 0,
+          y: 500,
+        })
+      }
+      else {
+        g.setNode(node.id, {
+          ...node,
+          width: node.measured?.width ?? 0,
+          height: node.measured?.height ?? 0,
+        })
+      }
+    },
+    )
+
+    Dagre.layout(g)
+
+    return {
+      nodes: nodes.map((node) => {
+        const position = g.node(node.id)
+        return { ...node, position: { x: position.x || 0, y: position.y || 0 } }
+      }),
+      edges,
+    }
+  }
+
   const nodes = useNodes()
   const edges = useEdges()
   const { fitView, setNodes, setEdges } = useReactFlow()
@@ -78,20 +78,17 @@ function useFlowLayout() {
       setNodes(layout.nodes)
       setEdges(layout.edges)
       window.requestAnimationFrame(() => {
-        fitView({ maxZoom: 0.8 })
+        fitView({ maxZoom: 2 })
       })
     }, [edges, nodes, setEdges, setNodes, fitView]),
   }
 }
 
 // 核心流程图部分
-function CoreFlow() {
-  // 配置节点选择
-  const nodes = useFlowStore(state => state.nodes)
-  const edges = useFlowStore(state => state.edges)
-  const onNodesChange = useFlowStore(state => state.onNodesChange)
-  const onEdgesChange = useFlowStore(state => state.onEdgesChange)
-  const onSelectionChange = useFlowStore(state => state.onSelectionChange)
+function CoreFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[] }> }) {
+  const initialData = use(promise)
+  const [nodes, , onNodesChange] = useNodesState(initialData.nodes)
+  const [edges, , onEdgesChange] = useEdgesState(initialData.edges)
 
   // 布局
   const { setLayout } = useFlowLayout()
@@ -101,6 +98,12 @@ function CoreFlow() {
       setLayout()
     }
   }, [isNodesInitialized])
+
+  const onSelectionChange = useCallback(({ nodes }) => {
+    usePlaygroundStore.setState((state) => {
+      state.currentSelectedComponent = nodes[0]?.data?.component
+    })
+  }, [])
 
   return (
     <ReactFlow
@@ -121,9 +124,27 @@ function CoreFlow() {
 
 // 包裹下，提供 ReactFlowProvider 上下文
 export const ModuleFlow = memo(() => {
+  const params = useParams<{ encodepath: string }>()
+  const path = decodeURIComponent(params.encodepath || '')
+  const promise = getModuleFlowData(path)
+
   return (
-    <ReactFlowProvider>
-      <CoreFlow />
-    </ReactFlowProvider>
+    <div className="relative flex-1 flex justify-center items-center">
+      <Suspense fallback={(
+        <div className="flex flex-col justify-center items-center text-muted-foreground">
+          <Spinner variant="bars" className="w-8 h-8 -translate-y-1/2" />
+          <p>
+            正在解析
+            {' '}
+            {path.split('/').slice(-1)}
+          </p>
+        </div>
+      )}
+      >
+        <ReactFlowProvider>
+          <CoreFlow promise={promise} />
+        </ReactFlowProvider>
+      </Suspense>
+    </div>
   )
 })

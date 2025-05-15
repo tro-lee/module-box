@@ -1,13 +1,18 @@
 'use client'
 import type { ReactCropperElement } from 'react-cropper'
-import { useSolutionManagerStore } from '@/stores/data/solution-manager-store'
+import { useSolutionStore } from '@/stores/page/solution-store'
+import { useParams, useRouter } from 'next/navigation'
 import { useRef } from 'react'
 import Cropper from 'react-cropper'
+import { v4 as uuid } from 'uuid'
+import { useShallow } from 'zustand/shallow'
 import { Button } from '../ui/button'
 import 'cropperjs/dist/cropper.css'
 
 export function ImageCropper() {
-  const currentSolution = useSolutionManagerStore(state => state.currentSolution)
+  const params = useParams<{ id: string }>()
+  const router = useRouter()
+  const currentSolution = useSolutionStore(useShallow(state => state.solutions[params.id]))
   const imageBase64 = currentSolution?.imageBase64
 
   const cropperRef = useRef<ReactCropperElement>(null)
@@ -20,9 +25,11 @@ export function ImageCropper() {
     }
   }
 
-  if (!imageBase64) {
-    return <div className="w-full h-full bg-muted-foreground">请先上传图片</div>
+  if (!currentSolution) {
+    setTimeout(() => router.push(`/create-solution/${uuid()}`))
+    return
   }
+
   return (
     <section>
       <Cropper

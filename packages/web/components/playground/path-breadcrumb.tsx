@@ -8,18 +8,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { usePlaygroundStore } from '@/stores/module/playground-store'
+import { useParams } from 'next/navigation'
 import { Fragment } from 'react'
 
-export function BreadcrumbComponent() {
-  const { selectedRelativePath } = usePlaygroundStore()
+export function PathBreadcrumb() {
+  const params = useParams<{ encodepath: string }>()
 
-  if (!selectedRelativePath) {
+  if (!params.encodepath) {
     return null
   }
 
   // 将文件路径分割成数组
-  const pathParts = selectedRelativePath.split('/')
+  const pathParts = decodeURIComponent(params.encodepath).split('/')
 
   // 构建面包屑项
   const breadcrumbItems = pathParts.map((part, index) => {

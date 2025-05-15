@@ -1,6 +1,6 @@
 import type { Component, Hook, Module } from '@module-toolbox/anaylzer'
 import type { Edge, Node } from '@xyflow/react'
-import { API_URL } from '@/lib/constants'
+import { API_URL, ROOT_PATH } from '@/lib/constants'
 import { compact } from 'lodash'
 
 // 查询某文件目录下的模块
@@ -39,7 +39,13 @@ export type FlowNode = Node & {
 }
 
 export default async function getModuleFlowData(path: string): Promise<{ nodes: FlowNode[], edges: Edge[] }> {
-  const { modules, components } = await fetchNodesByPath(path)
+  // 兜底
+  if (!path) {
+    return { nodes: [], edges: [] }
+  }
+
+  const absolutePath = `${ROOT_PATH}/${path}`
+  const { modules, components } = await fetchNodesByPath(absolutePath)
 
   // 处理节点部分
   const createNode = (id: string, data: (FlowNode)['data'], type: FlowNode['type']): FlowNode => ({

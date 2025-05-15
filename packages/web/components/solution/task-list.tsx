@@ -1,10 +1,11 @@
 'use client'
 
-import { useSolutionManagerStore } from '@/stores/data/solution-manager-store'
+import { useSolutionStore } from '@/stores/page/solution-store'
 import { useParams } from 'next/navigation'
 import React, { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
+import { useShallow } from 'zustand/shallow'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
 import { Button } from '../ui/button'
 
@@ -59,8 +60,18 @@ export function TaskList() {
   //     addSolutionTask(id, croppedBase64)
   //   }
   // }
-  const params = useParams()
-  const currentSolution = useSolutionManagerStore(state => state.currentSolution)
+  const params = useParams<{ id: string }>()
+  const currentSolution = useSolutionStore(
+    useShallow(state => state.solutions[params.id]),
+  )
+
+  if (!currentSolution) {
+    return (
+      <div className="flex flex-col flex-1">
+        <p className="text-sm text-muted-foreground">没有任务</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -68,7 +79,7 @@ export function TaskList() {
       <Markdown content="##
       <recognize> hi </recognize>"
       />
-      {currentSolution?.detail.map(task => (
+      {/* {currentSolution?.detail.map(task => (
         <div key={task.id} className="flex items-center gap-2">
           <p>{task.status}</p>
           <img src={task.imgData} alt="Task" className="w-16 h-16" />
@@ -77,7 +88,7 @@ export function TaskList() {
 
       {currentSolution?.detail.length === 0 && (
         <p className="text-sm text-muted-foreground">没有任务</p>
-      )}
+      )} */}
     </div>
 
   )
