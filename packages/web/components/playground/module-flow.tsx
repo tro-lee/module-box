@@ -2,7 +2,7 @@
 'use module'
 
 import type { Edge, Node } from '@xyflow/react'
-import { useFlowStore } from '@/store/flow-store'
+import { useFlowStore } from '@/stores/module/flow-store'
 import Dagre from '@dagrejs/dagre'
 import {
   Background,

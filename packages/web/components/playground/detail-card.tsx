@@ -2,7 +2,7 @@
 'use module'
 
 import { querySourceCode } from '@/actions/query-source-code'
-import { useFlowStore } from '@/store/flow-store'
+import { useFlowStore } from '@/stores/module/flow-store'
 import Prism from 'prismjs'
 import { use, useEffect, useState } from 'react'
 

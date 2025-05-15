@@ -1,6 +1,6 @@
 'use client'
 
-import { useSolutionManagerStore } from '@/store/solution-manager-store'
+import { useSolutionManagerStore } from '@/stores/data/solution-manager-store'
 import { useParams } from 'next/navigation'
 import React, { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'

@@ -1,8 +1,8 @@
 'use client'
 'use module'
 
-import type { ExplainCodeTask, TaskStatus } from '@/store/task-manager-store'
-import { useTaskManagerStore } from '@/store/task-manager-store'
+import type { ExplainCodeTask, TaskStatus } from '@/stores/data/task-manager-store'
+import { useTaskManagerStore } from '@/stores/data/task-manager-store'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { keys, values } from 'lodash'

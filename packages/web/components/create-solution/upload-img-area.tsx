@@ -1,7 +1,7 @@
 'use client'
 
 import { useImageUpload } from '@/hooks/use-image-upload'
-import { useTaskManagerStore } from '@/store/task-manager-store'
+import { useTaskManagerStore } from '@/stores/data/task-manager-store'
 import { ImagePlus } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'

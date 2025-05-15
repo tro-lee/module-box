@@ -5,7 +5,7 @@ import getModuleFlowData from '@/actions/module-flow-data'
 
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react'
 import { create } from 'zustand'
-import { useExplorerStore } from './explorer-store'
+import { usePlaygroundStore } from './playground-store'
 
 type AppNode = FlowNode
 
@@ -26,9 +26,9 @@ interface FlowState {
 
 export const useFlowStore = create<FlowState & AppState>((set, get) => {
   // 订阅 explorer-store 的变化
-  useExplorerStore.subscribe(async (state) => {
-    if (state.selectedRelativeFilePath) {
-      const { nodes, edges } = await getModuleFlowData(state.getSelectedAbsolutePath())
+  usePlaygroundStore.subscribe(async (state) => {
+    if (state.selectedRelativePath) {
+      const { nodes, edges } = await getModuleFlowData(`${state.rootPath}/${state.selectedRelativePath || ''}`)
       set({ nodes, edges })
     }
   })

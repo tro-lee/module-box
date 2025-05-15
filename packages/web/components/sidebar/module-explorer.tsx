@@ -1,7 +1,7 @@
 'use client'
 'use module'
 
-import { useExplorerStore } from '@/store/explorer-store'
+import { usePlaygroundStore } from '@/stores/module/playground-store'
 import { useRouter } from 'next/navigation'
 import { Fragment, use, useCallback, useEffect } from 'react'
 import { File, Folder, Tree } from '../ui/file-tree'
@@ -56,10 +56,9 @@ export function ModuleExplorer({
 }) {
   const { rootPath, elements } = use(dataPromise)
   const router = useRouter()
-  const currentRootPath = useExplorerStore(state => state.rootPath)
-  const setSelectedRelativeFilePath = useExplorerStore(state => state.setSelectedRelativeFilePath)
-  const setRootPath = useExplorerStore(state => state.setRootPath)
-  const selectedRelativeFilePath = useExplorerStore(state => state.selectedRelativeFilePath)
+  const currentRootPath = usePlaygroundStore(state => state.rootPath)
+  const setRootPath = usePlaygroundStore(state => state.setRootPath)
+  const selectedRelativePath = usePlaygroundStore(state => state.selectedRelativePath)
 
   useEffect(() => {
     if (currentRootPath === rootPath) {
@@ -69,22 +68,13 @@ export function ModuleExplorer({
   }, [rootPath, setRootPath])
 
   const handleSelect = useCallback((id: string) => {
-    // 获取当前路径
-    const currentPath = window.location.pathname
-
-    // 设置选中的相对文件路径
-    setSelectedRelativeFilePath(id)
-
-    // 如果当前路径不是 playground，则跳转到 playground 页面并带上文件路径
-    if (!currentPath.includes('/playground')) {
-      router.push(`/playground?file=${encodeURIComponent(id)}`)
-    }
-  }, [setSelectedRelativeFilePath, router])
+    router.push(`/playground/${encodeURIComponent(id)}`)
+  }, [router])
 
   return (
     <Tree
       className="text-muted-foreground"
-      initialSelectedId={selectedRelativeFilePath || undefined}
+      initialSelectedId={selectedRelativePath || undefined}
       initialExpandedItems={getAllFolderIds(elements)}
       elements={elements}
       handleSelect={handleSelect}

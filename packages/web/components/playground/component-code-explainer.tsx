@@ -1,6 +1,6 @@
 'use client'
 import type { Component } from '@module-toolbox/anaylzer'
-import { useTaskManagerStore } from '@/store/task-manager-store'
+import { useTaskManagerStore } from '@/stores/data/task-manager-store'
 import { useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { ScrollArea } from '../ui/scroll-area'

@@ -1,10 +1,10 @@
 'use client'
 'use module'
 
-import type { Solution } from '@/store/solution-manager-store'
+import type { Solution } from '@/stores/data/solution-manager-store'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useSolutionManagerStore } from '@/store/solution-manager-store'
+import { useSolutionManagerStore } from '@/stores/data/solution-manager-store'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { values } from 'lodash'

@@ -1,5 +1,6 @@
 import { BreadcrumbComponent } from '@/components/playground/breadcrumb'
 import { DetailCard } from '@/components/playground/detail-card'
+import { Keeper } from '@/components/playground/keeper'
 import {
   ModuleFlow,
   ModuleFlowSkeleton,
@@ -10,6 +11,7 @@ import { Suspense } from 'react'
 export default async function DashboardPage() {
   return (
     <main className="flex-1 flex">
+      <Keeper />
       <div className="flex flex-row items-center justify-start p-2 space-x-2 absolute z-10 text-muted-foreground">
         <SidebarTrigger />
         <BreadcrumbComponent />

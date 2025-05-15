@@ -1,6 +1,6 @@
 'use client'
 import type { ReactCropperElement } from 'react-cropper'
-import { useSolutionManagerStore } from '@/store/solution-manager-store'
+import { useSolutionManagerStore } from '@/stores/data/solution-manager-store'
 import { useRef } from 'react'
 import Cropper from 'react-cropper'
 import { Button } from '../ui/button'

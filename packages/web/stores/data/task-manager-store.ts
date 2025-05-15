@@ -63,7 +63,6 @@ async function startInitSolutionTask(task: InitSolutionTask, get: () => TaskMana
   const solution = useSolutionManagerStore.getState().addSolution(task.id)
   solution.initTask = task
   solution.imageBase64 = task.imageBase64
-  useSolutionManagerStore.getState().setCurrentSolution(task.id)
   useSolutionManagerStore.getState().updateSolution(solution)
 
   // // 处理流
