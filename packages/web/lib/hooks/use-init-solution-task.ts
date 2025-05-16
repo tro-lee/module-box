@@ -3,13 +3,13 @@ import { useSetAtom } from 'jotai'
 import { random } from 'lodash'
 import { useCallback } from 'react'
 import { getInitSolutionStream } from '../actions/init-solution'
-import { solutionsAtom } from '../atoms/solution'
 import { initSolutionTasksAtom } from '../atoms/task'
 import { handleSSE } from '../utils'
+import { useSolutionManager } from './use-solution-manager'
 
 export function useInitSolutionTask() {
   const setInitSolutionTask = useSetAtom(initSolutionTasksAtom)
-  const setSolutions = useSetAtom(solutionsAtom)
+  const { addSolution } = useSolutionManager()
 
   const addTask = useCallback((id: string, imageBase64: string) => {
     const task = {
@@ -27,14 +27,10 @@ export function useInitSolutionTask() {
   }, [])
 
   const startTask = useCallback(async (task: InitSolutionTask) => {
-    setSolutions((prev) => {
-      prev[task.id] = {
-        type: 'Solution',
-        name: `新建方案#${random(1000, false)}`,
-        id: task.id,
-        createdAt: new Date(),
-        imageBase64: task.imageBase64,
-      }
+    addSolution(task.id, {
+      name: `新建方案#${random(1000, false)}`,
+      id: task.id,
+      imageBase64: task.imageBase64,
     })
 
     setInitSolutionTask((prev) => {
@@ -57,7 +53,7 @@ export function useInitSolutionTask() {
         })
       },
     })
-  }, [])
+  }, [setInitSolutionTask, addSolution])
 
   return {
     addTask,

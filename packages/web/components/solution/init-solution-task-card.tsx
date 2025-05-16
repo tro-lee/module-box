@@ -39,7 +39,7 @@ export function InitSolutionTaskCard({ task }: { task?: InitSolutionTask }) {
   }
 
   return (
-    <Card className="flex flex-col p-2 w-full shadow-sm text-muted-foreground">
+    <Card className="flex flex-col p-2 w-full shadow-none text-muted-foreground">
       <section className="flex flex-row justify-between items-center py-0 px-2 text-muted-foreground text-sm">
         <div className="flex flex-row items-center gap-2">
           <Spinner variant="pinwheel" className="w-4 h-4" />

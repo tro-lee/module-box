@@ -1,4 +1,4 @@
-import { getSolutionGraph } from './graph'
+import { getInitSolutionGraph } from './graph'
 
-export const app = await getSolutionGraph()
+export const app = await getInitSolutionGraph()
 app.name = 'solution-graph'

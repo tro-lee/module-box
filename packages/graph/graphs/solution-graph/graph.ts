@@ -79,3 +79,18 @@ export async function getInitSolutionGraph(options?: {
 
   return workflow.compile({ checkpointer })
 }
+
+export async function getAnaylzeSolutionItemGraph(options?: {
+  checkpointer?: BaseCheckpointSaver | false
+}) {
+  const checkpointer = options?.checkpointer
+
+  const workflow = new StateGraph(StateAnnotation)
+    .addNode('recognize', recognizeImageNode)
+    .addNode('summary', summaryNode)
+    .addConditionalEdges(START, checkHasRecognizedText)
+    .addEdge('recognize', 'summary')
+    .addEdge('summary', END)
+
+  return workflow.compile({ checkpointer })
+}
