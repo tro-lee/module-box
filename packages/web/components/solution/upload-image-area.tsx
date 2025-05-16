@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Input } from '../ui/input'
 
-export function UploadImgArea() {
+export function UploadImageArea() {
   const param = useParams<{ id: string }>()
   const router = useRouter()
   const {
@@ -17,7 +17,7 @@ export function UploadImgArea() {
     handleThumbnailClick,
     handleFileChange,
   } = useImageUpload()
-  const { createTask, startTask } = useInitSolutionTask()
+  const { addTask, startTask } = useInitSolutionTask()
 
   // 监听粘贴事件
   useEffect(() => {
@@ -48,11 +48,11 @@ export function UploadImgArea() {
   // 监听图变化
   useEffect(() => {
     if (previewBase64) {
-      const task = createTask(param.id, previewBase64)
+      const task = addTask(param.id, previewBase64)
       startTask(task)
-      router.push(`/solution/${param.id}`)
+      router.push(`/update-solution/${param.id}`)
     }
-  }, [previewBase64, createTask])
+  }, [previewBase64, addTask])
 
   return (
     <main

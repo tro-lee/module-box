@@ -1,11 +1,10 @@
-import type { InitSolutionTask } from '@/lib/types'
 import { atomWithImmer } from 'jotai-immer'
 
 export interface Solution {
   type: 'Solution'
   id: string
   createdAt: Date
-  initTask?: InitSolutionTask
+  name: string
   imageBase64?: string
   error?: string
 }

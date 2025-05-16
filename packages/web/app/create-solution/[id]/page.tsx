@@ -1,13 +1,17 @@
 'use module'
 
-import { UploadImgArea } from '@/components/solution/upload-img-area'
+import { UploadImageArea } from '@/components/solution/upload-image-area'
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 
 export default async function Page() {
   return (
     <main className="h-full w-full overflow-hidden">
-      <UploadImgArea />
+      <div className="p-2 absolute z-10 text-muted-foreground">
+        <SidebarTrigger />
+      </div>
+      <UploadImageArea />
       <AnimatedGridPattern
         numSquares={30}
         maxOpacity={0.1}
