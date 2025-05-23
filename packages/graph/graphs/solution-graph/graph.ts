@@ -1,18 +1,19 @@
 import type { BaseCheckpointSaver } from '@langchain/langgraph'
-import { HumanMessage } from '@langchain/core/messages'
+import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
-import { OLLAMA_BASE_URL, OLLAMA_VISION_MODEL } from '@module-toolbox/lib'
-import { last } from 'lodash'
-import { recognizeImageSystemMessage, summaryPromptTemplate, summarySystemMessage } from './prompt'
+import { OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_VISION_MODEL } from '@module-toolbox/lib'
+import { recognizeImageOCR } from '../../lib/ocr'
+import { mixPromptTemplate, summaryPromptTemplate, summarySystemMessage } from './prompt'
 import { StateAnnotation } from './state'
 
-function checkHasRecognizedText(state: typeof StateAnnotation.State): 'recognize' | 'summary' {
-  if (state.recognizedText) {
-    return 'summary'
+async function ocrRecognizeImageNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
+  const text = await recognizeImageOCR(state.imageBase64)
+  return {
+    ocrRecognizedText: text,
+    recognizedText: text,
   }
-  return 'recognize'
 }
 
 async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
@@ -24,7 +25,7 @@ async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<
 
   const respone = await llm.invoke(
     [
-      recognizeImageSystemMessage,
+      new SystemMessage(state.ocrRecognizedText),
       new HumanMessage({
         content: [
           {
@@ -44,7 +45,7 @@ async function recognizeImageNode(state: typeof StateAnnotation.State): Promise<
 
 async function summaryNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
   const llm = new ChatOllama({
-    model: OLLAMA_VISION_MODEL,
+    model: OLLAMA_MODEL,
     baseUrl: OLLAMA_BASE_URL,
     temperature: 0,
   })
@@ -57,7 +58,29 @@ async function summaryNode(state: typeof StateAnnotation.State): Promise<Partial
   const chain = prompt.pipe(llm)
 
   const respone = await chain.invoke({
-    input: last(state.messages)?.text,
+    input: state.recognizedText,
+  })
+
+  return {
+    messages: [respone],
+    summaryText: respone.text,
+  }
+}
+
+async function answerNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
+  const llm = new ChatOllama({
+    model: OLLAMA_MODEL,
+    baseUrl: OLLAMA_BASE_URL,
+    temperature: 0,
+  })
+
+  const prompt = mixPromptTemplate
+
+  const chain = prompt.pipe(llm)
+
+  const respone = await chain.invoke({
+    image: state.recognizedText,
+    context: state.summaryText,
   })
 
   return {
@@ -71,10 +94,13 @@ export async function getInitSolutionGraph(options?: {
   const checkpointer = options?.checkpointer
 
   const workflow = new StateGraph(StateAnnotation)
-    .addNode('recognize', recognizeImageNode)
+    // .addNode('recognize', recognizeImageNode)
     .addNode('summary', summaryNode)
-    .addConditionalEdges(START, checkHasRecognizedText)
-    .addEdge('recognize', 'summary')
+    .addNode('ocr', ocrRecognizeImageNode)
+    .addEdge(START, 'ocr')
+    // .addEdge('ocr', 'recognize')
+    // .addEdge('recognize', 'summary')
+    .addEdge('ocr', 'summary')
     .addEdge('summary', END)
 
   return workflow.compile({ checkpointer })
@@ -86,11 +112,11 @@ export async function getAnaylzeSolutionItemGraph(options?: {
   const checkpointer = options?.checkpointer
 
   const workflow = new StateGraph(StateAnnotation)
-    .addNode('recognize', recognizeImageNode)
-    .addNode('summary', summaryNode)
-    .addConditionalEdges(START, checkHasRecognizedText)
-    .addEdge('recognize', 'summary')
-    .addEdge('summary', END)
+    .addNode('ocr', ocrRecognizeImageNode)
+    .addNode('answer', answerNode)
+    .addEdge(START, 'ocr')
+    .addEdge('ocr', 'answer')
+    .addEdge('answer', END)
 
   return workflow.compile({ checkpointer })
 }

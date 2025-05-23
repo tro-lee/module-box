@@ -1,5 +1,5 @@
 import * as fs from 'node:fs'
-import { getExplainCodeGraph, getInitSolutionGraph } from '@module-toolbox/graph'
+import { getAnaylzeSolutionItemGraph, getExplainCodeGraph, getInitSolutionGraph } from '@module-toolbox/graph'
 import { checkpointer } from '@module-toolbox/lib'
 import { Hono } from 'hono'
 import { streamSSE, streamText } from 'hono/streaming'
@@ -91,6 +91,55 @@ graphHandler.post('/init-solution-sse', async (c) => {
           data: responses[0].content,
           event: responses[1].langgraph_node,
         })
+      }
+    }
+    catch (err) {
+      console.log('流中断/结束')
+    }
+    finally {
+      console.log('流结束')
+      stream.close()
+    }
+  })
+})
+
+graphHandler.post('/anaylze-solution-item-stream', async (c) => {
+  const id = c.req.query('id') || ''
+  const body = await c.req.parseBody()
+  const img = body.img
+
+  if (!id || !img || typeof img !== 'string') {
+    return c.json({
+      status: 'error',
+      message: 'img is required',
+    }, 400)
+  }
+
+  return streamText(c, async (stream) => {
+    const controller = new AbortController()
+    const { signal } = controller
+
+    try {
+      const graph = await getAnaylzeSolutionItemGraph({ checkpointer })
+      const responseStream = graph.stream({
+        imageBase64: img,
+      }, {
+        streamMode: 'messages',
+        signal,
+        configurable: {
+          thread_id: id,
+        },
+      })
+
+      for await (const responses of await responseStream) {
+        if (stream.closed || stream.aborted || signal.aborted) {
+          controller.abort()
+          return
+        }
+
+        await stream.write(
+          responses[0].content,
+        )
       }
     }
     catch (err) {

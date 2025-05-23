@@ -1,6 +1,7 @@
 'use client'
 import type { ReactCropperElement } from 'react-cropper'
 import { useSolutionManager } from '@/lib/hooks/use-solution-manager'
+import { useAnaylzeSolutionItemTask } from '@/lib/hooks/use-task'
 import { useAtomValue } from 'jotai'
 import { useParams } from 'next/navigation'
 import { useRef } from 'react'
@@ -12,16 +13,19 @@ import 'cropperjs/dist/cropper.css'
 export function ImageCropper() {
   const params = useParams<{ id: string }>()
   const { addSolutionItem } = useSolutionManager()
+  const { startTask, addTask } = useAnaylzeSolutionItemTask()
   const solutions = useAtomValue(solutionsAtom)
   const currentSolution = solutions[params.id]
 
   const cropperRef = useRef<ReactCropperElement>(null)
   const handleButtonClick = () => {
     if (cropperRef.current) {
-      const cropper = cropperRef.current.cropper
-      const croppedCanvas = cropper.getCroppedCanvas()
+      const croppedCanvas = cropperRef.current.cropper.getCroppedCanvas()
       const croppedImageDataUrl = croppedCanvas.toDataURL('image/jpeg')
-      addSolutionItem(params.id, { imageBase64: croppedImageDataUrl })
+
+      const solutionItem = addSolutionItem(params.id, { imageBase64: croppedImageDataUrl })
+      const task = addTask(solutionItem)
+      startTask(task)
     }
   }
 
@@ -46,7 +50,7 @@ export function ImageCropper() {
         className="absolute bottom-4 right-4"
         onClick={handleButtonClick}
       >
-        上传裁切
+        分析裁剪
       </Button>
     </>
   )

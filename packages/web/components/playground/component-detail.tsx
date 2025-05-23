@@ -3,7 +3,7 @@
 
 import type { LocalComponent } from '@module-toolbox/anaylzer'
 import { explainCodeTasksAtom } from '@/lib/atoms/task'
-import { useExplainCodeTask } from '@/lib/hooks/use-explain-code-task'
+import { useExplainCodeTask } from '@/lib/hooks/use-task'
 import { useAtomValue } from 'jotai'
 import Prism from 'prismjs'
 import { use, useEffect } from 'react'
@@ -67,7 +67,7 @@ function ComponentCodeExplainer({ component }: { component: LocalComponent }) {
     return (
       <ScrollArea className="h-[90vh]" type="scroll">
         <div className="prose prose-sm dark:prose-invert w-72 p-4">
-          <ReactMarkdown children={currentTask?.content} />
+          <ReactMarkdown children={currentTask?.message} />
         </div>
       </ScrollArea>
     )

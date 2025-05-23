@@ -7,15 +7,15 @@ import { solutionsAtom } from '../atoms/solution'
 export function useSolutionManager() {
   const setSolutions = useSetAtom(solutionsAtom)
 
-  const addSolution = useCallback((initSolutionTaskId: string, solution: Pick<Solution, 'id' | 'imageBase64' | 'name'>) => {
+  const addSolution = useCallback((solution: Pick<Solution, 'id' | 'imageBase64' | 'name'>) => {
     const newSolution = {
       type: 'Solution',
       name: solution.name,
       id: solution.id,
       imageBase64: solution.imageBase64,
-      initSolutionTaskId,
+      initSolutionTaskId: solution.id,
       createdAt: new Date(),
-      items: [],
+      items: {},
     } as Solution
     setSolutions((prev) => {
       prev[solution.id] = newSolution
@@ -25,20 +25,19 @@ export function useSolutionManager() {
   }, [setSolutions])
 
   const addSolutionItem = useCallback((solutionId: string, item: Pick<Solution['items'][number], 'imageBase64'>) => {
-    const newItem = {
+    const newItem: Solution['items'][number] = {
       id: uuid(),
       imageBase64: item.imageBase64,
       createdAt: new Date(),
       content: '',
-      status: 'pending',
-    } as Solution['items'][number]
+      anaylzeSolutionItemTaskId: '',
+      solutionId,
+    }
 
     setSolutions((draft) => {
-      const solution = draft[solutionId]
-      if (solution) {
-        solution.items.push(newItem)
-      }
+      draft[solutionId].items[newItem.id] = newItem
     })
+    return newItem
   }, [setSolutions])
 
   return {

@@ -7,10 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // 处理SSE事件流的辅助函数
-export async function handleSSE(
+export async function handleStream(
   stream: ReadableStream<Uint8Array>,
   {
+    onStart = () => {},
     onEvent = (eventType: string, data: string) => {},
+    onMessage = (message: string) => {},
     onFinish = () => {},
   },
 ): Promise<void> {
@@ -20,6 +22,7 @@ export async function handleSSE(
   let buffer = ''
 
   try {
+    onStart()
     while (true) {
       const { done, value } = await reader.read()
       if (done) {
@@ -27,14 +30,15 @@ export async function handleSSE(
         break
       }
 
-      buffer += decoder.decode(value, { stream: true })
+      const text = decoder.decode(value, { stream: true })
+      onMessage(text)
 
       // 处理完整的SSE消息
+      buffer += text
       const lines = buffer.split('\n\n')
       buffer = lines.pop() || ''
 
       for (const line of lines) {
-        // 解析SSE消息
         const eventMatch = line.match(/^event: (.+)$/m)
         const dataMatch = line.match(/^data: (.+)$/m)
 
@@ -57,34 +61,6 @@ export async function handleSSE(
   catch (error) {
     console.error('处理SSE流时出错:', error)
     throw error
-  }
-  finally {
-    reader.releaseLock()
-  }
-}
-
-export async function handleStream(stream: ReadableStream<Uint8Array>, {
-  onMessage = (message: string) => {},
-  onFinish = () => {},
-}) {
-  const reader = stream.getReader()
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-
-      if (done) {
-        onFinish()
-        break
-      }
-
-      const decoder = new TextDecoder()
-      const text = decoder.decode(value, { stream: true })
-      onMessage(text)
-    }
-  }
-  catch (error) {
-    console.error('处理流时出错:', error)
   }
   finally {
     reader.releaseLock()

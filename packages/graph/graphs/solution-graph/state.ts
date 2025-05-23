@@ -7,5 +7,7 @@ export const StateAnnotation = Annotation.Root({
     default: () => [],
   }),
   imageBase64: Annotation<string>,
+  ocrRecognizedText: Annotation<string>,
   recognizedText: Annotation<string>,
+  summaryText: Annotation<string>,
 })

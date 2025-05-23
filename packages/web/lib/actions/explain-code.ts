@@ -1,15 +1,15 @@
 'use server'
 
+import type { ExplainCodeTask } from '../types'
 import { API_URL } from '@/lib/constants'
 
-export async function getExplainCodeStream(
-  path: string,
-  locStart: number,
-  locEnd: number,
+export async function startExplainCodeStream(
+  explainCodeTask: ExplainCodeTask,
 ): Promise<ReadableStream<Uint8Array>> {
+  const { componentFilePath, locStart, locEnd } = explainCodeTask.component
   try {
     const url = new URL('/graph/explain-code-stream', API_URL)
-    url.searchParams.append('filepath', path)
+    url.searchParams.append('filepath', componentFilePath)
     url.searchParams.append('locStart', locStart.toString())
     url.searchParams.append('locEnd', locEnd.toString())
 

@@ -6,62 +6,61 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import { initSolutionTasksAtom } from '@/lib/atoms/task'
+import { anaylzeSolutionItemTasksAtom, initSolutionTasksAtom } from '@/lib/atoms/task'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useAtomValue } from 'jotai'
+import { values } from 'lodash'
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { solutionsAtom } from '../../lib/atoms/solution'
-import { Card } from '../ui/card'
+import { Spinner } from '../ui/spinner'
 import { InitSolutionTaskCard } from './init-solution-task-card'
 
-function ImageHoverCard({ imageBase64, children }: { imageBase64: string, children: React.ReactNode }) {
-  return (
-    <HoverCard>
-      <HoverCardTrigger>
-        {children}
-      </HoverCardTrigger>
-      <HoverCardContent className="p-2">
-        <img src={imageBase64} alt="" className="object-contain" />
-      </HoverCardContent>
-    </HoverCard>
-  )
-}
-
-function SolutionItemList({ solution }: { solution: Solution }) {
-  const formatTime = (date: Date) => {
-    return formatDistanceToNow(date, { addSuffix: true, locale: zhCN })
-  }
-
-  if (solution.items.length === 0) {
-    return
-  }
+export function SolutionItem({ item }: { item: Solution['items'][number] }) {
+  const anaylzeSolutionItemTasks = useAtomValue(anaylzeSolutionItemTasksAtom)
+  const currentTask = anaylzeSolutionItemTasks?.[item.anaylzeSolutionItemTaskId]
 
   return (
-    <Card className="flex flex-col shadow-none">
-      {solution.items.map((item, index) => (
-        <div className={cn('flex flex-row justify-between p-4 h-16', index !== 0 && 'border-t')} key={item.id}>
-          <div className="flex flex-col text-muted-foreground text-sm">
-            <p>
-              等待识别...
-            </p>
-            <p className="text-xs">
-              {formatTime(item.createdAt)}
-            </p>
-          </div>
-          <ImageHoverCard imageBase64={item.imageBase64}>
-            <img
-              src={item.imageBase64}
-              alt=""
-              className="h-full w-32 object-contain cursor-pointer"
-            />
-          </ImageHoverCard>
+    <div className="flex flex-col gap-1 w-full text-muted-foreground">
+      <div className="h-16 border rounded-lg overflow-auto w-full">
+        {
+          currentTask.status === 'pending'
+            ? (
+                <HoverCard>
+                  <HoverCardTrigger>
+                    <img
+                      src={currentTask.imageBase64}
+                      alt=""
+                      className="h-full w-full object-cover animate-pulse"
+                    />
+                  </HoverCardTrigger>
+                  <HoverCardContent className="p-2">
+                    <img src={currentTask.imageBase64} alt="" className="object-contain" />
+                  </HoverCardContent>
+                </HoverCard>
+              )
+            : (
+                <p className="text-sm m-2">{currentTask.result}</p>
+              )
+        }
+      </div>
+
+      <div className="flex flex-row justify-between text-xs">
+        <p>
+          分析#
+          {item.id.slice(0, 6)}
+        </p>
+        <div className="flex flex-row items-center gap-2">
+          <Spinner className={cn(['pending', 'processing'].includes(currentTask.status) ? 'size-4' : 'size-0')} />
+          <p>
+            {formatDistanceToNow(currentTask.createdAt, { addSuffix: true, locale: zhCN })}
+          </p>
         </div>
-      ))}
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -72,7 +71,7 @@ export function SolutionDetail() {
   const currentSolution = solutions?.[params.id]
 
   const initSolutionTasks = useAtomValue(initSolutionTasksAtom)
-  const currentTask = initSolutionTasks?.[params.id]
+  const currentTask = initSolutionTasks?.[currentSolution?.initSolutionTaskId]
 
   useEffect(() => {
     if (!currentSolution) {
@@ -85,9 +84,11 @@ export function SolutionDetail() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-[92vh] overflow-auto">
+    <div className="flex flex-col gap-4 h-[92vh] overflow-auto pb-8">
       <InitSolutionTaskCard task={currentTask} />
-      <SolutionItemList solution={currentSolution} />
+      {values(currentSolution.items).map(item => (
+        <SolutionItem item={item} key={item.id} />
+      ))}
     </div>
   )
 }

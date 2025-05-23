@@ -1,17 +1,17 @@
-'use server'
-
-import type { InitSolutionTask } from '../types'
+import type { AnaylzeSolutionItemTask } from '../types'
 import { API_URL } from '@/lib/constants'
 
-export async function startInitSolutionTaskStream(
-  initSolutionTask: InitSolutionTask,
+export async function startAnaylzeSolutionItemStream(
+  anaylzeSolutionItemTask: AnaylzeSolutionItemTask,
 ): Promise<ReadableStream<Uint8Array>> {
+  const { solutionId, imageBase64 } = anaylzeSolutionItemTask
+
   try {
-    const url = new URL('/graph/init-solution-sse', API_URL)
-    url.searchParams.append('id', initSolutionTask.solutionId)
+    const url = new URL('/graph/anaylze-solution-item-stream', API_URL)
+    url.searchParams.append('id', solutionId)
 
     const formData = new FormData()
-    formData.append('img', initSolutionTask.imageBase64)
+    formData.append('img', imageBase64)
     const response = await fetch(url, {
       method: 'POST',
       body: formData,

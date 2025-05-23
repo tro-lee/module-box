@@ -1,24 +1,21 @@
 import { SystemMessage } from '@langchain/core/messages'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 
-export const recognizeImageSystemMessage = new SystemMessage(`
-请准确转录所提供图像中的所有文本内容，确保极高的准确性。您需要：
+export const recognizeImagePromptTemplate = ChatPromptTemplate.fromTemplate(`
+  你现在是一个专业的文档图像转录助手，结合OCR识别结果和图像内容，转录图像中的信息。
 
-1. 转录图像内容：捕捉图像中显示的所有文本，尽可能保持原始格式和结构。
+  ## OCR识别结果：
+  {ocrRecognizedText}
 
-2. 保留格式：注意保留文本的格式特征，包括标题、段落划分、粗体、斜体或下划线等样式。
+  ## 输出要求：
+  1. 转录图像内容：捕捉图像中显示的所有文本，尽可能保持原始格式和结构。
+  2. 结合OCR识别结果，确保文本的准确性和完整性。
+  3. 标记不确定内容：将不清楚或难以辨认的文本标记为[不清楚]或[难以辨认]，在可能的情况下提供最佳猜测。
+  4. 完整性：确保捕获图像中的所有文本元素，包括按钮文字、标签、说明文字等各类文本内容。
+  5. 尽可能还原其信息内容
 
-3. 处理特殊元素：
-   - 对于图像中的表格，简要描述表格布局并转录内容
-   - 对于图像中嵌套的其他图片，提供简要描述并转录其中的文本
-   - 对于图表或图形中的文字说明，也需完整转录
-
-4. 标记不确定内容：将不清楚或难以辨认的文本标记为[不清楚]或[难以辨认]，在可能的情况下提供最佳猜测。
-
-5. 完整性：确保捕获图像中的所有文本元素，包括按钮文字、标签、说明文字等各类文本内容。
-
-请仅关注图像本身，不需要处理图像之外的文档内容。直接输出图像中的文本，无需额外的解释或分析。
-不要陷入循环中！
+  ## 输出规则：
+  - 仅输出图像识别内容，不需要额外的解释或分析。
   `)
 
 export const summarySystemMessage = new SystemMessage(`
@@ -51,3 +48,16 @@ export const summaryPromptTemplate = ChatPromptTemplate.fromTemplate(`
   待解析文本：
   {input}
     `)
+
+export const mixPromptTemplate = ChatPromptTemplate.fromTemplate(`
+  现在你要结合上下文信息和图片内容，编写具体的需求条目。
+
+  ## 输出规则：
+  1.将图片内容和上下文信息结合起来，生成一段简洁的需求描述。
+  2.例子：
+  - 左侧实现一个用户注册的按钮
+
+  ## 数据：
+  图片内容：{image}
+  上下文信息：{context}
+  `)

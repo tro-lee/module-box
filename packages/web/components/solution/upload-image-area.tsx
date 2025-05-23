@@ -2,7 +2,9 @@
 'use module'
 
 import { useImageUpload } from '@/lib/hooks/use-image-upload'
-import { useInitSolutionTask } from '@/lib/hooks/use-init-solution-task'
+import { useSolutionManager } from '@/lib/hooks/use-solution-manager'
+import { useInitSolutionTask } from '@/lib/hooks/use-task'
+import { random } from 'lodash'
 import { ImagePlus } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -18,6 +20,7 @@ export function UploadImageArea() {
     handleFileChange,
   } = useImageUpload()
   const { addTask, startTask } = useInitSolutionTask()
+  const { addSolution } = useSolutionManager()
 
   // 监听粘贴事件
   useEffect(() => {
@@ -48,6 +51,12 @@ export function UploadImageArea() {
   // 监听图变化
   useEffect(() => {
     if (previewBase64) {
+      addSolution({
+        name: `新建方案#${random(1000, false)}`,
+        id: param.id,
+        imageBase64: previewBase64,
+      })
+
       const task = addTask(param.id, previewBase64)
       startTask(task)
       router.push(`/update-solution/${param.id}`)

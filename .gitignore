@@ -180,3 +180,6 @@ dist
 temp
 # LangGraph API
 .langgraph_api
+
+# tesseract.js
+*.traineddata
