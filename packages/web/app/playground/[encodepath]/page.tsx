@@ -15,7 +15,7 @@ export default async function Page() {
 
       <ModuleFlow />
 
-      <aside className="absolute right-0 p-2 pt-8">
+      <aside className="absolute right-0 px-2">
         <ComponentDetail />
       </aside>
     </main>

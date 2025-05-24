@@ -2,35 +2,48 @@
 'use module'
 
 import type { LocalComponent } from '@module-toolbox/anaylzer'
+import { CodeBlock } from '@/components/ui/code-block'
+import { querySourceCode } from '@/lib/actions/query-source-code'
 import { explainCodeTasksAtom } from '@/lib/atoms/task'
 import { useExplainCodeTask } from '@/lib/hooks/use-task'
 import { useAtomValue } from 'jotai'
-import Prism from 'prismjs'
-import { use, useEffect } from 'react'
+import { Code, FileText } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+
 import ReactMarkdown from 'react-markdown'
 import { selectedComponentAtom } from '../../lib/atoms/playground'
+import { Spinner } from '../ui/spinner'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 
-import { Card } from '../ui/card'
-import { ScrollArea } from '../ui/scroll-area'
-import 'prismjs/themes/prism.css'
-import 'prismjs/components/prism-jsx.js'
-import 'prismjs/components/prism-tsx.js'
-import 'prismjs/plugins/line-numbers/prism-line-numbers.js'
-import 'prismjs/plugins/line-numbers/prism-line-numbers.css'
-
-function HighlightCode({ codeContentPromise }: { codeContentPromise: Promise<string> }) {
-  const codeContent = use(codeContentPromise)
+function ComponentCodeBlock({ component }: { component: LocalComponent }) {
+  const [code, setCode] = useState<string>('')
 
   useEffect(() => {
-    Prism.highlightAll()
-  }, [])
+    querySourceCode(
+      component.componentFilePath,
+      component.locStart,
+      component.locEnd,
+    ).then((code) => {
+      setCode(code)
+    })
+  }, [component])
+
+  if (!code) {
+    return (
+      <div className="flex items-center justify-end w-full">
+        <Spinner className="size-4 text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
-    <pre className="language-tsx line-numbers h-[80vh] overflow-auto rounded-lg" style={{ margin: 0 }}>
-      <code>
-        {codeContent}
-      </code>
-    </pre>
+    <div className="max-h-[90vh] w-96 overflow-auto rounded-lg border bg-sidebar">
+      <CodeBlock
+        language="tsx"
+        filename={component.componentFilePath.split('/').pop() ?? ''}
+        code={code}
+      />
+    </div>
   )
 }
 
@@ -38,43 +51,31 @@ function ComponentCodeExplainer({ component }: { component: LocalComponent }) {
   const explainCodeTasks = useAtomValue(explainCodeTasksAtom)
   const { addTask, startTask } = useExplainCodeTask()
 
-  if (component.type === 'LocalComponent') {
-    const currentTask = explainCodeTasks[component.componentKey]
+  const currentTask = explainCodeTasks[component.componentKey]
 
-    useEffect(() => {
-      if (!currentTask) {
-        const task = addTask(component)
-        startTask(task)
-      }
-    }, [component])
-
-    if (!currentTask || currentTask?.type !== 'explainCodeTask')
-      return
-
-    if (currentTask?.status === 'pending') {
-      return (
-        <div className="animate-pulse flex flex-col gap-2 items-center p-4">
-          <p className="text-sm text-gray-500">
-            {currentTask?.component.componentName}
-            {' '}
-            正在上传中
-          </p>
-          <div className="h-2 w-32 bg-gray-200 rounded"></div>
-        </div>
-      )
+  useEffect(() => {
+    if (!currentTask) {
+      const task = addTask(component)
+      startTask(task)
     }
+  }, [component])
 
+  if (!currentTask || currentTask?.type !== 'explainCodeTask')
+    return
+
+  if (currentTask?.status === 'pending') {
     return (
-      <ScrollArea className="h-[90vh]" type="scroll">
-        <div className="prose prose-sm dark:prose-invert w-72 p-4">
-          <ReactMarkdown children={currentTask?.message} />
-        </div>
-      </ScrollArea>
+      <div className="flex items-center justify-end w-full">
+        <Spinner className="size-4 text-muted-foreground" />
+      </div>
     )
   }
-  else {
-    return (<></>)
-  }
+
+  return (
+    <div className="w-96 max-h-[90vh] overflow-auto rounded-lg border bg-sidebar prose prose-sm dark:prose-invert p-4">
+      <ReactMarkdown children={currentTask?.message} />
+    </div>
+  )
 }
 
 export function ComponentDetail() {
@@ -85,17 +86,24 @@ export function ComponentDetail() {
   }
 
   return (
-    <Card className="flex flex-col">
-      {selectedComponent && (
-      // <TabsTrigger
-      //   key={selectedComponent.componentKey}
-      //   value={selectedComponent.componentKey}
-      //   onClick={() =>
-      //     setSelectedComponentKey(selectedComponent.componentKey)}
-      // >
+    <Tabs defaultValue="code" className="flex flex-col justify-end">
+      <TabsList className="flex flex-row justify-end">
+        <TabsTrigger value="code">
+          <Code className="h-4 w-4" />
+        </TabsTrigger>
+        <TabsTrigger value="explain">
+          <FileText className="h-4 w-4" />
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="code" className="mt-0">
+        <Suspense fallback={<Spinner className="size-4" />}>
+          <ComponentCodeBlock component={selectedComponent} />
+        </Suspense>
+      </TabsContent>
+      <TabsContent value="explain" className="mt-0">
         <ComponentCodeExplainer component={selectedComponent} />
-      // </TabsTrigger>
-      )}
-    </Card>
+      </TabsContent>
+    </Tabs>
   )
 }

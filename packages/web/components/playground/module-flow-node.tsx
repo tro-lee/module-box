@@ -34,7 +34,7 @@ function ModuleNode({
 
   return (
     <Fragment>
-      <Button variant="outline" size="icon" className="bg-muted">
+      <Button variant="outline" size="icon" className="bg-muted shadow-none">
         <NetworkIcon />
       </Button>
       {hasSourceConnections && <Handle type="source" position={Position.Right} />}
@@ -81,8 +81,8 @@ function ComponentNode({
 
   return (
     <Fragment>
-      <Card className={cn('cursor-pointer transition-all duration-200 border-0 bg-muted', selected
-        ? 'ring-2 ring-muted-foreground shadow-lg'
+      <Card className={cn('cursor-pointer transition-all duration-200 border-0 bg-muted shadow-none', selected
+        ? 'ring-2 ring-muted-foreground'
         : 'hover:shadow-md')}
       >
         {hasTargetConnections && <Handle type="target" position={Position.Left} />}
