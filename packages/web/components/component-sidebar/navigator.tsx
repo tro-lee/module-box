@@ -3,7 +3,7 @@
 import { selectedSidebarTypeAtom } from '@/lib/atoms/playground'
 import { cn } from '@/lib/utils'
 import { useAtom } from 'jotai'
-import { FileCode2, FileText, Flower } from 'lucide-react'
+import { FileBox, FileCode, FileText } from 'lucide-react'
 import { useCallback } from 'react'
 import { Toggle } from '../ui/toggle'
 
@@ -13,7 +13,12 @@ function NavigatorButton({ children, type }: { children: React.ReactNode, type: 
   const [selectedSidebarType, setSelectedSidebarType] = useAtom(selectedSidebarTypeAtom)
 
   const onClick = useCallback(() => {
-    setSelectedSidebarType(type)
+    setSelectedSidebarType((prev) => {
+      if (prev === type) {
+        return 'none'
+      }
+      return type
+    })
   }, [type, setSelectedSidebarType])
 
   return (
@@ -24,9 +29,9 @@ function NavigatorButton({ children, type }: { children: React.ReactNode, type: 
 }
 
 const icons = {
-  code: <FileCode2 className="size-4" />,
+  code: <FileCode className="size-4" />,
   explain: <FileText className="size-4" />,
-  solution: <Flower className="size-4" />,
+  solution: <FileBox className="size-4" />,
 }
 
 export function NavigatorButtons({ className }: { className?: string }) {

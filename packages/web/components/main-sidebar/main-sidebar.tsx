@@ -7,7 +7,7 @@ import { TaskExplorer } from '@/components/main-sidebar/task-explorer'
 import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import getModuleExplorerData from '@/lib/actions/module-explorer-data'
-import { File, Flower, List } from 'lucide-react'
+import { Box, File, List } from 'lucide-react'
 import { Suspense } from 'react'
 
 export function MainSidebar() {
@@ -19,13 +19,13 @@ export function MainSidebar() {
         <SidebarHeader className="p-0 border-b">
           <TabsList className="flex flex-row justify-start">
             <TabsTrigger value="explorer">
-              <File className="h-4 w-4" />
+              <File className="size-4" />
             </TabsTrigger>
             <TabsTrigger value="tasks">
-              <List className="h-4 w-4" />
+              <List className="size-4" />
             </TabsTrigger>
             <TabsTrigger value="solution">
-              <Flower className="h-4 w-4" />
+              <Box className="size-4" />
             </TabsTrigger>
           </TabsList>
         </SidebarHeader>
