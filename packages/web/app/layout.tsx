@@ -1,7 +1,7 @@
 'use module'
 
 import type { Metadata } from 'next'
-import { LeftSidebar } from '@/components/sidebar/leftsidebar'
+import { MainSidebar } from '@/components/main-sidebar/main-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Provider } from 'jotai'
 import { Geist, Geist_Mono } from 'next/font/google'
@@ -34,7 +34,7 @@ export default function RootLayout({
       >
         <Provider>
           <SidebarProvider>
-            <LeftSidebar />
+            <MainSidebar />
             <SidebarInset>
               {children}
             </SidebarInset>

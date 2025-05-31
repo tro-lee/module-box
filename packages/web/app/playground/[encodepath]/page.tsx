@@ -1,8 +1,7 @@
 'use module'
 
-import { ComponentDetail } from '@/components/playground/component-detail'
+import { ComponentSidebar } from '@/components/component-sidebar/sidebar'
 import { ModuleFlow } from '@/components/playground/module-flow'
-import { PathBreadcrumb } from '@/components/playground/path-breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
 export default async function Page() {
@@ -10,13 +9,12 @@ export default async function Page() {
     <main className="flex-1 flex">
       <div className="flex flex-row items-center justify-start p-2 space-x-2 absolute z-10 text-muted-foreground">
         <SidebarTrigger />
-        <PathBreadcrumb />
       </div>
 
       <ModuleFlow />
 
       <aside className="absolute right-0">
-        <ComponentDetail />
+        <ComponentSidebar />
       </aside>
     </main>
   )

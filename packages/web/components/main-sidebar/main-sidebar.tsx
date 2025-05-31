@@ -1,16 +1,16 @@
 import {
   ModuleExplorer,
   ModuleExplorerSkeleton,
-} from '@/components/sidebar/module-explorer'
-import { SolutionExplorer } from '@/components/sidebar/solution-explorer'
-import { TaskExplorer } from '@/components/sidebar/task-explorer'
+} from '@/components/main-sidebar/module-explorer'
+import { SolutionExplorer } from '@/components/main-sidebar/solution-explorer'
+import { TaskExplorer } from '@/components/main-sidebar/task-explorer'
 import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import getModuleExplorerData from '@/lib/actions/module-explorer-data'
-import { ChartNoAxesGantt, File, List } from 'lucide-react'
+import { File, Flower, List } from 'lucide-react'
 import { Suspense } from 'react'
 
-export function LeftSidebar() {
+export function MainSidebar() {
   const explorerPromise = getModuleExplorerData()
 
   return (
@@ -25,7 +25,7 @@ export function LeftSidebar() {
               <List className="h-4 w-4" />
             </TabsTrigger>
             <TabsTrigger value="solution">
-              <ChartNoAxesGantt className="h-4 w-4" />
+              <Flower className="h-4 w-4" />
             </TabsTrigger>
           </TabsList>
         </SidebarHeader>

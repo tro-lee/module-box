@@ -7,7 +7,7 @@ import { Check, Copy } from "lucide-react"
 
 type CodeBlockProps = {
   language: string
-  filename: string
+  filename?: string
   highlightLines?: number[]
 } & (
   | {
