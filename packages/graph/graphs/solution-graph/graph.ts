@@ -3,9 +3,11 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { END, START, StateGraph } from '@langchain/langgraph'
 import { ChatOllama } from '@langchain/ollama'
-import { OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_VISION_MODEL } from '@module-toolbox/lib'
+import { OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_VISION_MODEL, vectorStore } from '@module-toolbox/lib'
+import { createRetrieverTool } from 'langchain/tools/retriever'
+import { last } from 'lodash'
 import { recognizeImageOCR } from '../../lib/ocr'
-import { mixPromptTemplate, summaryPromptTemplate, summarySystemMessage } from './prompt'
+import { solutionPromptTemplate, summaryPromptTemplate, summarySystemMessage, taskPromptTemplate } from './prompt'
 import { StateAnnotation } from './state'
 
 async function ocrRecognizeImageNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
@@ -67,20 +69,60 @@ async function summaryNode(state: typeof StateAnnotation.State): Promise<Partial
   }
 }
 
-async function answerNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
+// 创建检索组件代码工具
+async function createRetrieveComponentCodeTool(): Promise<ReturnType<typeof createRetrieverTool>> {
+  const retriever = vectorStore.asRetriever({
+    searchType: 'similarity',
+    k: 5,
+    tags: ['component', 'frontend'],
+  })
+
+  const tool = createRetrieverTool(
+    retriever,
+    {
+      name: 'retrieve_component_code',
+      description:
+      '这是一个在向量数据库中进行近似搜索组件代码的工具。你可以搜索组件名称或重点代码片段，系统将返回相关的组件代码。输入应该是与组件相关的问题或关键词，输出将是相关的组件代码片段。',
+    },
+  )
+
+  return tool
+}
+
+async function taskNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
   const llm = new ChatOllama({
     model: OLLAMA_MODEL,
     baseUrl: OLLAMA_BASE_URL,
     temperature: 0,
-  })
+  }).bindTools([await createRetrieveComponentCodeTool()])
 
-  const prompt = mixPromptTemplate
-
+  const prompt = taskPromptTemplate
   const chain = prompt.pipe(llm)
 
   const respone = await chain.invoke({
     image: state.recognizedText,
     context: state.summaryText,
+  })
+
+  return {
+    messages: [respone],
+  }
+}
+
+async function solutionNode(state: typeof StateAnnotation.State): Promise<Partial<typeof StateAnnotation.State>> {
+  const llm = new ChatOllama({
+    model: OLLAMA_MODEL,
+    baseUrl: OLLAMA_BASE_URL,
+    temperature: 0,
+  }).bindTools([await createRetrieveComponentCodeTool()])
+
+  const prompt = solutionPromptTemplate
+  const chain = prompt.pipe(llm)
+
+  const respone = await chain.invoke({
+    task: last(state.messages)?.text || '',
+    recognizedText: state.recognizedText || '',
+    summaryText: state.summaryText || '',
   })
 
   return {
@@ -113,10 +155,12 @@ export async function getAnaylzeSolutionItemGraph(options?: {
 
   const workflow = new StateGraph(StateAnnotation)
     .addNode('ocr', ocrRecognizeImageNode)
-    .addNode('answer', answerNode)
+    .addNode('task', taskNode)
+    .addNode('solution', solutionNode)
     .addEdge(START, 'ocr')
-    .addEdge('ocr', 'answer')
-    .addEdge('answer', END)
+    .addEdge('ocr', 'task')
+    .addEdge('task', 'solution')
+    .addEdge('solution', END)
 
   return workflow.compile({ checkpointer })
 }

@@ -1,11 +1,54 @@
 'use client'
 
 import { selectedComponentAtom, selectedSidebarTypeAtom } from '@/lib/atoms/playground'
+import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
+import { FileBox, FileCode, FileText } from 'lucide-react'
+import { useCallback } from 'react'
+import { Toggle } from '../ui/toggle'
 import { ComponentCodeBlock } from './code-block'
 import { ComponentCodeExplainer } from './code-explainer'
-import { NavigatorButtons } from './navigator'
+import { SolutionDetailExplorer } from './solution-detail-explorer'
+
+const navigatorButtonTypes = ['code', 'explain', 'solution'] as const
+
+function NavigatorButton({ children, type }: { children: React.ReactNode, type: typeof navigatorButtonTypes[number] }) {
+  const [selectedSidebarType, setSelectedSidebarType] = useAtom(selectedSidebarTypeAtom)
+
+  const onClick = useCallback(() => {
+    setSelectedSidebarType((prev) => {
+      if (prev === type) {
+        return 'none'
+      }
+      return type
+    })
+  }, [type, setSelectedSidebarType])
+
+  return (
+    <Toggle variant="outline" onClick={onClick} pressed={type === selectedSidebarType} className="bg-sidebar" size="sm">
+      {children}
+    </Toggle>
+  )
+}
+
+function NavigatorButtons({ className }: { className?: string }) {
+  const icons = {
+    code: <FileCode className="size-4" />,
+    explain: <FileText className="size-4" />,
+    solution: <FileBox className="size-4" />,
+  }
+
+  return (
+    <nav className={cn('flex flex-row items-center gap-2', className)}>
+      {navigatorButtonTypes.map(type => (
+        <NavigatorButton key={type} type={type}>
+          {icons[type]}
+        </NavigatorButton>
+      ))}
+    </nav>
+  )
+}
 
 export function MotionDiv({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
@@ -59,7 +102,7 @@ export function ComponentSidebar() {
         {
           currentTab === 'solution' && (
             <MotionDiv key="solution">
-              <ComponentCodeExplainer component={selectedComponent} />
+              <SolutionDetailExplorer />
             </MotionDiv>
           )
         }

@@ -25,10 +25,10 @@ export function SolutionItem({ item }: { item: Solution['items'][number] }) {
 
   return (
     <div className="flex flex-col gap-1 w-full text-muted-foreground">
-      <div className="h-16 border rounded-lg overflow-auto w-full">
-        {
-          currentTask.status === 'pending'
-            ? (
+      {
+        currentTask.status === 'pending'
+          ? (
+              <div className="h-16 border rounded-lg overflow-auto w-full">
                 <HoverCard>
                   <HoverCardTrigger>
                     <img
@@ -41,12 +41,14 @@ export function SolutionItem({ item }: { item: Solution['items'][number] }) {
                     <img src={currentTask.imageBase64} alt="" className="object-contain" />
                   </HoverCardContent>
                 </HoverCard>
-              )
-            : (
+              </div>
+            )
+          : (
+              <div className="min-h-16 max-h-64 border rounded-lg overflow-auto w-full relative">
                 <p className="text-sm m-2">{currentTask.result}</p>
-              )
-        }
-      </div>
+              </div>
+            )
+      }
 
       <div className="flex flex-row justify-between text-xs">
         <p>
