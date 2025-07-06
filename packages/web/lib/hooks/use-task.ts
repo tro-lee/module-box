@@ -1,15 +1,11 @@
-import type { AnaylzeSolutionItemTask, BaseTask, ExplainCodeTask, InitSolutionTask } from '@/lib/types'
+import type { BaseTask, ExplainCodeTask } from '@/lib/types'
 import type { LocalComponent } from '@module-toolbox/anaylzer'
 import type { Draft } from 'immer'
 import type { atomWithImmer } from 'jotai-immer'
-import type { Solution } from '../atoms/solution'
 import { useSetAtom } from 'jotai'
 import { useCallback } from 'react'
-import { startAnaylzeSolutionItemStream } from '../actions/anaylze-solution-item'
 import { startExplainCodeStream } from '../actions/explain-code'
-import { startInitSolutionTaskStream } from '../actions/init-solution'
-import { solutionsAtom } from '../atoms/solution'
-import { anaylzeSolutionItemTasksAtom, explainCodeTasksAtom, initSolutionTasksAtom } from '../atoms/task'
+import { explainCodeTasksAtom } from '../atoms/task'
 import { handleStream } from '../utils'
 
 function useStreamTask<T extends BaseTask>(
@@ -75,45 +71,6 @@ function useStreamTask<T extends BaseTask>(
   }
 }
 
-export function useInitSolutionTask() {
-  const { addStreamTask, startStreamTask } = useStreamTask(
-    initSolutionTasksAtom,
-    startInitSolutionTaskStream,
-  )
-
-  const setInitSolutionTask = useSetAtom(initSolutionTasksAtom)
-
-  const addTask = useCallback((id: string, imageBase64: string) => {
-    return addStreamTask({
-      type: 'initSolutionTask',
-      id,
-      imageBase64,
-      solutionId: id,
-      recognize: '',
-      summary: '',
-    })
-  }, [addStreamTask])
-
-  const startTask = useCallback(async (task: InitSolutionTask) => {
-    startStreamTask(task, {
-      onStart: () => {
-      },
-      onEvent: () => {
-        setInitSolutionTask((prev) => {
-          console.log('onEvent', prev[task.id].sse.recognize)
-          prev[task.id].recognize = prev[task.id].sse.recognize || ''
-          prev[task.id].summary = prev[task.id].sse.summary || ''
-        })
-      },
-    })
-  }, [])
-
-  return {
-    addTask,
-    startTask,
-  }
-}
-
 export function useExplainCodeTask() {
   const { addStreamTask, startStreamTask } = useStreamTask(
     explainCodeTasksAtom,
@@ -130,47 +87,6 @@ export function useExplainCodeTask() {
 
   const startTask = useCallback(async (task: ExplainCodeTask) => {
     startStreamTask(task)
-  }, [startStreamTask])
-
-  return {
-    addTask,
-    startTask,
-  }
-}
-
-export function useAnaylzeSolutionItemTask() {
-  const setAnaylzeSolutionItemTask = useSetAtom(anaylzeSolutionItemTasksAtom)
-  const setSolutions = useSetAtom(solutionsAtom)
-
-  const { addStreamTask, startStreamTask } = useStreamTask(
-    anaylzeSolutionItemTasksAtom,
-    startAnaylzeSolutionItemStream,
-  )
-
-  const addTask = useCallback((solutionItem: Solution['items'][number]) => {
-    const { id, solutionId, imageBase64 } = solutionItem
-    setSolutions((draft) => {
-      draft[solutionId].items[id].anaylzeSolutionItemTaskId = id
-    })
-
-    return addStreamTask({
-      type: 'anaylzeSolutionItemTask',
-      id,
-      imageBase64,
-      solutionId,
-      solutionItemId: id,
-      result: '',
-    })
-  }, [addStreamTask])
-
-  const startTask = useCallback(async (task: AnaylzeSolutionItemTask) => {
-    startStreamTask(task, {
-      onMessage: () => {
-        setAnaylzeSolutionItemTask((prev) => {
-          prev[task.id].result = prev[task.id].message || ''
-        })
-      },
-    })
   }, [startStreamTask])
 
   return {

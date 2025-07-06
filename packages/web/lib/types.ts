@@ -14,25 +14,9 @@ export interface BaseTask {
   error?: string
 }
 
-export type InitSolutionTask = BaseTask & {
-  type: 'initSolutionTask'
-  solutionId: string
-  imageBase64: string
-  recognize: string
-  summary: string
-}
-
 export type ExplainCodeTask = BaseTask & {
   type: 'explainCodeTask'
   component: LocalComponent
 }
 
-export type AnaylzeSolutionItemTask = BaseTask & {
-  type: 'anaylzeSolutionItemTask'
-  imageBase64: string
-  solutionId: string
-  solutionItemId: string
-  result: string
-}
-
-export type Task = InitSolutionTask | ExplainCodeTask | AnaylzeSolutionItemTask
+export type Task = ExplainCodeTask

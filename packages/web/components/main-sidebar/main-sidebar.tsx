@@ -2,12 +2,11 @@ import {
   ModuleExplorer,
   ModuleExplorerSkeleton,
 } from '@/components/main-sidebar/module-explorer'
-import { SolutionExplorer } from '@/components/main-sidebar/solution-explorer'
 import { TaskExplorer } from '@/components/main-sidebar/task-explorer'
 import { Sidebar, SidebarContent, SidebarHeader } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import getModuleExplorerData from '@/lib/actions/module-explorer-data'
-import { Box, File, List } from 'lucide-react'
+import { File, List } from 'lucide-react'
 import { Suspense } from 'react'
 
 export function MainSidebar() {
@@ -24,9 +23,6 @@ export function MainSidebar() {
             <TabsTrigger value="tasks">
               <List className="size-4" />
             </TabsTrigger>
-            <TabsTrigger value="solution">
-              <Box className="size-4" />
-            </TabsTrigger>
           </TabsList>
         </SidebarHeader>
 
@@ -40,9 +36,6 @@ export function MainSidebar() {
           </TabsContent>
           <TabsContent value="tasks">
             <TaskExplorer />
-          </TabsContent>
-          <TabsContent value="solution">
-            <SolutionExplorer />
           </TabsContent>
         </SidebarContent>
       </Tabs>

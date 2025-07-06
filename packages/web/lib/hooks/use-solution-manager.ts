@@ -30,7 +30,6 @@ export function useSolutionManager() {
       imageBase64: item.imageBase64,
       createdAt: new Date(),
       content: '',
-      anaylzeSolutionItemTaskId: '',
       solutionId,
     }
 

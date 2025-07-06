@@ -4,14 +4,13 @@ import { selectedComponentAtom, selectedSidebarTypeAtom } from '@/lib/atoms/play
 import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAtom, useAtomValue } from 'jotai'
-import { FileBox, FileCode, FileText } from 'lucide-react'
+import { FileCode, FileText } from 'lucide-react'
 import { useCallback } from 'react'
 import { Toggle } from '../ui/toggle'
 import { ComponentCodeBlock } from './code-block'
 import { ComponentCodeExplainer } from './code-explainer'
-import { SolutionDetailExplorer } from './solution-detail-explorer'
 
-const navigatorButtonTypes = ['code', 'explain', 'solution'] as const
+const navigatorButtonTypes = ['code', 'explain'] as const
 
 function NavigatorButton({ children, type }: { children: React.ReactNode, type: typeof navigatorButtonTypes[number] }) {
   const [selectedSidebarType, setSelectedSidebarType] = useAtom(selectedSidebarTypeAtom)
@@ -36,7 +35,6 @@ function NavigatorButtons({ className }: { className?: string }) {
   const icons = {
     code: <FileCode className="size-4" />,
     explain: <FileText className="size-4" />,
-    solution: <FileBox className="size-4" />,
   }
 
   return (
@@ -96,13 +94,6 @@ export function ComponentSidebar() {
           currentTab === 'explain' && (
             <MotionDiv key="explain">
               <ComponentCodeExplainer component={selectedComponent} />
-            </MotionDiv>
-          )
-        }
-        {
-          currentTab === 'solution' && (
-            <MotionDiv key="solution">
-              <SolutionDetailExplorer />
             </MotionDiv>
           )
         }

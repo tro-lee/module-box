@@ -1,7 +1,7 @@
 'use client'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { anaylzeSolutionItemTasksAtom, explainCodeTasksAtom, initSolutionTasksAtom } from '@/lib/atoms/task'
+import { explainCodeTasksAtom } from '@/lib/atoms/task'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { useAtomValue } from 'jotai'
 import { keys, values } from 'lodash'
@@ -10,12 +10,8 @@ import { TaskItem } from './task-explorer-item'
 
 export function TaskExplorer() {
   const explainCodeTasks = useAtomValue(explainCodeTasksAtom)
-  const initSolutionTasks = useAtomValue(initSolutionTasksAtom)
-  const anaylzeSolutionItemTasks = useAtomValue(anaylzeSolutionItemTasksAtom)
 
   const hasTasks = keys(explainCodeTasks).length > 0
-    || keys(initSolutionTasks).length > 0
-    || keys(anaylzeSolutionItemTasks).length > 0
 
   // 定义任务类型配置
   const taskConfigs = [
@@ -23,16 +19,6 @@ export function TaskExplorer() {
       id: 'explain-code-tasks',
       title: '代码解释',
       tasks: explainCodeTasks,
-    },
-    {
-      id: 'init-solution-tasks',
-      title: '智能方案初始化',
-      tasks: initSolutionTasks,
-    },
-    {
-      id: 'analyze-solution-tasks',
-      title: '智能方案分析',
-      tasks: anaylzeSolutionItemTasks,
     },
   ]
 
