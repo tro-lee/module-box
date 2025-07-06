@@ -1,7 +1,7 @@
 'use module'
 
-import { ModuleFlow } from '@/components/module-flow'
-import { Toolbar } from '@/components/toolbar'
+import { ModuleFlow } from '@/components/module-flow/module-flow'
+import { Toolbar } from '@/components/toolbar/toolbar'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Spinner } from '@/components/ui/spinner'
 import getModuleFlowData from '@/lib/actions/module-flow-data'
