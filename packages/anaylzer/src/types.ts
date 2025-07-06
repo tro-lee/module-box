@@ -40,6 +40,7 @@ export interface FileContext {
 interface WithBaseInfo<T extends Node> {
   id: Identifier
   filePath: string
+  encryptedKey: string
   locStart: number
   locEnd: number
   nodePath: NodePath<T>
@@ -74,16 +75,9 @@ type VariableDeclaratorWithBaseInfo = WithBaseInfo<VariableDeclarator> & {
 
 type NodeModuleImportDeclaration = Pick<
   WithBaseInfo<ImportDeclaration>,
-  'id' | 'filePath'
+  'id' | 'filePath' | 'encryptedKey'
 > & {
   type: 'NodeModuleImportDeclaration'
-}
-
-type TodoDeclaration = Pick<
-  WithBaseInfo<Node>,
-  'id' | 'filePath' | 'nodePath' | 'context'
-> & {
-  type: 'TodoDeclaration'
 }
 
 export type Declaration =
@@ -91,16 +85,13 @@ export type Declaration =
   | FunctionDeclarationWithBaseInfo
   | VariableDeclaratorWithBaseInfo
   | NodeModuleImportDeclaration
-  | TodoDeclaration
 
 // ============================================
 // 模块组件相关 最终成果
 // ============================================
 export interface Module {
   type: 'LocalModule'
-  key: string // module + componentKey
-  componentName: string
-  componentFilePath: string
+  moduleKey: string // module + componentKey
   componentKey: string // 组件唯一标识Name-FilePath
 }
 
@@ -114,7 +105,7 @@ export type Hook = {
   hookDescription: string
   hookParams: CustomTypeAnnotation[]
 } | {
-  type: 'NodeHook'
+  type: 'NodeModuleHook'
   hookName: string
   packageName: string
   hookKey: string
@@ -129,11 +120,6 @@ export type Component =
     locStart: number
     locEnd: number
     componentKey: string // 组件唯一标识Name-FilePath
-    componentDescription: string
-    componentJSXElements: {
-      elementName: string
-      componentKey: string // 组件唯一标识Name-FilePath
-    }[]
     componentParams: CustomTypeAnnotation[]
     referencedHookKeys: string[]
     referencedComponentKeys: string[]
@@ -146,6 +132,10 @@ export type Component =
   }
 
 export type LocalComponent = Extract<Component, { type: 'LocalComponent' }>
+export interface ComponentJSXElement {
+  elementName: string
+  componentKey: string // 组件唯一标识Name-FilePath
+}
 
 export interface CustomBinding {
   name: string

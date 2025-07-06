@@ -11,8 +11,8 @@ import {
   parseComponentJSXElement,
 } from '../parse'
 import { scanDeclarationInContext } from '../scan/declaration'
-import { transformArrowFunctionToDeclaration } from './arrow-function-to-declaration'
 import { getFunctionBaseInfo, isJsxComponent } from './utils'
+import { transformVariableToArrowFunction } from './variable-to-arrow-function'
 
 // 重要函数
 // 将声明语句转换为组件
@@ -40,7 +40,6 @@ export async function transformDeclarationToComponent(
       functionDescription,
       functionParams,
     } = await getFunctionBaseInfo(declaration)
-    const componentKey = `${functionName}-${context.path}`
 
     // 收集组件的函数体
     const {
@@ -78,9 +77,7 @@ export async function transformDeclarationToComponent(
       type: 'LocalComponent',
       componentName: functionName,
       componentFilePath: context.path,
-      componentKey,
-      componentDescription: functionDescription,
-      componentJSXElements,
+      componentKey: declaration.encryptedKey,
       componentParams: functionParams,
       referencedHookKeys,
       referencedComponentKeys,
@@ -110,7 +107,8 @@ export async function transformDeclarationToComponent(
 
   // 对引用组件进行处理
   if (declaration.type === 'NodeModuleImportDeclaration') {
-    const componentKey = `${declaration.id.name}-${declaration.filePath}`
+    // 导入语句比较特殊，它的key直接生成了
+    const componentKey = declaration.encryptedKey
 
     GlobalComponentContext[componentKey] = {
       type: 'NodeComponent',
@@ -145,12 +143,9 @@ export async function transformDeclarationToComponent(
     })
 
     if (arrowFunctionWithNodePath) {
-      const functionDeclaration = transformArrowFunctionToDeclaration(
+      const functionDeclaration = transformVariableToArrowFunction(
         arrowFunctionWithNodePath,
-        declaration.filePath,
-        declaration.context,
-        declaration.locStart,
-        declaration.locEnd,
+        declaration,
       )
       if (functionDeclaration) {
         Object.assign(functionDeclaration.id, declaration.id)

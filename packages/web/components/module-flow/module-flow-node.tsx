@@ -23,14 +23,14 @@ function ModuleNode({
 }) {
   const { module } = data
   const connections = useNodeConnections()
-  const hasSourceConnections = connections.some(c => c.source === module.key)
+  const hasSourceConnections = connections.some(c => c.source === module.moduleKey)
 
-  const handleDoubleClick = () => {
-    // 构建 VSCode 或 Cursor 的 URL scheme
-    const cursorUrl = `cursor://file/${module.componentFilePath}`
-    // 尝试打开 Cursor
-    window.location.href = cursorUrl
-  }
+  // const handleDoubleClick = () => {
+  //   // 构建 VSCode 或 Cursor 的 URL scheme
+  //   // const cursorUrl = `cursor://file/${module.componentFilePath}`
+  //   // 尝试打开 Cursor
+  //   window.location.href = cursorUrl
+  // }
 
   return (
     <Fragment>
@@ -119,7 +119,7 @@ function HookNode({
       </Wrapper>
     )
   }
-  else if (hook.type === 'NodeHook') {
+  else if (hook.type === 'NodeModuleHook') {
     return (
       <Wrapper>
         <CardHeader>

@@ -57,7 +57,7 @@ export default async function getModuleFlowData(path: string): Promise<{ nodes: 
 
   const nodes: FlowNode[] = compact([
     // 模块节点
-    ...Object.values(modules).map(module => createNode(module.key, { module, type: 'module' }, 'module')),
+    ...Object.values(modules).map(module => createNode(module.moduleKey, { module, type: 'module' }, 'module')),
     // 组件和Hook节点
     ...Object.values(components).flatMap((component) => {
       const componentNode = createNode(component.componentKey, { component, type: 'component' }, 'component')
@@ -74,8 +74,8 @@ export default async function getModuleFlowData(path: string): Promise<{ nodes: 
   // 处理边部分
   const edges: Edge[] = [
     ...Object.values(modules).map(module => ({
-      id: `edge-${module.key}-${module.componentKey}`,
-      source: module.key,
+      id: `edge-${module.moduleKey}-${module.componentKey}`,
+      source: module.moduleKey,
       target: module.componentKey,
       animated: true,
     })),

@@ -38,7 +38,7 @@ export async function transformFilePathsToCoreData(
   const modules = flatten(await Promise.all(modulePromises))
   const resultModules: Record<string, Module> = {}
   for (const module of modules) {
-    resultModules[module.componentName] = module
+    resultModules[module.moduleKey] = module
   }
 
   return {

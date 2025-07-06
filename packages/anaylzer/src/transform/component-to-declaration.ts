@@ -25,6 +25,7 @@ export async function transformComponentToDeclaration(
         type: 'Identifier',
       },
       filePath: component.packageName,
+      encryptedKey: component.componentKey,
     }
   }
 }

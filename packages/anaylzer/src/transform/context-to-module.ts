@@ -1,4 +1,5 @@
 import type { FileContext, Module } from '../types'
+import { generateUniqueId } from '../utils'
 import { transformDeclarationToComponent } from './declaration-to-component'
 
 // 将文件上下文转换为模块
@@ -33,9 +34,7 @@ export async function transformFileContextToModule(
 
     modules.push({
       type: 'LocalModule',
-      key: `Module-${component.componentKey}`,
-      componentFilePath: component.componentFilePath,
-      componentName: component.componentName,
+      moduleKey: generateUniqueId(component.componentKey, 'LocalModule'),
       componentKey: component.componentKey,
     })
   }

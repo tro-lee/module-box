@@ -2,7 +2,7 @@ import type { NodePath } from '@babel/traverse'
 import type { ExportSpecifier, Identifier, ImportDeclaration } from '@babel/types'
 import type { Declaration, FileContext } from '../types'
 import path from 'node:path'
-import { findNearestProjectRoot } from '../utils'
+import { findNearestProjectRoot, generateUniqueId } from '../utils'
 
 import { scanFileContextByAutoFile } from './file-context'
 
@@ -63,7 +63,7 @@ async function getDeclarationByImportDeclaration(
       }
 
       let targetIdentifier: Identifier | null = null
-      let targetDeclaration: Declaration | null = null
+      const targetDeclaration: Declaration | null = null
       targetContext.exportDefaultDeclarationWithNodePath.traverse({
         // 解析第一个函数参数
         Identifier(path) {
@@ -79,16 +79,16 @@ async function getDeclarationByImportDeclaration(
             // 解决export default A() {}
             targetIdentifier = path.node
           }
-          else if (path.parentPath.type === 'ClassDeclaration') {
-            // 解决export default class A {}
-            targetDeclaration = {
-              type: 'TodoDeclaration',
-              id: path.node,
-              nodePath: path.parentPath,
-              filePath: targetContext.path,
-              context: targetContext,
-            }
-          }
+          // else if (path.parentPath.type === 'ClassDeclaration') {
+          //   // 解决export default class A {}
+          //   targetDeclaration = {
+          //     type: 'TodoDeclaration',
+          //     id: path.node,
+          //     nodePath: path.parentPath,
+          //     filePath: targetContext.path,
+          //     context: targetContext,
+          //   }
+          // }
         },
       })
 
@@ -229,6 +229,7 @@ async function getDeclarationByImportDeclaration(
       name: itemName,
     },
     filePath: currentImportDeclaration.source.value,
+    encryptedKey: generateUniqueId(itemName, currentImportDeclaration.source.value, 'NodeModuleImportDeclaration'),
   }
 }
 

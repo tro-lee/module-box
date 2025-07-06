@@ -5,8 +5,8 @@ import type {
   Hook,
 } from '../types'
 import { GlobalHookContext } from '../constanst'
-import { transformArrowFunctionToDeclaration } from './arrow-function-to-declaration'
 import { getFunctionBaseInfo, isHookFunction } from './utils'
+import { transformVariableToArrowFunction } from './variable-to-arrow-function'
 
 // 重要函数
 // 将声明语句转换为Hook函数
@@ -32,7 +32,7 @@ export async function transformDeclarationToHook(
       type: 'LocalHook',
       hookName: functionName,
       hookFilePath: context.path,
-      hookKey: `${functionName}-${context.path}`,
+      hookKey: declaration.encryptedKey,
       hookDescription: functionDescription,
       hookParams: functionParams,
       locStart: declaration.locStart,
@@ -44,9 +44,9 @@ export async function transformDeclarationToHook(
   }
 
   if (declaration.type === 'NodeModuleImportDeclaration') {
-    const hookKey = `${declaration.id.name}-${declaration.filePath}`
+    const hookKey = declaration.encryptedKey
     const hook = {
-      type: 'NodeHook',
+      type: 'NodeModuleHook',
       hookName: declaration.id.name,
       packageName: declaration.filePath,
       hookKey,
@@ -75,12 +75,9 @@ export async function transformDeclarationToHook(
     })
 
     if (arrowFunctionWithNodePath) {
-      const functionDeclaration = transformArrowFunctionToDeclaration(
+      const functionDeclaration = transformVariableToArrowFunction(
         arrowFunctionWithNodePath,
-        declaration.filePath,
-        declaration.context,
-        declaration.locStart,
-        declaration.locEnd,
+        declaration,
       )
       if (functionDeclaration) {
         Object.assign(functionDeclaration.id, declaration.id)

@@ -4,7 +4,7 @@ import type { NodePath } from '@babel/core'
 import type {
   JSXElement,
 } from '@babel/types'
-import type { FileContext, LocalComponent } from '../types'
+import type { ComponentJSXElement, FileContext } from '../types'
 
 import { scanDeclarationInContext } from '../scan/declaration'
 
@@ -12,7 +12,7 @@ import { scanDeclarationInContext } from '../scan/declaration'
 export async function parseComponentJSXElement(
   jsxElementWithNodePath: NodePath<JSXElement>,
   currentContext: FileContext,
-): Promise<LocalComponent['componentJSXElements'][0] | undefined> {
+): Promise<ComponentJSXElement | undefined> {
   let elementName: string | undefined
   const openingElement = jsxElementWithNodePath.node.openingElement
 
@@ -39,6 +39,6 @@ export async function parseComponentJSXElement(
 
   return {
     elementName,
-    componentKey: `${elementDeclaration.id.name}-${elementDeclaration.filePath}`,
+    componentKey: elementDeclaration.encryptedKey,
   }
 }

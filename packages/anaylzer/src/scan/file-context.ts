@@ -16,6 +16,7 @@ import type { FileContext } from '../types'
 import fs from 'node:fs'
 import { traverse } from '@babel/core'
 import * as babel from '@babel/parser'
+import { generateUniqueId } from '../utils'
 
 const astContextCache: Record<string, FileContext> = {}
 
@@ -115,11 +116,14 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
         },
       })
 
+      const encryptedKey = generateUniqueId(id.name, filePath, 'FunctionDeclaration')
+
       context.functionsWithBaseInfo.push({
         type: 'FunctionDeclarationWithBaseInfo',
         isArrowFunction: false,
         nodePath: path,
         id,
+        encryptedKey,
         leadingComment,
         filePath,
         context,
@@ -147,6 +151,8 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
         = path.parent?.leadingComments ?? path.node.leadingComments
       const leadingComment = leadingComments?.at(-1)
 
+      const encryptedKey = generateUniqueId(id.name, filePath, 'InterfaceDeclaration')
+
       context.interfacesWithBaseInfo.push({
         type: 'InterfaceDeclarationWithBaseInfo',
         id,
@@ -154,6 +160,7 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
         nodePath: path,
         filePath,
         context,
+        encryptedKey,
         tsTypeElements: path.node.body.body,
         extendsExpression: path.node.extends ?? [],
         interfaceDeclaration: path.node,
@@ -177,11 +184,14 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
 
           // 暂时只支持 变量声明
           if (path.node.id.type === 'Identifier') {
+            const encryptedKey = generateUniqueId(path.node.id.name, filePath, 'VariableDeclaration')
+
             context.variablesWithBaseInfo.push({
               type: 'VariableDeclaratorWithBaseInfo',
               id: path.node.id,
               filePath,
               context,
+              encryptedKey,
               variableDeclarator: path.node,
               nodePath: path,
               locStart: path.parent.start ?? 0,

@@ -1,15 +1,20 @@
 import type { NodePath } from '@babel/core'
 import type { ArrowFunctionExpression, BlockStatement, Expression, Identifier, JSXElement } from '@babel/types'
-import type { FileContext } from '../types'
+import type { Declaration, FileContext } from '../types'
 
 // 将箭头函数转换为函数声明
-export function transformArrowFunctionToDeclaration(
+export function transformVariableToArrowFunction(
   path: NodePath<ArrowFunctionExpression>,
-  filePath: string,
-  context: FileContext,
-  locStart: number,
-  locEnd: number,
+  declaration: Extract<Declaration, { type: 'VariableDeclaratorWithBaseInfo' }>,
 ): FileContext['functionsWithBaseInfo'][number] | undefined {
+  const {
+    locStart,
+    locEnd,
+    filePath,
+    context,
+    encryptedKey,
+  } = declaration
+
   // 保证解析是 解析的顶级域的初始化箭头函数
   // 然后伪装成FunctionDeclaration，我们不对箭头函数和函数进行细微区分
   const arrowFunction = path.node
@@ -56,6 +61,7 @@ export function transformArrowFunctionToDeclaration(
     isArrowFunction: true,
     nodePath: path,
     id,
+    encryptedKey,
     leadingComment,
     filePath,
     context,
