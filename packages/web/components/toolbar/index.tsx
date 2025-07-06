@@ -1,19 +1,20 @@
 'use client'
 
-import { selectedComponentAtom, selectedSidebarTypeAtom } from '@/lib/atoms/playground'
+import { selectedComponentAtom, selectedToolbarTypeAtom } from '@/lib/atoms/module-flow'
 import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAtom, useAtomValue } from 'jotai'
-import { FileCode, FileText } from 'lucide-react'
+import { DraftingCompass, FileCode, FileText } from 'lucide-react'
 import { useCallback } from 'react'
 import { Toggle } from '../ui/toggle'
 import { ComponentCodeBlock } from './code-block'
+import { ComponentCodeDraft } from './code-draft'
 import { ComponentCodeExplainer } from './code-explainer'
 
-const navigatorButtonTypes = ['code', 'explain'] as const
+const navigatorButtonTypes = ['code', 'explain', 'draft'] as const
 
 function NavigatorButton({ children, type }: { children: React.ReactNode, type: typeof navigatorButtonTypes[number] }) {
-  const [selectedSidebarType, setSelectedSidebarType] = useAtom(selectedSidebarTypeAtom)
+  const [selectedSidebarType, setSelectedSidebarType] = useAtom(selectedToolbarTypeAtom)
 
   const onClick = useCallback(() => {
     setSelectedSidebarType((prev) => {
@@ -35,6 +36,7 @@ function NavigatorButtons({ className }: { className?: string }) {
   const icons = {
     code: <FileCode className="size-4" />,
     explain: <FileText className="size-4" />,
+    draft: <DraftingCompass className="size-4" />,
   }
 
   return (
@@ -48,7 +50,7 @@ function NavigatorButtons({ className }: { className?: string }) {
   )
 }
 
-export function MotionDiv({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function MotionDiv({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -61,8 +63,8 @@ export function MotionDiv({ children, ...props }: React.HTMLAttributes<HTMLDivEl
   )
 }
 
-export function ComponentSidebar() {
-  const currentTab = useAtomValue(selectedSidebarTypeAtom)
+export function Toolbar() {
+  const currentTab = useAtomValue(selectedToolbarTypeAtom)
   const selectedComponent = useAtomValue(selectedComponentAtom)
 
   if (!selectedComponent || selectedComponent.type !== 'LocalComponent') {
@@ -94,6 +96,13 @@ export function ComponentSidebar() {
           currentTab === 'explain' && (
             <MotionDiv key="explain">
               <ComponentCodeExplainer component={selectedComponent} />
+            </MotionDiv>
+          )
+        }
+        {
+          currentTab === 'draft' && (
+            <MotionDiv key="draft">
+              <ComponentCodeDraft component={selectedComponent} />
             </MotionDiv>
           )
         }

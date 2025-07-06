@@ -20,3 +20,9 @@ export type ExplainCodeTask = BaseTask & {
 }
 
 export type Task = ExplainCodeTask
+
+export interface Draft {
+  id: string
+  name: string
+  nodeIds: string[] // 包含节点
+}

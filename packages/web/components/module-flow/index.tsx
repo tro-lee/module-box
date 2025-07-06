@@ -2,26 +2,23 @@
 'use module'
 
 import type { Component } from '@module-toolbox/anaylzer'
-import type { Edge, Node } from '@xyflow/react'
-import getModuleFlowData from '@/lib/actions/module-flow-data'
+import type { Edge, EdgeChange, Node, NodeChange } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import {
+  applyEdgeChanges,
+  applyNodeChanges,
   Background,
   BackgroundVariant,
   ReactFlow,
   ReactFlowProvider,
   useEdges,
-  useEdgesState,
   useNodes,
   useNodesInitialized,
-  useNodesState,
   useReactFlow,
 } from '@xyflow/react'
-import { useSetAtom } from 'jotai'
-import { useParams } from 'next/navigation'
-import React, { memo, Suspense, use, useCallback, useEffect } from 'react'
-import { selectedComponentAtom } from '../../lib/atoms/playground'
-import { Spinner } from '../ui/spinner'
+import { useAtom, useSetAtom } from 'jotai'
+import React, { use, useCallback, useEffect } from 'react'
+import { moduleFlowEdgesAtom, moduleFlowNodesAtom, selectedComponentAtom } from '../../lib/atoms/module-flow'
 import { CustomNodeType } from './module-flow-node'
 import '@xyflow/react/dist/style.css'
 
@@ -86,11 +83,19 @@ function useFlowLayout() {
   }
 }
 
-// 核心流程图部分
-function CoreFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[] }> }) {
-  const initialData = use(promise)
-  const [nodes, , onNodesChange] = useNodesState(initialData.nodes)
-  const [edges, , onEdgesChange] = useEdgesState(initialData.edges)
+function CoreFlow() {
+  const [nodes, setNodes] = useAtom(moduleFlowNodesAtom)
+  const onNodesChange = useCallback(
+    (changes: NodeChange<Node>[]) => setNodes(draft => applyNodeChanges(changes, draft)),
+    [setNodes],
+  )
+  const [edges, setEdges] = useAtom(moduleFlowEdgesAtom)
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<Edge>[]) => setEdges(draft => applyEdgeChanges(changes, draft)),
+    [setEdges],
+  )
+
+  const setSelectedComponent = useSetAtom(selectedComponentAtom)
 
   // 布局
   const { setLayout } = useFlowLayout()
@@ -100,8 +105,6 @@ function CoreFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[]
       setLayout()
     }
   }, [isNodesInitialized])
-
-  const setSelectedComponent = useSetAtom(selectedComponentAtom)
 
   return (
     <ReactFlow
@@ -120,29 +123,21 @@ function CoreFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[]
   )
 }
 
-// 包裹下，提供 ReactFlowProvider 上下文
-export const ModuleFlow = memo(() => {
-  const params = useParams<{ encodepath: string }>()
-  const path = decodeURIComponent(params.encodepath || '')
-  const promise = getModuleFlowData(path)
+export function ModuleFlow({ promise }: { promise: Promise<{ nodes: Node[], edges: Edge[] }> }) {
+  const setNodes = useSetAtom(moduleFlowNodesAtom)
+  const setEdges = useSetAtom(moduleFlowEdgesAtom)
+  const data = use(promise)
+
+  useEffect(() => {
+    setNodes(data.nodes)
+    setEdges(data.edges)
+  }, [data])
 
   return (
     <div className="relative flex-1 flex justify-center items-center">
-      <Suspense fallback={(
-        <div className="flex flex-col justify-center items-center text-muted-foreground">
-          <Spinner variant="bars" className="w-8 h-8 -translate-y-1/2" />
-          <p>
-            正在解析
-            {' '}
-            {path.split('/').slice(-1)}
-          </p>
-        </div>
-      )}
-      >
-        <ReactFlowProvider>
-          <CoreFlow promise={promise} />
-        </ReactFlowProvider>
-      </Suspense>
+      <ReactFlowProvider>
+        <CoreFlow />
+      </ReactFlowProvider>
     </div>
   )
-})
+}
