@@ -1,10 +1,8 @@
 {
   "name": "@module-toolbox/lib",
-  "type": "module",
   "version": "0.1.0",
   "main": "./index.ts",
   "module": "./index.ts",
-  "types": "./index.ts",
   "devDependencies": {},
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -12,9 +10,6 @@
   "scripts": {
     "build": "tsc && bun run build.ts"
   },
-  "dependencies": {
-    "@langchain/community": "^0.3.45",
-    "@langchain/langgraph-checkpoint-postgres": "^0.0.5",
-    "@prisma/client": "^6.8.2"
-  }
+  "type": "module",
+  "types": "./index.ts"
 }
