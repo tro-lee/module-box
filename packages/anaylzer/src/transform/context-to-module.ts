@@ -1,4 +1,5 @@
 import type { FileContext, Module } from '../types'
+import { scanDeclarationInContext } from '../scan'
 import { generateUniqueId } from '../utils'
 import { transformDeclarationToComponent } from './declaration-to-component'
 
@@ -12,18 +13,30 @@ export async function transformFileContextToModule(
     ...context.functionsWithBaseInfo,
     ...context.variablesWithBaseInfo,
   ]
-  for (const declaration of declarations) {
+
+  const filterDeclarations = declarations.filter((declaration) => {
+    return [
+      'ExportSpecifier',
+      'ExportAllDeclaration',
+      'ExportNamedDeclaration',
+      'ExportDefaultDeclaration',
+    ].includes(declaration.nodePath.getStatementParent()?.type ?? '')
+  })
+
+  // 从导出语句里找（可能出现export xx或export default xx，这种非函数或变量声明的）
+
+  // 让export default memo(A) 转换为 export const default = memo(A)
+  if (context.exportDefaultDeclarationWithNodePath) {
+    // let identifier:
+    // context.exportDefaultDeclarationWithNodePath.traverse({
+    //   Identifier(path) {
+
+    //   }
+    // })
+  }
+
+  for (const declaration of filterDeclarations) {
     // 将导出声明都转换为模块，其他则忽略
-    if (
-      ![
-        'ExportSpecifier',
-        'ExportAllDeclaration',
-        'ExportNamedDeclaration',
-        'ExportDefaultDeclaration',
-      ].includes(declaration.nodePath.getStatementParent()?.type ?? '')
-    ) {
-      continue
-    }
 
     const component = await transformDeclarationToComponent(
       declaration,

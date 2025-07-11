@@ -1,5 +1,4 @@
 import { transformProjectPathToDocument } from '@module-toolbox/anaylzer'
-import { addDocument } from '@module-toolbox/lib'
 import { Hono } from 'hono'
 
 export const codebaseHandler = new Hono()
@@ -19,8 +18,8 @@ codebaseHandler.get('/init-embed-text', async (c) => {
     include: ['src', 'lib', 'app', 'components'],
   })
 
-  const promises = documents.map(doc => addDocument(doc.pageContent, doc.id))
-  await Promise.all(promises)
+  // const promises = documents.map(doc => addDocument(doc.pageContent, doc.id))
+  // await Promise.all(promises)
 
   isInitialized = true
 
