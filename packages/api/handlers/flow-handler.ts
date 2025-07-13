@@ -5,7 +5,6 @@ export const flowHandler = new Hono()
 
 flowHandler.get('/modules', async (c) => {
   const filepath = c.req.query('filepath') || ''
-
   if (!filepath) {
     return c.json({
       status: 'error',
@@ -13,9 +12,7 @@ flowHandler.get('/modules', async (c) => {
     }, 400)
   }
 
-  const result = await transformFilePathsToModule(
-    [filepath],
-  )
+  const result = await transformFilePathsToModule(filepath)
 
   return c.json({
     status: 'success',
