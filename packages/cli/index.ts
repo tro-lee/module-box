@@ -4,11 +4,10 @@ import chalk from 'chalk'
 import inquirer from 'inquirer'
 import { find } from 'lodash'
 import exitChoice from './choices/exit'
-import pullChoice from './choices/pull'
 import pushChoice from './choices/push'
 import { asciiArt } from './lib/ascii-art'
 
-const choices = [pullChoice, pushChoice, exitChoice]
+const choices = [pushChoice, exitChoice]
 
 async function handleUserChoice(choiceName: string) {
   const choice = find(choices, c => c.value === choiceName)
