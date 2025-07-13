@@ -7,6 +7,8 @@
     "web:build": "cd packages/web && bun run build",
     "web:start": "cd packages/web && bun run start",
     "web:lint": "cd packages/web && bun run lint",
+    "cli:build": "cd packages/cli && bun run build",
+    "cli:dev": "cd packages/cli && bun run dev",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "peerDependencies": {

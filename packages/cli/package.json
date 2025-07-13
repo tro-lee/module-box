@@ -1,0 +1,21 @@
+{
+  "name": "@module-toolbox/cli",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "module-toolbox": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build.ts",
+    "dev": "bun run index.ts --watch"
+  },
+  "dependencies": {
+    "@module-toolbox/anaylzer": "workspace:*",
+    "chalk": "^5.4.1",
+    "inquirer": "^12.7.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.8"
+  }
+}
