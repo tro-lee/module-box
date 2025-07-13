@@ -6,7 +6,6 @@ import type {
 } from '../../types'
 import { compact, uniq } from 'lodash'
 import { GlobalComponentContext, HOC_WHITELIST } from '../../constanst'
-import { parseBlockStatement } from '../../parse/block-statement'
 import { parseComponentJSXElement } from '../../parse/jsx-element'
 import { scanDeclarationInContext } from '../../scan/declaration'
 import { getFunctionBaseInfo, isJsxComponent } from '../utils'
@@ -14,9 +13,9 @@ import { transformVariableToArrowFunction } from './variable-to-arrow-function'
 
 // 重要函数
 // 将声明语句转换为组件
-export async function transformDeclarationToComponent(
+export function transformDeclarationToComponent(
   declaration: Declaration,
-): Promise<Component | undefined> {
+): Component | undefined {
   // 核心 对本地组件进行处理
   if (declaration.type === 'FunctionDeclarationWithBaseInfo') {
     const {
@@ -35,17 +34,16 @@ export async function transformDeclarationToComponent(
     // 收集函数的基础信息
     const {
       functionName,
-      functionDescription,
       functionParams,
-    } = await getFunctionBaseInfo(declaration)
+    } = getFunctionBaseInfo(declaration)
 
     // 收集组件的函数体
-    const {
-      hooks,
-    } = await parseBlockStatement(
-      blockStateWithNodePath,
-      context,
-    )
+    // const {
+    //   hooks,
+    // } = parseBlockStatement(
+    //   blockStateWithNodePath,
+    //   context,
+    // )
 
     // 收集并解析组件中的JSX元素
     const recordedJSXElements = jsxElementsWithNodePath.reduce<Record<string, NodePath<JSXElement>>>((acc, jsxElement) => {
@@ -60,14 +58,11 @@ export async function transformDeclarationToComponent(
       return acc
     }, {})
     const componentJSXElements = compact(
-      await Promise.all(
-        Object.values(recordedJSXElements).map(jsxElement =>
-          parseComponentJSXElement(jsxElement, context),
-        ),
+      Object.values(recordedJSXElements).map(jsxElement =>
+        parseComponentJSXElement(jsxElement, context),
       ),
     )
 
-    const referencedHookKeys = uniq(hooks.map(hook => hook.hookKey))
     const referencedComponentKeys = uniq(componentJSXElements.map(jsxElement => jsxElement.componentKey))
 
     // 组装信息为组件
@@ -77,7 +72,7 @@ export async function transformDeclarationToComponent(
       componentFilePath: context.path,
       componentKey: declaration.encryptedKey,
       componentParams: functionParams,
-      referencedHookKeys,
+      referencedHookKeys: [],
       referencedComponentKeys,
       locStart,
       locEnd,
@@ -87,13 +82,13 @@ export async function transformDeclarationToComponent(
     // 副作用
     // 将jsx元素中的组件声明也转换为组件
     for (const jsxElement of componentJSXElements) {
-      const declaration = await scanDeclarationInContext(
+      const declaration = scanDeclarationInContext(
         jsxElement.elementName,
         context,
       )
 
       if (declaration) {
-        const component = await transformDeclarationToComponent(declaration)
+        const component = transformDeclarationToComponent(declaration)
         if (component) {
           GlobalComponentContext[component.componentKey] = component
         }
@@ -147,7 +142,7 @@ export async function transformDeclarationToComponent(
       )
       if (functionDeclaration) {
         Object.assign(functionDeclaration.id, declaration.id)
-        return await transformDeclarationToComponent(functionDeclaration)
+        return transformDeclarationToComponent(functionDeclaration)
       }
     }
   }

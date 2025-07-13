@@ -9,10 +9,10 @@ import { parse as parseComment } from 'comment-parser'
 import { scanDeclarationInContext } from '../scan/declaration'
 
 // 解析类型注解
-export async function parseCustomTypeAnnotation(
+export function parseCustomTypeAnnotation(
   typeAnnotation: TSTypeAnnotation | TypeAnnotation | Noop | null | undefined,
   context: FileContext,
-): Promise<CustomTypeAnnotation> {
+): CustomTypeAnnotation {
   if (typeAnnotation && typeAnnotation.type === 'TSTypeAnnotation') {
     const _typeAnnotation = typeAnnotation.typeAnnotation
 
@@ -27,7 +27,7 @@ export async function parseCustomTypeAnnotation(
         }
       }
 
-      const declaration = await scanDeclarationInContext(typeName.name, context)
+      const declaration = scanDeclarationInContext(typeName.name, context)
 
       if (!declaration) {
         return {
@@ -68,7 +68,7 @@ export async function parseCustomTypeAnnotation(
             && prop.key.type === 'Identifier'
           ) {
             const propKey = prop.key.name
-            const propType = await parseCustomTypeAnnotation(
+            const propType = parseCustomTypeAnnotation(
               prop.typeAnnotation,
               declaration.context,
             )
@@ -84,7 +84,7 @@ export async function parseCustomTypeAnnotation(
         const extendsInterface: InterfaceTypeAnnotation[] = []
         for (const extendsItem of extendsExpression) {
           if (extendsItem.expression.type === 'Identifier') {
-            const extendsInterfaceItem = (await parseCustomTypeAnnotation(
+            const extendsInterfaceItem = (parseCustomTypeAnnotation(
               {
                 type: 'TSTypeAnnotation',
                 typeAnnotation: {
@@ -115,27 +115,27 @@ export async function parseCustomTypeAnnotation(
     // 字面量处理
     if (_typeAnnotation.type === 'TSTypeLiteral') {
       const properties = _typeAnnotation.members
-      const parsedProperties = (
-        await Promise.all(
-          properties.map(async (property): Promise<Prop | undefined> => {
-            if (
-              property.type === 'TSPropertySignature'
-              && property.key.type === 'Identifier'
-            ) {
-              const propKey = property.key.name
-              const propType = await parseCustomTypeAnnotation(
-                property.typeAnnotation,
-                context,
-              )
+      const parsedProperties
+        = properties.map((property): Prop | undefined => {
+          if (
+            property.type === 'TSPropertySignature'
+            && property.key.type === 'Identifier'
+          ) {
+            const propKey = property.key.name
+            const propType = parseCustomTypeAnnotation(
+              property.typeAnnotation,
+              context,
+            )
 
-              return {
-                propKey,
-                propType,
-              }
+            return {
+              propKey,
+              propType,
             }
-          }),
-        )
-      ).filter(v => v !== undefined)
+          }
+
+          return undefined
+        })
+          .filter(v => v !== undefined)
 
       return {
         type: 'ObjectTypeAnnotation',
@@ -146,17 +146,15 @@ export async function parseCustomTypeAnnotation(
     // Union处理
     if (_typeAnnotation.type === 'TSUnionType') {
       const unionMembers = _typeAnnotation.types
-      const parsedUnionMembers = await Promise.all(
-        unionMembers.map(async (member) => {
-          return await parseCustomTypeAnnotation(
-            {
-              type: 'TSTypeAnnotation',
-              typeAnnotation: member,
-            },
-            context,
-          )
-        }),
-      )
+      const parsedUnionMembers = unionMembers.map((member) => {
+        return parseCustomTypeAnnotation(
+          {
+            type: 'TSTypeAnnotation',
+            typeAnnotation: member,
+          },
+          context,
+        )
+      })
 
       return {
         type: 'UnionTypeAnnotation',
@@ -168,7 +166,7 @@ export async function parseCustomTypeAnnotation(
     if (_typeAnnotation.type === 'TSArrayType') {
       return {
         type: 'ArrayTypeAnnotation',
-        elementType: await parseCustomTypeAnnotation(
+        elementType: parseCustomTypeAnnotation(
           {
             type: 'TSTypeAnnotation',
             typeAnnotation: _typeAnnotation.elementType,

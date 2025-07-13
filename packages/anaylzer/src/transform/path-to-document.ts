@@ -1,25 +1,24 @@
 import generate from '@babel/generator'
-import { compact, flatten } from 'lodash'
+import { flatten } from 'lodash'
 import { scanEntryFilePaths } from '../scan/entry-file'
 import { scanFileContext } from '../scan/file-context'
 
 // 重要的入口文件
 // 将项目路径下的所有文件转换为代码库文档
-export async function transformProjectPathToDocument(projectPath: string, options: {
+export function transformProjectPathToDocument(projectPath: string, options: {
   exclude?: string[]
   include?: string[]
 }) {
   // 获取所有文件上下文
-  const entryFiles = await scanEntryFilePaths(projectPath, {
+  const entryFiles = scanEntryFilePaths(projectPath, {
     exclude: options.exclude,
     include: options.include,
   })
-  const fileContextsPromises = entryFiles.map(filePath =>
-    scanFileContext(filePath),
-  )
-  const fileContextResults = compact(flatten(await Promise.all(fileContextsPromises)))
+  const fileContexts = entryFiles
+    .map(filePath => scanFileContext(filePath))
+    .filter(fileContext => fileContext !== null)
 
-  const declarations = fileContextResults.map(fileContext =>
+  const declarations = fileContexts.map(fileContext =>
     [...fileContext.functionsWithBaseInfo.map(declaration => declaration), ...fileContext.variablesWithBaseInfo.map(declaration => declaration)],
   ).flat()
 

@@ -10,9 +10,9 @@ import { transformVariableToArrowFunction } from './variable-to-arrow-function'
 
 // 重要函数
 // 将声明语句转换为Hook函数
-export async function transformDeclarationToHook(
+export function transformDeclarationToHook(
   declaration: Declaration,
-): Promise<Hook | undefined> {
+): Hook | undefined {
   if (declaration.type === 'FunctionDeclarationWithBaseInfo') {
     const { context } = declaration
 
@@ -25,7 +25,7 @@ export async function transformDeclarationToHook(
       functionName,
       functionDescription,
       functionParams,
-    } = await getFunctionBaseInfo(declaration)
+    } = getFunctionBaseInfo(declaration)
 
     // 组装信息为组件
     const hook: Hook = {
@@ -81,7 +81,7 @@ export async function transformDeclarationToHook(
       )
       if (functionDeclaration) {
         Object.assign(functionDeclaration.id, declaration.id)
-        return await transformDeclarationToHook(functionDeclaration)
+        return transformDeclarationToHook(functionDeclaration)
       }
     }
   }

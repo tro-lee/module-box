@@ -2,11 +2,11 @@ import type { Component, Declaration } from '../../types'
 import { scanFileContext } from '../../scan/file-context'
 
 // 将组件转换为声明语句
-export async function transformComponentToDeclaration(
+export function transformComponentToDeclaration(
   component: Component,
-): Promise<Declaration | undefined> {
+): Declaration | undefined {
   if (component.type === 'LocalComponent') {
-    const fileContext = await scanFileContext(
+    const fileContext = scanFileContext(
       component.componentFilePath,
     )
 

@@ -4,7 +4,7 @@ import { transformDeclarationToComponent } from './declaration-to-component'
 
 // 将文件上下文转换为模块
 // 实际就是直接转换成组件
-export async function transformFileContextToModule(
+export function transformFileContextToModule(
   context: FileContext,
 ) {
   const modules: Module[] = []
@@ -34,13 +34,13 @@ export async function transformFileContextToModule(
   //   // })
   // }
 
-  const promises = filterDeclarations.map(async (declaration) => {
+  const promises = filterDeclarations.map((declaration) => {
     // 将导出声明都转换为模块，其他则忽略
-    const component = await transformDeclarationToComponent(
+    const component = transformDeclarationToComponent(
       declaration,
     )
     if (!component || component.type !== 'LocalComponent') {
-      return
+      return undefined
     }
 
     modules.push({
@@ -48,9 +48,11 @@ export async function transformFileContextToModule(
       moduleKey: generateUniqueId(component.componentKey, 'LocalModule'),
       componentKey: component.componentKey,
     })
+
+    return undefined
   })
 
-  await Promise.all(promises)
+  promises.filter(Boolean)
 
   return modules
 }

@@ -9,10 +9,10 @@ import type { ComponentJSXElement, FileContext } from '../types'
 import { scanDeclarationInContext } from '../scan/declaration'
 
 // 只解析组件函数
-export async function parseComponentJSXElement(
+export function parseComponentJSXElement(
   jsxElementWithNodePath: NodePath<JSXElement>,
   currentContext: FileContext,
-): Promise<ComponentJSXElement | undefined> {
+): ComponentJSXElement | undefined {
   let elementName: string | undefined
   const openingElement = jsxElementWithNodePath.node.openingElement
 
@@ -26,7 +26,7 @@ export async function parseComponentJSXElement(
     return
   }
 
-  const elementDeclaration = await scanDeclarationInContext(
+  const elementDeclaration = scanDeclarationInContext(
     elementName,
     currentContext,
   )

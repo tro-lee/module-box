@@ -8,11 +8,11 @@ import { scanFileContext } from './file-context'
 
 // 从导入声明中获取目标声明
 // 用于解决导入导出问题
-async function getDeclarationByImportDeclaration(
+function getDeclarationByImportDeclaration(
   currentImportDeclaration: ImportDeclaration,
   currentContext: FileContext,
   itemName: string,
-): Promise<Declaration | null> {
+): Declaration | null {
   let absoluteTargetImportPath = ''
 
   // 判断是否使用@/，进行变量转换
@@ -37,7 +37,7 @@ async function getDeclarationByImportDeclaration(
   // 若有目标文件路径，则进行扫描
   // 针对不同情况的export写法，进行处理
   if (absoluteTargetImportPath) {
-    const targetContext = await scanFileContext(
+    const targetContext = scanFileContext(
       absoluteTargetImportPath,
     )
     if (!targetContext) {
@@ -97,7 +97,7 @@ async function getDeclarationByImportDeclaration(
       }
 
       if (!targetDeclaration && targetIdentifier) {
-        return await scanDeclarationInContext(
+        return scanDeclarationInContext(
           (targetIdentifier as Identifier).name,
           targetContext,
         )
@@ -189,7 +189,7 @@ async function getDeclarationByImportDeclaration(
       const exportedName = (targetExportSpecifier as ExportSpecifier).exported
       const actualExportName
         = exportedName.type === 'Identifier' ? exportedName.name : itemName
-      const declaration = await scanDeclarationInContext(
+      const declaration = scanDeclarationInContext(
         actualExportName,
         targetContext,
       )
@@ -207,9 +207,9 @@ async function getDeclarationByImportDeclaration(
         sourceValue,
       )
 
-      const newContext = await scanFileContext(resolvedPath)
+      const newContext = scanFileContext(resolvedPath)
       if (newContext) {
-        const result = await scanDeclarationInContext(itemName, newContext)
+        const result = scanDeclarationInContext(itemName, newContext)
         if (result) {
           return result
         }
@@ -238,10 +238,10 @@ const declarationCache = new Map<string, Declaration | null>()
 
 // 获取声明在一个上下文中
 // 如果没有，则直接报错
-export async function scanDeclarationInContext(
+export function scanDeclarationInContext(
   itemName: string,
   currentContext: FileContext,
-): Promise<Declaration | null> {
+): Declaration | null {
   const cacheKey = `${currentContext.path}-${itemName}`
   const cachedDeclaration = declarationCache.get(cacheKey)
   if (cachedDeclaration) {
@@ -274,11 +274,11 @@ export async function scanDeclarationInContext(
 
   // 递归获取
   const declaration = targetImportDeclaration
-    ? await getDeclarationByImportDeclaration(
-      targetImportDeclaration,
-      currentContext,
-      itemName,
-    )
+    ? getDeclarationByImportDeclaration(
+        targetImportDeclaration,
+        currentContext,
+        itemName,
+      )
     : null
 
   if (declaration) {

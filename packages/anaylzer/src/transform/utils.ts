@@ -22,15 +22,15 @@ export function isJsxComponent(
   return declaration.jsxElementsWithNodePath.length > 0
 }
 
-interface FunctionBaseInfo {
+export interface FunctionBaseInfo {
   functionName: string
   functionDescription: string
   functionParams: CustomTypeAnnotation[]
 }
 
-export async function getFunctionBaseInfo(
+export function getFunctionBaseInfo(
   declaration: Declaration & { type: 'FunctionDeclarationWithBaseInfo' },
-): Promise<FunctionBaseInfo> {
+): FunctionBaseInfo {
   const {
     functionDeclaration,
     leadingComment,
@@ -51,15 +51,13 @@ export async function getFunctionBaseInfo(
   }
 
   // 收集函数参数的类型注解
-  const functionParams = (
-    await Promise.all(
-      functionDeclaration.params
-        .filter(param => param.type === 'Identifier')
-        .map(param =>
-          parseCustomTypeAnnotation(param.typeAnnotation, context),
-        ),
-    )
-  ).filter(item => item !== undefined)
+  const functionParams
+    = functionDeclaration.params
+      .filter(param => param.type === 'Identifier')
+      .map(param =>
+        parseCustomTypeAnnotation(param.typeAnnotation, context),
+      )
+      .filter(item => item !== undefined)
 
   return {
     functionName,

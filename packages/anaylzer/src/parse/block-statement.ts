@@ -3,21 +3,25 @@ import type {
   BlockStatement,
 } from '@babel/types'
 import type {
-  CustomBinding,
-  Declaration,
   FileContext,
-  Hook,
+  FunctionDeclarationWithBaseInfo,
+  VariableDeclaratorWithBaseInfo,
 } from '../types'
 import { scanDeclarationInContext } from '../scan/declaration'
-import { transformDeclarationToHook } from '../transform/react-dsl/declaration-to-hook'
 
 // 解析函数体
-export async function parseBlockStatement(
+export function parseBlockStatement(
   blockStatementWithNodePath: NodePath<BlockStatement>,
   context: FileContext,
-): Promise<{ totalBindings: CustomBinding[], hooks: Hook[] }> {
-  const totalBindings: CustomBinding[] = []
-  const hooks: Hook[] = []
+): { functionDeclarations: FunctionDeclarationWithBaseInfo[], variableDeclarations: VariableDeclaratorWithBaseInfo[] } {
+  const functionDeclarations: FunctionDeclarationWithBaseInfo[] = []
+  const variableDeclarations: VariableDeclaratorWithBaseInfo[] = []
+
+  blockStatementWithNodePath.traverse({
+    Identifier(path) {
+      console.log(path)
+    },
+  })
 
   for (const [key, binding] of Object.entries(
     blockStatementWithNodePath.scope.bindings,
@@ -32,11 +36,14 @@ export async function parseBlockStatement(
       },
     })
 
-    let initCalleeDeclaration: Declaration | null = null
     if (initCalleeName) {
-      initCalleeDeclaration = await scanDeclarationInContext(initCalleeName, context)
-      const hook = initCalleeDeclaration ? await transformDeclarationToHook(initCalleeDeclaration) : null
-      hook && hooks.push(hook)
+      const initCalleeDeclaration = scanDeclarationInContext(initCalleeName, context)
+      if (initCalleeDeclaration?.type === 'FunctionDeclarationWithBaseInfo') {
+        functionDeclarations.push(initCalleeDeclaration)
+      }
+      else if (initCalleeDeclaration?.type === 'VariableDeclaratorWithBaseInfo') {
+        variableDeclarations.push(initCalleeDeclaration)
+      }
     }
 
     // // 获取所有引用语句
@@ -112,7 +119,7 @@ export async function parseBlockStatement(
   }
 
   return {
-    totalBindings,
-    hooks,
+    functionDeclarations,
+    variableDeclarations,
   }
 }

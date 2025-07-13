@@ -2,7 +2,7 @@ import type { NodePath } from '@babel/core'
 import type { ArrowFunctionExpression, BlockStatement, Expression, Identifier, JSXElement } from '@babel/types'
 import type { Declaration, FileContext } from '../../types'
 
-// 将箭头函数转换为函数声明
+// 将变量声明转换为函数声明
 export function transformVariableToArrowFunction(
   path: NodePath<ArrowFunctionExpression>,
   declaration: Extract<Declaration, { type: 'VariableDeclaratorWithBaseInfo' }>,
