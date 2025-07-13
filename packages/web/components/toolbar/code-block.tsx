@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { CodeBlock } from '../ui/code-block'
 import { Spinner } from '../ui/spinner'
 
+/**
+ * @export
+ */
 export function ComponentCodeBlock({ component }: { component: LocalComponent }) {
   const [code, setCode] = useState<string>('')
 

@@ -1,45 +1,16 @@
+import type { FilterFilesOptions } from './utils'
 import fs from 'node:fs'
 import path from 'node:path'
-
-interface Options {
-  exclude?: string[]
-  include?: string[]
-}
+import { filterFiles } from './utils'
 
 // 获取入口文件
 export async function scanEntryFilePaths(
   dirPath: string,
-  options: Options = {},
+  options: FilterFilesOptions = {},
   headLineFlag: string = '',
 ): Promise<string[]> {
-  const start = performance.now()
-  const files = fs.readdirSync(
-    path.resolve(__dirname, dirPath),
-    { encoding: 'utf-8', recursive: true },
-  )
-
-  // 只获取tsx和ts文件
-  // 根据options过滤文件
-  const filteredFiles = files.filter(
-    (file) => {
-      const basicFilter = ['.tsx', '.ts'].some(ext => file.endsWith(ext))
-        && !file.includes('node_modules')
-        && !file.startsWith('.')
-
-      if (options.exclude && options.exclude.length > 0) {
-        if (options.exclude.some(excludePath => file.includes(excludePath))) {
-          return false
-        }
-      }
-
-      if (options.include && options.include.length > 0) {
-        return basicFilter
-          && options.include.some(includePath => file.includes(includePath))
-      }
-
-      return basicFilter
-    },
-  )
+  const files = fs.readdirSync(dirPath, { encoding: 'utf-8', recursive: true })
+  const filteredFiles = filterFiles(files, options)
 
   let result = []
   if (headLineFlag) {
@@ -62,7 +33,5 @@ export async function scanEntryFilePaths(
     result = filteredFiles.map(file => path.resolve(dirPath, file))
   }
 
-  const end = performance.now()
-  console.log(`拿到符合规则路径: ${end - start}ms`)
   return result
 }

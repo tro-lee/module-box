@@ -48,7 +48,7 @@ interface WithBaseInfo<T extends Node> {
   context: FileContext
 }
 
-type FunctionDeclarationWithBaseInfo =
+export type FunctionDeclarationWithBaseInfo =
   (| (WithBaseInfo<ArrowFunctionExpression> & { isArrowFunction: true })
     | (WithBaseInfo<FunctionDeclaration> & { isArrowFunction: false }))
   & {
@@ -61,19 +61,19 @@ type FunctionDeclarationWithBaseInfo =
     blockStateWithNodePath: NodePath<BlockStatement>
   }
 
-type InterfaceDeclarationWithBaseInfo = WithBaseInfo<TSInterfaceDeclaration> & {
+export type InterfaceDeclarationWithBaseInfo = WithBaseInfo<TSInterfaceDeclaration> & {
   type: 'InterfaceDeclarationWithBaseInfo'
   tsTypeElements: TSTypeElement[]
   extendsExpression: TSExpressionWithTypeArguments[]
   interfaceDeclaration: TSInterfaceDeclaration
 }
 
-type VariableDeclaratorWithBaseInfo = WithBaseInfo<VariableDeclarator> & {
+export type VariableDeclaratorWithBaseInfo = WithBaseInfo<VariableDeclarator> & {
   type: 'VariableDeclaratorWithBaseInfo'
   variableDeclarator: VariableDeclarator
 }
 
-type NodeModuleImportDeclaration = Pick<
+export type NodeModuleImportDeclaration = Pick<
   WithBaseInfo<ImportDeclaration>,
   'id' | 'filePath' | 'encryptedKey'
 > & {
