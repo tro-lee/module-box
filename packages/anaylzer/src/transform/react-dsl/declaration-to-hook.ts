@@ -3,9 +3,9 @@ import type { ArrowFunctionExpression } from '@babel/types'
 import type {
   Declaration,
   Hook,
-} from '../types'
-import { GlobalHookContext } from '../constanst'
-import { getFunctionBaseInfo, isHookFunction } from './utils'
+} from '../../types'
+import { GlobalHookContext } from '../../constanst'
+import { getFunctionBaseInfo, isHookFunction } from '../utils'
 import { transformVariableToArrowFunction } from './variable-to-arrow-function'
 
 // 重要函数

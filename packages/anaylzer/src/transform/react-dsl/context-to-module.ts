@@ -1,5 +1,5 @@
-import type { FileContext, Module } from '../types'
-import { generateUniqueId } from '../utils'
+import type { FileContext, Module } from '../../types'
+import { generateUniqueId } from '../../utils'
 import { transformDeclarationToComponent } from './declaration-to-component'
 
 // 将文件上下文转换为模块

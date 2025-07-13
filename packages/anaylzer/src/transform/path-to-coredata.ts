@@ -5,7 +5,7 @@ import type {
 import { compact, flatten } from 'lodash'
 import { GlobalComponentContext, GlobalHookContext } from '../constanst'
 import { scanFileContext } from '../scan/file-context'
-import { transformFileContextToModule } from './context-to-module'
+import { transformFileContextToModule } from './react-dsl/context-to-module'
 
 // 重要的入口文件
 export async function transformFilePathsToCoreData(

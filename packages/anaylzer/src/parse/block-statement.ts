@@ -9,7 +9,7 @@ import type {
   Hook,
 } from '../types'
 import { scanDeclarationInContext } from '../scan/declaration'
-import { transformDeclarationToHook } from '../transform/declaration-to-hook'
+import { transformDeclarationToHook } from '../transform/react-dsl/declaration-to-hook'
 
 // 解析函数体
 export async function parseBlockStatement(

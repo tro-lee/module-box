@@ -1,5 +1,5 @@
-import type { Component, Declaration } from '../types'
-import { scanFileContext } from '../scan/file-context'
+import type { Component, Declaration } from '../../types'
+import { scanFileContext } from '../../scan/file-context'
 
 // 将组件转换为声明语句
 export async function transformComponentToDeclaration(
