@@ -1,6 +1,7 @@
 import generate from '@babel/generator'
 import { compact, flatten } from 'lodash'
-import { scanEntryFilePathsByDir, scanFileContextByAutoFile } from '../scan'
+import { scanEntryFilePaths } from '../scan/entry-file'
+import { scanFileContext } from '../scan/file-context'
 
 // 重要的入口文件
 // 将项目路径下的所有文件转换为代码库文档
@@ -9,12 +10,12 @@ export async function transformProjectPathToDocument(projectPath: string, option
   include?: string[]
 }) {
   // 获取所有文件上下文
-  const entryFiles = await scanEntryFilePathsByDir(projectPath, {
+  const entryFiles = await scanEntryFilePaths(projectPath, {
     exclude: options.exclude,
     include: options.include,
   })
   const fileContextsPromises = entryFiles.map(filePath =>
-    scanFileContextByAutoFile(filePath),
+    scanFileContext(filePath),
   )
   const fileContextResults = compact(flatten(await Promise.all(fileContextsPromises)))
 

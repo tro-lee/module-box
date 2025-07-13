@@ -211,7 +211,7 @@ async function scanFileContextByFile(filePath: string): Promise<FileContext | nu
 // 自动处理文件的扩展名
 // 比如扫描 /XXX/X 视为 /XXX/X/index.ts
 // 比如扫描 /XXX/X/hi 视为 /XXX/X/hi.ts
-export async function scanFileContextByAutoFile(
+export async function scanFileContext(
   filePath: string,
 ): Promise<FileContext | null> {
   for (const ext of [

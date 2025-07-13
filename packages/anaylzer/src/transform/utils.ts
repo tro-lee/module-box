@@ -1,6 +1,6 @@
 import type { CustomTypeAnnotation, Declaration } from '../types'
 import { parse as parseComment } from 'comment-parser'
-import { parseCustomTypeAnnotation } from '../parse'
+import { parseCustomTypeAnnotation } from '../parse/type-annotation'
 
 export function isHookFunction(
   declaration: Declaration,

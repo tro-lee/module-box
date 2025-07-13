@@ -6,10 +6,8 @@ import type {
 } from '../types'
 import { compact, uniq } from 'lodash'
 import { GlobalComponentContext, HOC_WHITELIST } from '../constanst'
-import {
-  parseBlockStatement,
-  parseComponentJSXElement,
-} from '../parse'
+import { parseBlockStatement } from '../parse/block-statement'
+import { parseComponentJSXElement } from '../parse/jsx-element'
 import { scanDeclarationInContext } from '../scan/declaration'
 import { getFunctionBaseInfo, isJsxComponent } from './utils'
 import { transformVariableToArrowFunction } from './variable-to-arrow-function'

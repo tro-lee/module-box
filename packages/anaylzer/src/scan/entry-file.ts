@@ -7,7 +7,7 @@ interface Options {
 }
 
 // 获取入口文件
-export async function scanEntryFilePathsByDir(
+export async function scanEntryFilePaths(
   dirPath: string,
   options: Options = {},
   headLineFlag: string = '',

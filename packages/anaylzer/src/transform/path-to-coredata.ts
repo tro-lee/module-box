@@ -4,7 +4,7 @@ import type {
 } from '../types'
 import { compact, flatten } from 'lodash'
 import { GlobalComponentContext, GlobalHookContext } from '../constanst'
-import { scanFileContextByAutoFile } from '../scan'
+import { scanFileContext } from '../scan/file-context'
 import { transformFileContextToModule } from './context-to-module'
 
 // 重要的入口文件
@@ -21,7 +21,7 @@ export async function transformFilePathsToCoreData(
 
   // 分析出所有的文件上下文
   const fileContextsPromises = filePaths.map(filePath =>
-    scanFileContextByAutoFile(filePath).then(fileContext =>
+    scanFileContext(filePath).then(fileContext =>
       fileContext ? { filePath, fileContext } : null,
     ),
   )

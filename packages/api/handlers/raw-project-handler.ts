@@ -1,5 +1,5 @@
 import * as fs from 'node:fs'
-import { scanEntryFilePathsByDir } from '@module-toolbox/anaylzer'
+import { scanEntryFilePaths } from '@module-toolbox/anaylzer'
 import { Hono } from 'hono'
 
 export const rawProjectHandler = new Hono()
@@ -16,7 +16,7 @@ rawProjectHandler.get('/entry-filepath', async (c) => {
     }, 400)
   }
 
-  const absolutePaths = await scanEntryFilePathsByDir(
+  const absolutePaths = await scanEntryFilePaths(
     filepath,
     {
       exclude,

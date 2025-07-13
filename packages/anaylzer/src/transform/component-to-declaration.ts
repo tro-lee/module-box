@@ -1,12 +1,12 @@
 import type { Component, Declaration } from '../types'
-import { scanFileContextByAutoFile } from '../scan'
+import { scanFileContext } from '../scan/file-context'
 
 // 将组件转换为声明语句
 export async function transformComponentToDeclaration(
   component: Component,
 ): Promise<Declaration | undefined> {
   if (component.type === 'LocalComponent') {
-    const fileContext = await scanFileContextByAutoFile(
+    const fileContext = await scanFileContext(
       component.componentFilePath,
     )
 

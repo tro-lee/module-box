@@ -4,7 +4,7 @@ import type { Declaration, FileContext } from '../types'
 import path from 'node:path'
 import { findNearestProjectRoot, generateUniqueId } from '../utils'
 
-import { scanFileContextByAutoFile } from './file-context'
+import { scanFileContext } from './file-context'
 
 // 从导入声明中获取目标声明
 // 用于解决导入导出问题
@@ -37,7 +37,7 @@ async function getDeclarationByImportDeclaration(
   // 若有目标文件路径，则进行扫描
   // 针对不同情况的export写法，进行处理
   if (absoluteTargetImportPath) {
-    const targetContext = await scanFileContextByAutoFile(
+    const targetContext = await scanFileContext(
       absoluteTargetImportPath,
     )
     if (!targetContext) {
@@ -207,7 +207,7 @@ async function getDeclarationByImportDeclaration(
         sourceValue,
       )
 
-      const newContext = await scanFileContextByAutoFile(resolvedPath)
+      const newContext = await scanFileContext(resolvedPath)
       if (newContext) {
         const result = await scanDeclarationInContext(itemName, newContext)
         if (result) {
