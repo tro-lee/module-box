@@ -53,7 +53,7 @@ export type FunctionDeclarationWithBaseInfo =
     | (WithBaseInfo<FunctionDeclaration> & { isArrowFunction: false }))
   & {
     type: 'FunctionDeclarationWithBaseInfo'
-    functionDeclaration: Pick<FunctionDeclaration, 'body' | 'params'> & {
+    functionDeclaration: FunctionDeclaration & {
       id: Identifier
     }
     // 函数里面具体内容：

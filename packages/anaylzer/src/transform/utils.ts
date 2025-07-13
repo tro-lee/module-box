@@ -1,4 +1,4 @@
-import type { CustomTypeAnnotation, Declaration } from '../types'
+import type { CustomTypeAnnotation, Declaration, FunctionDeclarationWithBaseInfo } from '../types'
 import { parse as parseComment } from 'comment-parser'
 import { parseCustomTypeAnnotation } from '../parse/type-annotation'
 
@@ -24,12 +24,13 @@ export function isJsxComponent(
 
 export interface FunctionBaseInfo {
   functionName: string
+  functionComment: { [key: string]: string }
   functionDescription: string
   functionParams: CustomTypeAnnotation[]
 }
 
 export function getFunctionBaseInfo(
-  declaration: Declaration & { type: 'FunctionDeclarationWithBaseInfo' },
+  declaration: FunctionDeclarationWithBaseInfo,
 ): FunctionBaseInfo {
   const {
     functionDeclaration,
@@ -37,16 +38,12 @@ export function getFunctionBaseInfo(
     context,
   } = declaration
 
-  // 收集函数的名称
   const functionName = functionDeclaration.id.name
+  const functionComment: { [key: string]: string } = {}
 
-  // 收集函数的注释
-  let functionDescription = ''
   for (const item of parseComment(`/*${leadingComment?.value}*/`)) {
     item.tags.forEach((tag) => {
-      if (tag.name === 'description') {
-        functionDescription = tag.name
-      }
+      functionComment[tag.tag] = tag.name
     })
   }
 
@@ -61,7 +58,8 @@ export function getFunctionBaseInfo(
 
   return {
     functionName,
-    functionDescription,
+    functionComment,
+    functionDescription: functionComment.description ?? '',
     functionParams,
   }
 }

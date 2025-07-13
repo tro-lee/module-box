@@ -66,6 +66,9 @@ export function transformVariableToArrowFunction(
     filePath,
     context,
     functionDeclaration: {
+      type: 'FunctionDeclaration',
+      generator: false,
+      async: false,
       id,
       body: arrowFunction.body,
       params: arrowFunction.params,

@@ -6,6 +6,8 @@ import { Spinner } from '../ui/spinner'
 
 /**
  * @export
+ * @description 组件代码块
+ * @version 1.0.0
  */
 export function ComponentCodeBlock({ component }: { component: LocalComponent }) {
   const [code, setCode] = useState<string>('')
