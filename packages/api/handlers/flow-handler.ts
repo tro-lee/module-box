@@ -1,4 +1,4 @@
-import { transformFilePathsToCoreData } from '@module-toolbox/anaylzer'
+import { transformFilePathsToModule } from '@module-toolbox/anaylzer'
 import { Hono } from 'hono'
 
 export const flowHandler = new Hono()
@@ -13,7 +13,7 @@ flowHandler.get('/modules', async (c) => {
     }, 400)
   }
 
-  const result = await transformFilePathsToCoreData(
+  const result = await transformFilePathsToModule(
     [filepath],
   )
 

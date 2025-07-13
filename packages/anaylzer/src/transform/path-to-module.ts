@@ -8,7 +8,7 @@ import { scanFileContext } from '../scan/file-context'
 import { transformFileContextToModule } from './react-dsl/context-to-module'
 
 // 重要的入口文件
-export async function transformFilePathsToCoreData(
+export async function transformFilePathsToModule(
   filePaths: string[],
 ) {
   // 清空全局上下文
